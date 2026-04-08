@@ -33,6 +33,8 @@ namespace BlockBlastGame
                 return;
             }
             Instance = this;
+            Application.targetFrameRate = 30;
+            QualitySettings.vSyncCount = 0;
         }
 
         bool gameStarted;

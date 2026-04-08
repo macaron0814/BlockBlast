@@ -8,7 +8,7 @@ namespace BlockBlastGame
         public SpriteRenderer[] cellRenderers;
 
         [Header("Visual Settings")]
-        public float cellSize = 0.5f;
+        public float cellSize = 0.35f;
         public GameObject cellPrefab;
 
         [Header("Custom Sprite (optional)")]

@@ -297,7 +297,7 @@ namespace BlockBlastGame
         static Font GetFont()
         {
             if (_cachedFont == null)
-                _cachedFont = Font.CreateDynamicFontFromOSFont("Arial", 24);
+                _cachedFont = Resources.Load<Font>("GameFont");
             return _cachedFont;
         }
 

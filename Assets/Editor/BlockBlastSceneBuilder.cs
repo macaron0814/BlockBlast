@@ -405,7 +405,7 @@ public static class BlockBlastSceneBuilder
     static Font GetFont()
     {
         if (_font == null)
-            _font = Font.CreateDynamicFontFromOSFont("Arial", 24);
+            _font = Resources.Load<Font>("GameFont");
         return _font;
     }
 
