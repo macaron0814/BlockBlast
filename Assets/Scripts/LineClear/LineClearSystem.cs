@@ -14,6 +14,20 @@ namespace BlockBlastGame
         public float clearAnimationDelay = 0.05f;
         public float clearAnimationDuration = 0.3f;
 
+        [Header("Clear Effect")]
+        [Tooltip("ライン消去エフェクトのスプライト配列（コマ送りアニメーション順に並べる）")]
+        public Sprite[] clearEffectFrames;
+        [Tooltip("エフェクトの再生速度（秒/フレーム）")]
+        public float clearEffectFrameRate = 0.05f;
+        [Tooltip("エフェクトの座標オフセット (X, Y)")]
+        public Vector2 clearEffectOffset = Vector2.zero;
+        [Tooltip("エフェクトのスケール")]
+        public Vector2 clearEffectScale = Vector2.one;
+        [Tooltip("エフェクトのソーティングレイヤー")]
+        public string clearEffectSortingLayer = "Tile";
+        [Tooltip("エフェクトのソーティングオーダー")]
+        public int clearEffectSortingOrder = 20;
+
         public LineClearResult CheckAndClearLines()
         {
             var result = new LineClearResult();
@@ -120,32 +134,62 @@ namespace BlockBlastGame
 
         IEnumerator AnimateAndClear(LineClearResult result, Action onComplete)
         {
+            // ブロックを即座に全マス消す
             foreach (var cell in result.clearedCells)
             {
                 Vector3 worldPos = boardManager.BoardToWorld(cell);
                 SpawnClearEffect(worldPos, boardManager.grid[cell.x, cell.y].colorType);
-                yield return new WaitForSeconds(clearAnimationDelay);
-            }
-
-            yield return new WaitForSeconds(clearAnimationDuration);
-
-            foreach (var cell in result.clearedCells)
-            {
                 boardManager.ClearCell(cell.x, cell.y);
             }
+
+            // エフェクトの再生完了を待つ
+            float effectDuration = (clearEffectFrames != null && clearEffectFrames.Length > 0)
+                ? clearEffectFrames.Length * clearEffectFrameRate
+                : clearAnimationDuration;
+            yield return new WaitForSeconds(effectDuration);
 
             onComplete?.Invoke();
         }
 
         void SpawnClearEffect(Vector3 position, BlockColorType colorType)
         {
-            GameObject effect = new GameObject("ClearEffect");
-            effect.transform.position = position;
-            var sr = effect.AddComponent<SpriteRenderer>();
-            sr.sprite = BlockPiece.GetOrCreateSquareSprite();
-            sr.color = BlockPiece.GetColorForType(colorType);
-            sr.sortingOrder = 10;
-            StartCoroutine(FadeAndDestroy(effect, clearAnimationDuration));
+            // スプライトアニメが設定されていればコマ送りで再生
+            if (clearEffectFrames != null && clearEffectFrames.Length > 0)
+            {
+                GameObject effect = new GameObject("ClearEffect");
+                effect.transform.position = position + new Vector3(clearEffectOffset.x, clearEffectOffset.y, 0f);
+                effect.transform.localScale = new Vector3(clearEffectScale.x, clearEffectScale.y, 1f);
+
+                var sr = effect.AddComponent<SpriteRenderer>();
+                sr.sprite           = clearEffectFrames[0];
+                sr.color            = Color.white;
+                sr.sortingLayerName = clearEffectSortingLayer;
+                sr.sortingOrder     = clearEffectSortingOrder;
+
+                StartCoroutine(PlayFrameAnimation(effect, sr));
+            }
+            else
+            {
+                // フォールバック: 従来のフェードアウトエフェクト
+                GameObject effect = new GameObject("ClearEffect");
+                effect.transform.position = position;
+                var sr = effect.AddComponent<SpriteRenderer>();
+                sr.sprite = BlockPiece.GetOrCreateSquareSprite();
+                sr.color  = BlockPiece.GetColorForType(colorType);
+                sr.sortingOrder = 10;
+                StartCoroutine(FadeAndDestroy(effect, clearAnimationDuration));
+            }
+        }
+
+        IEnumerator PlayFrameAnimation(GameObject obj, SpriteRenderer sr)
+        {
+            for (int i = 0; i < clearEffectFrames.Length; i++)
+            {
+                if (obj == null) yield break;
+                sr.sprite = clearEffectFrames[i];
+                yield return new WaitForSeconds(clearEffectFrameRate);
+            }
+            if (obj != null) Destroy(obj);
         }
 
         IEnumerator FadeAndDestroy(GameObject obj, float duration)

@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Stage1
   m_EditorClassIdentifier: 
   stageNumber: 0
-  linesToClear: 5
-  initialTurns: 20
-  turnsPerLineClear: 3
+  linesToClear: 9999
+  initialTurns: 9999
+  turnsPerLineClear: 9999
   difficultyMultiplier: 1
   itemCount: 3
