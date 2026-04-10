@@ -52,7 +52,10 @@ namespace BlockBlastGame
         [Tooltip("基準スクロール速度 (度/秒) — ArchRoadSystem.scrollSpeed と揃える")]
         public float baseScrollSpeed = 15f;
 
-        float _currentAngle;
+        // 基準角度はラップせず累積し、各レイヤー側で個別に 360 度ラップする。
+        // 先に基準角度を 360 度で折り返すと、parallaxFactor が 1 以外のレイヤーで
+        // 不連続なジャンプが発生して継ぎ目のズレに見える。
+        double _accumulatedAngle;
 
         void Start()
         {
@@ -63,9 +66,7 @@ namespace BlockBlastGame
 
         void Update()
         {
-            _currentAngle += baseScrollSpeed * Time.deltaTime;
-            if (_currentAngle >= 360f) _currentAngle -= 360f;
-            if (_currentAngle < 0f)    _currentAngle += 360f;
+            _accumulatedAngle += baseScrollSpeed * Time.deltaTime;
             if (layers == null) return;
             foreach (var layer in layers)
                 RepositionLayer(layer);
@@ -119,7 +120,7 @@ namespace BlockBlastGame
         {
             if (layer.tiles == null) return;
 
-            float layerAngle = _currentAngle * layer.parallaxFactor;
+            float layerAngle = Mathf.Repeat((float)(_accumulatedAngle * layer.parallaxFactor), 360f);
             float r          = layer.effectiveRadius;
 
             for (int i = 0; i < layer.totalTiles; i++)
