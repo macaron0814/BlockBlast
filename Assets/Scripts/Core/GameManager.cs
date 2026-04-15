@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -19,6 +20,7 @@ namespace BlockBlastGame
         public RoguelikeSystem roguelikeSystem;
         public SpaceshipBuilder spaceshipBuilder;
         public UIManager uiManager;
+        public EnemySystem enemySystem;
 
         [Header("State")]
         public GameState currentState = GameState.Title;
@@ -35,6 +37,22 @@ namespace BlockBlastGame
             Instance = this;
             Application.targetFrameRate = 30;
             QualitySettings.vSyncCount = 0;
+        }
+
+        void OnEnable()
+        {
+            GameEvents.OnWaveSurvivalClear += HandleWaveSurvivalClear;
+        }
+
+        void OnDisable()
+        {
+            GameEvents.OnWaveSurvivalClear -= HandleWaveSurvivalClear;
+        }
+
+        void HandleWaveSurvivalClear()
+        {
+            if (currentState != GameState.Playing) return;
+            OnStageClear();
         }
 
         bool gameStarted;
@@ -133,6 +151,7 @@ namespace BlockBlastGame
             }
 
             GameEvents.TriggerLineClear(clearResult.linesCleared, comboCount);
+            GameEvents.TriggerLineClearWithCells(clearResult.linesCleared, clearResult.clearedCells.Count, comboCount);
 
             itemSystem.TrySpawnRandomItem(clearResult.linesCleared);
 
@@ -166,13 +185,14 @@ namespace BlockBlastGame
 
         void TriggerGameOver()
         {
-            var gameOverType = chaseSystem.DetermineGameOverType();
             ChangeState(GameState.GameOver);
-            GameEvents.TriggerGameOver(gameOverType);
+            GameEvents.TriggerGameOver(GameOverType.PuzzleStuck);
         }
 
         public void OnStageClear()
         {
+            EnemyController.ClearAllHitEffects();
+
             if (stageManager.currentStageNumber >= 5)
             {
                 var parts = itemSystem.GetCollectedSpaceshipParts();
@@ -193,6 +213,13 @@ namespace BlockBlastGame
             int nextStage = stageManager.currentStageNumber + 1;
             ChangeState(GameState.Playing);
             stageManager.StartStage(nextStage);
+        }
+
+        public void OnEnemyReachedPlayer()
+        {
+            if (currentState != GameState.Playing) return;
+            ChangeState(GameState.GameOver);
+            GameEvents.TriggerGameOver(GameOverType.EnemyCapture);
         }
 
         public void RestartGame()

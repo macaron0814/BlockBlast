@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0952ef8d1568b461e8cacfc9f98662b1, type: 3}
+  m_Name: EnemyWaveData 1
+  m_EditorClassIdentifier: 
+  waves:
+  - enemies:
+    - {fileID: 11400000, guid: 29f7135b057204c40870acdb4b4bfedd, type: 2}
+    - {fileID: 11400000, guid: 29f7135b057204c40870acdb4b4bfedd, type: 2}
+    spawnInterval: 5
+  - enemies:
+    - {fileID: 11400000, guid: 29f7135b057204c40870acdb4b4bfedd, type: 2}
+    - {fileID: 11400000, guid: 3ff2548348b224289b5c85671406338e, type: 2}
+    - {fileID: 11400000, guid: 29f7135b057204c40870acdb4b4bfedd, type: 2}
+    - {fileID: 11400000, guid: 3ff2548348b224289b5c85671406338e, type: 2}
+    spawnInterval: 5
+  intervalBetweenWaves: 5
+  survivalTime: 30

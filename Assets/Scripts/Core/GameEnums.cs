@@ -39,7 +39,7 @@ namespace BlockBlastGame
 
     public enum GameOverType
     {
-        FanChase,
+        PuzzleStuck,
         EnemyCapture
     }
 

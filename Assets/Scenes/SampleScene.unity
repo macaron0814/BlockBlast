@@ -714,6 +714,37 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 157829013}
   m_CullTransparentMesh: 1
+--- !u!1 &176539262
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 176539263}
+  m_Layer: 0
+  m_Name: PlayerBulletPos
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &176539263
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 176539262}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 4.41, y: 7.46, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &199686102
 GameObject:
   m_ObjectHideFlags: 0
@@ -838,15 +869,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   turnManager: {fileID: 1012336332}
-  possibleGameOverTypes: 0000000001000000
-  fanChaseMessages:
-  - 
-  - 
-  - 
-  enemyCaptureMessages:
-  - 
-  - 
-  - 
   screenShakeIntensity: 0.1
 --- !u!1 &338677537
 GameObject:
@@ -1313,6 +1335,8 @@ MonoBehaviour:
   - {fileID: 980479032}
   - {fileID: 621009993}
   - {fileID: 2078097996}
+  waveText: {fileID: 0}
+  survivalTimerText: {fileID: 0}
   spaceshipPanel: {fileID: 1486542627}
   spaceshipInfoText: {fileID: 1919759808}
   launchButton: {fileID: 78965266}
@@ -1943,7 +1967,7 @@ Canvas:
   m_VertexColorAlwaysGammaSpace: 0
   m_AdditionalShaderChannelsFlag: 0
   m_UpdateRectTransformForStandalone: 0
-  m_SortingLayerID: -1418151699
+  m_SortingLayerID: 431946445
   m_SortingOrder: 100
   m_TargetDisplay: 0
 --- !u!224 &915925026
@@ -3709,6 +3733,69 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1693582499}
   m_CullTransparentMesh: 1
+--- !u!1 &1720245482
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1720245484}
+  - component: {fileID: 1720245483}
+  m_Layer: 0
+  m_Name: EnemySystem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1720245483
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1720245482}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3dfca02e4cf34f81810e8a7c5fd4664, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  archRoadSystem: {fileID: 1487148783}
+  stageWaves:
+  - {fileID: 11400000, guid: effe0587126c74dab98453d1d4214050, type: 2}
+  - {fileID: 11400000, guid: 2e762ef2148404bd1a46e333bfc4531b, type: 2}
+  stageSurvivalTimes:
+  - 30
+  - 60
+  bulletSpawnPoint: {fileID: 176539263}
+  bulletSpeed: 3
+  bulletBounceHeight: 1
+  bulletBounceFrequency: 3
+  bulletSpawnInterval: 0.2
+  bulletViewportExitMargin: 0.1
+  bulletSprite: {fileID: 21300000, guid: c590d8c7e96154d0f998ac94d22f5e93, type: 3}
+  bulletColor: {r: 1, g: 1, b: 1, a: 1}
+  bulletScale: 1
+  bulletHitAngleOffset: 0
+  bulletHitAngleRadius: 0.5
+  gameOverAngle: -1
+--- !u!4 &1720245484
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1720245482}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 7.643466, y: 6.371294, z: 313.94727}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1751557930
 GameObject:
   m_ObjectHideFlags: 0
@@ -4178,6 +4265,7 @@ MonoBehaviour:
   roguelikeSystem: {fileID: 1421152539}
   spaceshipBuilder: {fileID: 1616592778}
   uiManager: {fileID: 635398557}
+  enemySystem: {fileID: 0}
   currentState: 0
   score: 0
 --- !u!1 &1992716501
@@ -4793,3 +4881,5 @@ SceneRoots:
   - {fileID: 915925026}
   - {fileID: 32875507}
   - {fileID: 667842523}
+  - {fileID: 1720245484}
+  - {fileID: 176539263}

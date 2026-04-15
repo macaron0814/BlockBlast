@@ -26,6 +26,10 @@ namespace BlockBlastGame
         public Button[] perkButtons;
         public Text[] perkTexts;
 
+        [Header("Wave / Survival HUD")]
+        public Text waveText;
+        public Text survivalTimerText;
+
         [Header("Spaceship Panel")]
         public GameObject spaceshipPanel;
         public Text spaceshipInfoText;
@@ -45,6 +49,8 @@ namespace BlockBlastGame
             GameEvents.OnGameOver += ShowGameOver;
             GameEvents.OnStageClear += ShowStageTransition;
             GameEvents.OnSpaceshipBuild += ShowSpaceshipBuild;
+            GameEvents.OnWaveStarted += UpdateWaveDisplay;
+            GameEvents.OnSurvivalTimerUpdate += UpdateSurvivalTimer;
         }
 
         void OnDisable()
@@ -57,6 +63,8 @@ namespace BlockBlastGame
             GameEvents.OnGameOver -= ShowGameOver;
             GameEvents.OnStageClear -= ShowStageTransition;
             GameEvents.OnSpaceshipBuild -= ShowSpaceshipBuild;
+            GameEvents.OnWaveStarted -= UpdateWaveDisplay;
+            GameEvents.OnSurvivalTimerUpdate -= UpdateSurvivalTimer;
         }
 
         void Start()
@@ -176,6 +184,25 @@ namespace BlockBlastGame
                 comboText.gameObject.SetActive(false);
         }
 
+        void UpdateWaveDisplay(int waveIndex, int totalWaves)
+        {
+            if (waveText != null)
+                waveText.text = $"WAVE {waveIndex + 1}/{totalWaves}";
+        }
+
+        void UpdateSurvivalTimer(float elapsed, float limit)
+        {
+            if (survivalTimerText == null) return;
+            float remaining = Mathf.Max(0f, limit - elapsed);
+            int min = (int)(remaining / 60f);
+            int sec = (int)(remaining % 60f);
+            survivalTimerText.text = $"{min}:{sec:D2}";
+
+            survivalTimerText.color = remaining <= 10f
+                ? Color.Lerp(Color.red, Color.yellow, Mathf.PingPong(Time.unscaledTime * 3f, 1f))
+                : Color.white;
+        }
+
         void ShowGameOver(GameOverType type)
         {
             if (gameOverPanel == null) return;
@@ -221,12 +248,18 @@ namespace BlockBlastGame
 
             spaceshipPanel.SetActive(true);
 
+            var titleText = spaceshipPanel.transform.Find("Title")?.GetComponent<Text>();
+            if (titleText != null)
+                titleText.text = "ゲームクリア";
+
             if (spaceshipInfoText != null)
+                spaceshipInfoText.text = string.Empty;
+
+            if (launchButton != null)
             {
-                if (parts == null || parts.Count == 0)
-                    spaceshipInfoText.text = "Normal spaceship complete!\nEscaping Earth without items!";
-                else
-                    spaceshipInfoText.text = $"Spaceship parts: {parts.Count}\nSpecial spaceship complete!";
+                var buttonText = launchButton.GetComponentInChildren<Text>();
+                if (buttonText != null)
+                    buttonText.text = "OK";
             }
         }
 

@@ -319,6 +319,16 @@ public static class BlockBlastSceneBuilder
             TextAnchor.UpperCenter, 28, FontStyle.Bold, Color.yellow);
         ui.comboText.gameObject.SetActive(false);
 
+        ui.waveText = MakeText(hud.transform, "WaveText", "WAVE 1/1",
+            new Vector2(0.5f,1), new Vector2(0.5f,1), new Vector2(0.5f,1),
+            new Vector2(0,-10), new Vector2(300,40),
+            TextAnchor.UpperCenter, 22, FontStyle.Normal, Color.white);
+
+        ui.survivalTimerText = MakeText(hud.transform, "SurvivalTimerText", "1:00",
+            new Vector2(0.5f,1), new Vector2(0.5f,1), new Vector2(0.5f,1),
+            new Vector2(0,-45), new Vector2(200,50),
+            TextAnchor.UpperCenter, 36, FontStyle.Bold, Color.white);
+
         var overlay     = CreateUIChild(canvas, "UrgencyOverlay");
         var overlayRect = overlay.GetComponent<RectTransform>();
         overlayRect.anchorMin = Vector2.zero;

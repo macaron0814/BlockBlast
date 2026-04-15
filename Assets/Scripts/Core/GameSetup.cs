@@ -20,6 +20,7 @@ namespace BlockBlastGame
         ChaseSystem chaseSystem;
         RoguelikeSystem roguelikeSystem;
         SpaceshipBuilder spaceshipBuilder;
+        EnemySystem enemySystem;
         BlockSpawner blockSpawner;
         BlockDragHandler dragHandler;
         UIManager uiManager;
@@ -86,6 +87,9 @@ namespace BlockBlastGame
 
             var spaceObj = CreateChild(gmObj, "SpaceshipBuilder");
             spaceshipBuilder = spaceObj.AddComponent<SpaceshipBuilder>();
+
+            var enemyObj = CreateChild(gmObj, "EnemySystem");
+            enemySystem = enemyObj.AddComponent<EnemySystem>();
         }
 
         void SetupTilemaps()
@@ -466,6 +470,7 @@ namespace BlockBlastGame
             gm.roguelikeSystem = roguelikeSystem;
             gm.spaceshipBuilder = spaceshipBuilder;
             gm.uiManager = uiManager;
+            gm.enemySystem = enemySystem;
 
             boardManager.tilemapController = tilemapController;
             lineClearSystem.boardManager = boardManager;
@@ -477,6 +482,7 @@ namespace BlockBlastGame
             dragHandler.boardManager = boardManager;
             dragHandler.blockSpawner = blockSpawner;
             dragHandler.mainCamera = Camera.main;
+            enemySystem.archRoadSystem = FindObjectOfType<ArchRoadSystem>();
         }
     }
 }
