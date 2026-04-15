@@ -237,7 +237,17 @@ namespace BlockBlastGame
 
             } while (animState.loop);
 
-            Play(animState.nextState);
+            // 同期的に Play を呼ぶと、同一コルーチンを Stop しつつ遷移する形になり
+            // WebGL 等でスタックや挙動不整合の原因になり得るため、1フレーム遅延する。
+            var next = animState.nextState;
+            StartCoroutine(DeferredPlayNext(next));
+        }
+
+        IEnumerator DeferredPlayNext(CharaState next)
+        {
+            yield return null;
+            if (!isActiveAndEnabled) yield break;
+            Play(next);
         }
 
         // ─────────────────────────────────────────────────
