@@ -376,6 +376,7 @@ RectTransform:
   - {fileID: 453324}
   - {fileID: 635398556}
   - {fileID: 2143628566}
+  - {fileID: 590353481}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -573,7 +574,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &89908094
 RectTransform:
   m_ObjectHideFlags: 0
@@ -762,7 +763,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &199686103
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1113,6 +1114,86 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1614425744}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &590353480
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 590353481}
+  - component: {fileID: 590353484}
+  - component: {fileID: 590353482}
+  m_Layer: 0
+  m_Name: CalorieDisplay
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &590353481
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 590353480}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 32875507}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 262, y: 299}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &590353482
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 590353480}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4058f66e98cf74a26b634be1043cb0d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  digitSprites:
+  - {fileID: 21300000, guid: e81c7f8180e7843b7b219be88a2a8999, type: 3}
+  - {fileID: 21300000, guid: b2e77ad77757449a095d98e4a45580c2, type: 3}
+  - {fileID: 21300000, guid: d0e3ac38282704735882b4e5322cbb06, type: 3}
+  - {fileID: 21300000, guid: 8840de60f86544cfea25368dfdd2bf90, type: 3}
+  - {fileID: 21300000, guid: 7babd65a0f63d45f4927a962cacb07d3, type: 3}
+  - {fileID: 21300000, guid: 3e8df81042a33434faf2a702a36a16b6, type: 3}
+  - {fileID: 21300000, guid: 2baf2d6ec95144ee88323b518c50add5, type: 3}
+  - {fileID: 21300000, guid: 28b6cedb76cc4496f855498d7fde043c, type: 3}
+  - {fileID: 21300000, guid: 36fdd9a5931e349c8bcc83beee57dad0, type: 3}
+  - {fileID: 21300000, guid: 5028d13cba29b453b90212e211e87902, type: 3}
+  kcalLabelSprite: {fileID: 21300000, guid: 48fe78086dc1a4f958feb4ec922ed5b6, type: 3}
+  caloriesPerBlock: 100
+  maxDigits: 5
+  digitSize: {x: 60, y: 80}
+  useNativeSize: 1
+  digitScale: 1
+  digitGap: -5
+  labelGap: 8
+  zeroPadToMaxDigits: 1
+  digitOffset: {x: 0, y: 0}
+  labelOffset: {x: 0, y: 0}
+  labelOnLeft: 0
+--- !u!222 &590353484
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 590353480}
+  m_CullTransparentMesh: 1
 --- !u!1 &616173608
 GameObject:
   m_ObjectHideFlags: 0
@@ -1340,6 +1421,24 @@ MonoBehaviour:
   spaceshipPanel: {fileID: 1486542627}
   spaceshipInfoText: {fileID: 1919759808}
   launchButton: {fileID: 78965266}
+  routeParent: {fileID: 2143628566}
+  routeBaseSprite: {fileID: 21300000, guid: fed9ec7321ef54185b5fa59dd97b8238, type: 3}
+  routeConnectorSprite: {fileID: 21300000, guid: 3434f617fdd32432baeda0e5dee2368b, type: 3}
+  routeCurrentSprite: {fileID: 21300000, guid: 34a0c55f6a740431c808bf31dfc8c26f, type: 3}
+  routeShopSprite: {fileID: 21300000, guid: b4072688629bf4d1db3d54b8d7edc5be, type: 3}
+  routeVendingSprite: {fileID: 21300000, guid: 32db489f220d44c18849fe6ae9ca401f, type: 3}
+  routeCakeSprite: {fileID: 21300000, guid: 1ebfa2969ea1f4d448ba967dace33cdb, type: 3}
+  routeBossSprite: {fileID: 21300000, guid: d2fc97e21e41a4c15a5375b964dc6eda, type: 3}
+  routeAnchoredPosition: {x: -100, y: -110}
+  routeNodeSize: {x: 100, y: 100}
+  routeEventIconSize: {x: 88, y: 88}
+  routeCurrentIconSize: {x: 77.2, y: 77.2}
+  routeEventOffset: {x: 0, y: 50}
+  routeCurrentOffset: {x: 0, y: 20}
+  routeConnectorSize: {x: 91.5, y: 134}
+  routeSpacing: -64.67
+  routeMoveDuration: 3
+  routeMaxVisibleNodes: 4
 --- !u!1 &667842520
 GameObject:
   m_ObjectHideFlags: 0
@@ -1746,7 +1845,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &851186096
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3671,7 +3770,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1693582500
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4265,7 +4364,7 @@ MonoBehaviour:
   roguelikeSystem: {fileID: 1421152539}
   spaceshipBuilder: {fileID: 1616592778}
   uiManager: {fileID: 635398557}
-  enemySystem: {fileID: 0}
+  enemySystem: {fileID: 1720245483}
   currentState: 0
   score: 0
 --- !u!1 &1992716501

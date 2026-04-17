@@ -35,9 +35,42 @@ namespace BlockBlastGame
         public Text spaceshipInfoText;
         public Button launchButton;
 
+        [Header("Route HUD")]
+        public RectTransform routeParent;
+        public Sprite routeBaseSprite;
+        public Sprite routeConnectorSprite;
+        public Sprite routeCurrentSprite;
+        public Sprite routeShopSprite;
+        public Sprite routeVendingSprite;
+        public Sprite routeCakeSprite;
+        public Sprite routeBossSprite;
+        public Vector2 routeAnchoredPosition = new Vector2(0f, -260f);
+        public Vector2 routeNodeSize = new Vector2(116f, 62f);
+        public Vector2 routeEventIconSize = new Vector2(88f, 88f);
+        public Vector2 routeCurrentIconSize = new Vector2(96f, 96f);
+        public Vector2 routeEventOffset = new Vector2(0f, 18f);
+        public Vector2 routeCurrentOffset = new Vector2(0f, 20f);
+        public Vector2 routeConnectorSize = new Vector2(56f, 22f);
+        public float routeSpacing = 14f;
+        [Tooltip("マス移動アニメーションにかける秒数")]
+        public float routeMoveDuration = 3f;
+        [Tooltip("一度に表示するマスの最大数。0 = 制限なし")]
+        public int routeMaxVisibleNodes = 4;
+
         float blinkTimer;
         bool blinkVisible = true;
         int lastTurnValue;
+        RectTransform _routeRoot;
+        readonly List<RectTransform> _routeNodeRects = new List<RectTransform>();
+        readonly List<Image> _routeNodeBaseImages = new List<Image>();
+        readonly List<Image> _routeEventImages = new List<Image>();
+        readonly List<Image> _routeConnectorImages = new List<Image>();
+        Image _routeCurrentImage;
+        Image _routeCurrentBaseImage;
+        Image _routeCurrentConnectorImage;
+        EnemyWaveData _displayedRouteWaveData;
+        int _displayedRouteNodeCount = -1;
+        bool _routeDirty = true;
 
         void OnEnable()
         {
@@ -84,6 +117,7 @@ namespace BlockBlastGame
         {
             UpdateUrgencyOverlay();
             UpdateTurnBlink();
+            UpdateRouteHud();
         }
 
         void UpdateTurnDisplay(int turns)
@@ -133,6 +167,8 @@ namespace BlockBlastGame
         {
             if (stageText != null)
                 stageText.text = $"STAGE {stage}/5";
+
+            _routeDirty = true;
         }
 
         void UpdateLineProgress(int cleared, int target)
@@ -261,6 +297,310 @@ namespace BlockBlastGame
                 if (buttonText != null)
                     buttonText.text = "OK";
             }
+        }
+
+        // ════════════════════════════════════════
+        //  Route HUD  ─  うさぎ固定 / マス消化スクロール
+        // ════════════════════════════════════════
+
+        void UpdateRouteHud()
+        {
+            var gameManager = GameManager.Instance;
+            if (gameManager == null
+                || (gameManager.currentState != GameState.Playing && gameManager.currentState != GameState.LineClearing))
+            {
+                SetRouteHudVisible(false);
+                return;
+            }
+
+            var enemySystem = gameManager.enemySystem;
+            if (enemySystem == null || enemySystem.RouteNodes == null || enemySystem.RouteNodes.Count == 0)
+            {
+                SetRouteHudVisible(false);
+                return;
+            }
+
+            if (!HasRouteSprites())
+            {
+                SetRouteHudVisible(false);
+                return;
+            }
+
+            EnsureRouteRoot();
+            if (_routeRoot == null)
+                return;
+
+            int nodeCount = enemySystem.RouteNodes.Count;
+            if (_routeDirty
+                || _displayedRouteWaveData != enemySystem.CurrentWaveData
+                || _displayedRouteNodeCount != nodeCount)
+            {
+                RebuildRouteHud(enemySystem);
+                _routeDirty = false;
+            }
+
+            int consumed = RouteTimelineMath.GetConsumedCount(
+                enemySystem.SurvivalElapsed, enemySystem.SurvivalTimeLimit, nodeCount);
+            float moveProgress = RouteTimelineMath.GetMoveTravelProgress(
+                enemySystem.SurvivalElapsed, enemySystem.SurvivalTimeLimit, nodeCount, routeMoveDuration);
+
+            LayoutRouteScroll(nodeCount, consumed, moveProgress);
+            SetRouteHudVisible(true);
+        }
+
+        bool HasRouteSprites()
+        {
+            return routeBaseSprite != null
+                && routeConnectorSprite != null
+                && routeCurrentSprite != null;
+        }
+
+        void EnsureRouteRoot()
+        {
+            if (routeParent == null)
+            {
+                var hud = GameObject.Find("HUD");
+                if (hud != null)
+                    routeParent = hud.GetComponent<RectTransform>();
+            }
+
+            if (routeParent == null)
+                routeParent = stageText != null ? stageText.canvas.GetComponent<RectTransform>() : null;
+
+            if (routeParent == null)
+                return;
+
+            if (_routeRoot != null)
+                return;
+
+            var routeObject = new GameObject("RouteHUD", typeof(RectTransform));
+            routeObject.transform.SetParent(routeParent, false);
+            _routeRoot = routeObject.GetComponent<RectTransform>();
+            _routeRoot.anchorMin = new Vector2(0.5f, 1f);
+            _routeRoot.anchorMax = new Vector2(0.5f, 1f);
+            _routeRoot.pivot = new Vector2(0.5f, 1f);
+            _routeRoot.anchoredPosition = routeAnchoredPosition;
+            _routeRoot.sizeDelta = new Vector2(800f, 140f);
+        }
+
+        void RebuildRouteHud(EnemySystem enemySystem)
+        {
+            int nodeCount = enemySystem.RouteNodes.Count;
+            EnsureRouteVisuals(nodeCount);
+            ApplyRouteNodeIcons(enemySystem);
+
+            _displayedRouteWaveData = enemySystem.CurrentWaveData;
+            _displayedRouteNodeCount = nodeCount;
+        }
+
+        void EnsureRouteVisuals(int nodeCount)
+        {
+            while (_routeNodeRects.Count < nodeCount)
+            {
+                int index = _routeNodeRects.Count;
+
+                var nodeObject = new GameObject($"RouteNode_{index}", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+                nodeObject.transform.SetParent(_routeRoot, false);
+                var nodeRect = nodeObject.GetComponent<RectTransform>();
+                var nodeImage = nodeObject.GetComponent<Image>();
+                nodeImage.preserveAspect = true;
+                nodeImage.raycastTarget = false;
+
+                var eventObject = new GameObject($"RouteEvent_{index}", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+                eventObject.transform.SetParent(nodeRect, false);
+                var eventRect = eventObject.GetComponent<RectTransform>();
+                eventRect.anchorMin = eventRect.anchorMax = eventRect.pivot = new Vector2(0.5f, 0.5f);
+                var eventImage = eventObject.GetComponent<Image>();
+                eventImage.preserveAspect = true;
+                eventImage.raycastTarget = false;
+
+                _routeNodeRects.Add(nodeRect);
+                _routeNodeBaseImages.Add(nodeImage);
+                _routeEventImages.Add(eventImage);
+            }
+
+            int connectorCount = Mathf.Max(0, nodeCount - 1);
+            while (_routeConnectorImages.Count < connectorCount)
+            {
+                int index = _routeConnectorImages.Count;
+                var connectorObject = new GameObject($"RouteConnector_{index}", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+                connectorObject.transform.SetParent(_routeRoot, false);
+                var connectorImage = connectorObject.GetComponent<Image>();
+                connectorImage.preserveAspect = true;
+                connectorImage.raycastTarget = false;
+                _routeConnectorImages.Add(connectorImage);
+            }
+
+            if (_routeCurrentBaseImage == null)
+            {
+                var baseObj = new GameObject("RouteCurrentBase", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+                baseObj.transform.SetParent(_routeRoot, false);
+                _routeCurrentBaseImage = baseObj.GetComponent<Image>();
+                _routeCurrentBaseImage.preserveAspect = true;
+                _routeCurrentBaseImage.raycastTarget = false;
+            }
+
+            if (_routeCurrentConnectorImage == null)
+            {
+                var connObj = new GameObject("RouteCurrentConnector", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+                connObj.transform.SetParent(_routeRoot, false);
+                _routeCurrentConnectorImage = connObj.GetComponent<Image>();
+                _routeCurrentConnectorImage.preserveAspect = true;
+                _routeCurrentConnectorImage.raycastTarget = false;
+            }
+
+            if (_routeCurrentImage == null)
+            {
+                var currentObject = new GameObject("RouteCurrent", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+                currentObject.transform.SetParent(_routeRoot, false);
+                _routeCurrentImage = currentObject.GetComponent<Image>();
+                _routeCurrentImage.preserveAspect = true;
+                _routeCurrentImage.raycastTarget = false;
+            }
+
+            for (int i = 0; i < _routeNodeRects.Count; i++)
+                _routeNodeRects[i].gameObject.SetActive(i < nodeCount);
+
+            for (int i = 0; i < _routeConnectorImages.Count; i++)
+                _routeConnectorImages[i].gameObject.SetActive(i < connectorCount);
+        }
+
+        /// <summary>
+        /// 左揃え。うさぎを左端に固定し、最大 routeMaxVisibleNodes 個まで表示。
+        /// 1 つ消えると右から次のマスが出てくる。
+        /// </summary>
+        void LayoutRouteScroll(int nodeCount, int consumedCount, float moveProgress)
+        {
+            if (_routeRoot == null) return;
+
+            _routeRoot.anchoredPosition = routeAnchoredPosition;
+
+            float stride = routeNodeSize.x + routeConnectorSize.x + routeSpacing;
+
+            // 左揃え ─ ルートルートの左端を基準
+            float rootHalfW = _routeRoot.sizeDelta.x * 0.5f;
+            float rabbitX = -rootHalfW + routeNodeSize.x * 0.5f;
+
+            // うさぎ開始地点の受け皿
+            _routeCurrentBaseImage.rectTransform.anchorMin =
+                _routeCurrentBaseImage.rectTransform.anchorMax =
+                _routeCurrentBaseImage.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            _routeCurrentBaseImage.rectTransform.anchoredPosition = new Vector2(rabbitX, 0f);
+            _routeCurrentBaseImage.rectTransform.sizeDelta = routeNodeSize;
+
+            // うさぎアイコン
+            _routeCurrentImage.rectTransform.anchorMin =
+                _routeCurrentImage.rectTransform.anchorMax =
+                _routeCurrentImage.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            _routeCurrentImage.rectTransform.anchoredPosition = new Vector2(rabbitX, 0) + routeCurrentOffset;
+            _routeCurrentImage.rectTransform.sizeDelta = routeCurrentIconSize;
+            _routeCurrentImage.transform.SetAsLastSibling();
+
+            // 表示ウィンドウ: consumedCount 〜 windowEnd-1
+            int maxVis = routeMaxVisibleNodes > 0 ? routeMaxVisibleNodes : nodeCount;
+            int windowEnd = Mathf.Min(consumedCount + maxVis, nodeCount);
+
+            // マス配置
+            for (int i = 0; i < nodeCount; i++)
+            {
+                bool inWindow = i >= consumedCount && i < windowEnd;
+                _routeNodeRects[i].gameObject.SetActive(inWindow);
+
+                if (!inWindow) continue;
+
+                int relIdx = i - consumedCount;
+                float x = rabbitX + (relIdx + 1 - moveProgress) * stride;
+
+                RectTransform nodeRect = _routeNodeRects[i];
+                nodeRect.anchorMin = nodeRect.anchorMax = nodeRect.pivot = new Vector2(0.5f, 0.5f);
+                nodeRect.anchoredPosition = new Vector2(x, 0f);
+                nodeRect.sizeDelta = routeNodeSize;
+
+                RectTransform eventRect = _routeEventImages[i].rectTransform;
+                eventRect.sizeDelta = routeEventIconSize;
+                eventRect.anchoredPosition = routeEventOffset;
+            }
+
+            // うさぎ ↔ 最初の可視ノード間のコネクター
+            bool hasFirstVisible = consumedCount < windowEnd
+                && _routeNodeRects[consumedCount].gameObject.activeSelf;
+            _routeCurrentConnectorImage.gameObject.SetActive(hasFirstVisible);
+            if (hasFirstVisible)
+            {
+                float lx = rabbitX + routeNodeSize.x * 0.5f;
+                float rx = _routeNodeRects[consumedCount].anchoredPosition.x - routeNodeSize.x * 0.5f;
+                RectTransform ccRect = _routeCurrentConnectorImage.rectTransform;
+                ccRect.anchorMin = ccRect.anchorMax = ccRect.pivot = new Vector2(0.5f, 0.5f);
+                ccRect.anchoredPosition = new Vector2((lx + rx) * 0.5f, 0f);
+                ccRect.sizeDelta = routeConnectorSize;
+            }
+
+            // ノード間コネクター
+            int connectorCount = Mathf.Max(0, nodeCount - 1);
+            for (int i = 0; i < connectorCount; i++)
+            {
+                bool leftVis = _routeNodeRects[i].gameObject.activeSelf;
+                bool rightVis = _routeNodeRects[i + 1].gameObject.activeSelf;
+
+                _routeConnectorImages[i].gameObject.SetActive(leftVis && rightVis);
+
+                if (!(leftVis && rightVis)) continue;
+
+                float leftX = _routeNodeRects[i].anchoredPosition.x + routeNodeSize.x * 0.5f;
+                float rightX = _routeNodeRects[i + 1].anchoredPosition.x - routeNodeSize.x * 0.5f;
+                float connX = (leftX + rightX) * 0.5f;
+
+                RectTransform connRect = _routeConnectorImages[i].rectTransform;
+                connRect.anchorMin = connRect.anchorMax = connRect.pivot = new Vector2(0.5f, 0.5f);
+                connRect.anchoredPosition = new Vector2(connX, 0f);
+                connRect.sizeDelta = routeConnectorSize;
+            }
+        }
+
+        void ApplyRouteNodeIcons(EnemySystem enemySystem)
+        {
+            for (int i = 0; i < enemySystem.RouteNodes.Count; i++)
+            {
+                _routeNodeBaseImages[i].sprite = routeBaseSprite;
+
+                Image eventImage = _routeEventImages[i];
+                Sprite eventSprite = GetRouteEventSprite(enemySystem.RouteNodes[i].GetDisplayEventType());
+                eventImage.sprite = eventSprite;
+                eventImage.enabled = eventSprite != null;
+            }
+
+            for (int i = 0; i < _routeConnectorImages.Count; i++)
+            {
+                _routeConnectorImages[i].sprite = routeConnectorSprite;
+                _routeConnectorImages[i].enabled = i < enemySystem.RouteNodes.Count - 1;
+            }
+
+            _routeCurrentBaseImage.sprite = routeBaseSprite;
+            _routeCurrentBaseImage.enabled = true;
+
+            _routeCurrentConnectorImage.sprite = routeConnectorSprite;
+            _routeCurrentConnectorImage.enabled = true;
+
+            _routeCurrentImage.sprite = routeCurrentSprite;
+            _routeCurrentImage.enabled = true;
+        }
+
+        Sprite GetRouteEventSprite(RouteEventType eventType)
+        {
+            return eventType switch
+            {
+                RouteEventType.Shop => routeShopSprite,
+                RouteEventType.VendingMachine => routeVendingSprite,
+                RouteEventType.Cake => routeCakeSprite,
+                RouteEventType.Boss => routeBossSprite,
+                _ => null
+            };
+        }
+
+        void SetRouteHudVisible(bool visible)
+        {
+            if (_routeRoot != null)
+                _routeRoot.gameObject.SetActive(visible);
         }
 
         void OnLaunchSpaceship()

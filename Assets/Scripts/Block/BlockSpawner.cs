@@ -30,6 +30,7 @@ namespace BlockBlastGame
         public float dropStagger = 0f;
 
         float difficultyMultiplier = 1f;
+        int extraAvailableShapeCount;
 
         void Awake()
         {
@@ -108,7 +109,7 @@ namespace BlockBlastGame
         {
             if (allShapes == null || allShapes.Count == 0) return null;
 
-            int maxIndex = Mathf.Min(allShapes.Count, Mathf.FloorToInt(allShapes.Count * difficultyMultiplier));
+            int maxIndex = Mathf.FloorToInt(allShapes.Count * difficultyMultiplier) + extraAvailableShapeCount;
             maxIndex = Mathf.Max(maxIndex, 5);
             maxIndex = Mathf.Min(maxIndex, allShapes.Count);
             return allShapes[Random.Range(0, maxIndex)];
@@ -156,6 +157,15 @@ namespace BlockBlastGame
         public void SetDifficulty(float multiplier)
         {
             difficultyMultiplier = multiplier;
+            extraAvailableShapeCount = 0;
+        }
+
+        public void IncreaseAvailableShapeCount(int amount)
+        {
+            if (amount <= 0)
+                return;
+
+            extraAvailableShapeCount = Mathf.Min(allShapes != null ? allShapes.Count : amount, extraAvailableShapeCount + amount);
         }
 
         IEnumerator DropIn(Transform target, Vector3 landPos, float delay)

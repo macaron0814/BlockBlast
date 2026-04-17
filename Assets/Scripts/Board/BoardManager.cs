@@ -56,6 +56,9 @@ namespace BlockBlastGame
             int shapeW = shape.GetLength(0);
             int shapeH = shape.GetLength(1);
 
+            if (!IsPlacementWithinBounds(shapeW, shapeH, boardPosition))
+                return false;
+
             for (int x = 0; x < shapeW; x++)
             {
                 for (int y = 0; y < shapeH; y++)
@@ -64,9 +67,6 @@ namespace BlockBlastGame
 
                     int boardX = boardPosition.x + x;
                     int boardY = boardPosition.y + y;
-
-                    if (boardX < 0 || boardX >= boardWidth || boardY < 0 || boardY >= boardHeight)
-                        return false;
 
                     if (grid[boardX, boardY].IsFilled)
                         return false;
@@ -152,6 +152,23 @@ namespace BlockBlastGame
         public bool IsValidPosition(int x, int y)
         {
             return x >= 0 && x < boardWidth && y >= 0 && y < boardHeight;
+        }
+
+        public bool IsPlacementWithinBounds(BlockData blockData, Vector2Int boardPosition)
+        {
+            if (blockData == null)
+                return false;
+
+            bool[,] shape = blockData.GetShapeArray();
+            return IsPlacementWithinBounds(shape.GetLength(0), shape.GetLength(1), boardPosition);
+        }
+
+        bool IsPlacementWithinBounds(int shapeWidth, int shapeHeight, Vector2Int boardPosition)
+        {
+            return boardPosition.x >= 0
+                && boardPosition.y >= 0
+                && boardPosition.x + shapeWidth <= boardWidth
+                && boardPosition.y + shapeHeight <= boardHeight;
         }
     }
 }

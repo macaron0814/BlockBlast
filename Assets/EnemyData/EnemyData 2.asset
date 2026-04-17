@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3c5af2a1e1b4e4bbb94497c15eb88c66, type: 3}
   m_Name: EnemyData 2
   m_EditorClassIdentifier: 
-  maxHP: 15
-  chaseSpeed: 0.15
+  maxHP: 40
+  chaseSpeed: 0.1
   knockbackPerHit: 1
   stunDuration: 2
-  spawnDistance: 5
+  spawnDistance: 4
   frames:
   - {fileID: 21300000, guid: f664ef5584267465e8d8cb2fc30e9997, type: 3}
   stunFrames: []

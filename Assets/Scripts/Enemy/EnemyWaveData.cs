@@ -28,12 +28,24 @@ namespace BlockBlastGame
         [Tooltip("この秒数を生き残ればクリア。0 = 全ウェーブ完了でクリア")]
         public float survivalTime = 60f;
 
+        [Header("ルートマス配置")]
+        [Tooltip("マスごとのイベント設定。配列の長さ = マス数。None ならアイコン無しの空マス")]
+        public RouteNodeConfig[] routeNodes;
+
         public static EnemyWaveData CreateDefault()
         {
             var d = CreateInstance<EnemyWaveData>();
             d.name = "DefaultWave";
             d.intervalBetweenWaves = 5f;
             d.survivalTime = 60f;
+
+            d.routeNodes = new RouteNodeConfig[]
+            {
+                new RouteNodeConfig { eventType = RouteEventType.None },
+                new RouteNodeConfig { eventType = RouteEventType.Shop },
+                new RouteNodeConfig { eventType = RouteEventType.Cake, randomShapeIncrease = 1 },
+                new RouteNodeConfig { eventType = RouteEventType.Boss },
+            };
 
             d.waves = new EnemyWaveEntry[]
             {
@@ -53,6 +65,7 @@ namespace BlockBlastGame
                     spawnInterval = 1f
                 },
             };
+
             return d;
         }
     }

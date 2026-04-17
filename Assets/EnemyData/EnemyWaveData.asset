@@ -21,3 +21,13 @@ MonoBehaviour:
     spawnInterval: 5
   intervalBetweenWaves: 5
   survivalTime: 30
+  routeNodes:
+  - eventType: 0
+    randomShapeIncrease: 1
+    spawnEnemy: {fileID: 0}
+  - eventType: 0
+    randomShapeIncrease: 1
+    spawnEnemy: {fileID: 0}
+  - eventType: 1
+    randomShapeIncrease: 1
+    spawnEnemy: {fileID: 0}

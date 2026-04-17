@@ -17,6 +17,9 @@ namespace BlockBlastGame
         public static event Action OnStageClear;
         public static event Action<List<ItemData>> OnSpaceshipBuild;
 
+        // Calorie events
+        public static event Action<int> OnCalorieChanged; // totalCalories
+
         // Wave events
         public static event Action<int, int> OnWaveStarted;            // waveIndex, totalWaves
         public static event Action<float, float> OnSurvivalTimerUpdate; // elapsed, limit
@@ -33,6 +36,8 @@ namespace BlockBlastGame
         public static void TriggerScoreChanged(int score) => OnScoreChanged?.Invoke(score);
         public static void TriggerStageClear() => OnStageClear?.Invoke();
         public static void TriggerSpaceshipBuild(List<ItemData> parts) => OnSpaceshipBuild?.Invoke(parts);
+
+        public static void TriggerCalorieChanged(int totalCalories) => OnCalorieChanged?.Invoke(totalCalories);
 
         public static void TriggerWaveStarted(int waveIndex, int totalWaves) => OnWaveStarted?.Invoke(waveIndex, totalWaves);
         public static void TriggerSurvivalTimerUpdate(float elapsed, float limit) => OnSurvivalTimerUpdate?.Invoke(elapsed, limit);
@@ -51,6 +56,7 @@ namespace BlockBlastGame
             OnScoreChanged = null;
             OnStageClear = null;
             OnSpaceshipBuild = null;
+            OnCalorieChanged = null;
             OnWaveStarted = null;
             OnSurvivalTimerUpdate = null;
             OnWaveSurvivalClear = null;

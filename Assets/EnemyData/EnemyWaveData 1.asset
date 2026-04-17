@@ -14,14 +14,33 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   waves:
   - enemies:
-    - {fileID: 11400000, guid: 29f7135b057204c40870acdb4b4bfedd, type: 2}
-    - {fileID: 11400000, guid: 29f7135b057204c40870acdb4b4bfedd, type: 2}
+    - {fileID: 11400000, guid: 391bbf5706ddd42bba05d8244ed35817, type: 2}
+    - {fileID: 11400000, guid: 391bbf5706ddd42bba05d8244ed35817, type: 2}
     spawnInterval: 5
   - enemies:
-    - {fileID: 11400000, guid: 29f7135b057204c40870acdb4b4bfedd, type: 2}
-    - {fileID: 11400000, guid: 3ff2548348b224289b5c85671406338e, type: 2}
-    - {fileID: 11400000, guid: 29f7135b057204c40870acdb4b4bfedd, type: 2}
-    - {fileID: 11400000, guid: 3ff2548348b224289b5c85671406338e, type: 2}
+    - {fileID: 11400000, guid: 391bbf5706ddd42bba05d8244ed35817, type: 2}
+    - {fileID: 11400000, guid: 391bbf5706ddd42bba05d8244ed35817, type: 2}
+    - {fileID: 11400000, guid: 391bbf5706ddd42bba05d8244ed35817, type: 2}
+    - {fileID: 11400000, guid: 391bbf5706ddd42bba05d8244ed35817, type: 2}
     spawnInterval: 5
   intervalBetweenWaves: 5
   survivalTime: 30
+  routeNodes:
+  - eventType: 0
+    randomShapeIncrease: 1
+    spawnEnemy: {fileID: 0}
+  - eventType: 1
+    randomShapeIncrease: 1
+    spawnEnemy: {fileID: 0}
+  - eventType: 3
+    randomShapeIncrease: 1
+    spawnEnemy: {fileID: 0}
+  - eventType: 0
+    randomShapeIncrease: 1
+    spawnEnemy: {fileID: 0}
+  - eventType: 4
+    randomShapeIncrease: 1
+    spawnEnemy: {fileID: 11400000, guid: 391bbf5706ddd42bba05d8244ed35817, type: 2}
+  - eventType: 2
+    randomShapeIncrease: 1
+    spawnEnemy: {fileID: 0}

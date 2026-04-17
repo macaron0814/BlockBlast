@@ -52,6 +52,8 @@ namespace BlockBlastGame
         int _currentWaveIndex;
         Coroutine _waveCoroutine;
         bool _wavesRunning;
+        readonly List<RouteNodeRuntime> _routeNodes = new List<RouteNodeRuntime>();
+        int _consumedNodeCount;
 
         // --- Survival timer ---
         float _survivalTimer;
@@ -60,9 +62,13 @@ namespace BlockBlastGame
 
         public float SurvivalTimeRemaining => Mathf.Max(0f, _survivalTimeLimit - _survivalTimer);
         public float SurvivalTimeLimit => _survivalTimeLimit;
+        public float SurvivalElapsed => _survivalTimer;
         public int CurrentWaveIndex => _currentWaveIndex;
         public int TotalWaves => _currentWaveData != null ? _currentWaveData.waves.Length : 0;
         public bool IsSurvivalActive => _survivalActive;
+        public EnemyWaveData CurrentWaveData => _currentWaveData;
+        public IReadOnlyList<RouteNodeRuntime> RouteNodes => _routeNodes;
+        public int ConsumedNodeCount => _consumedNodeCount;
 
         // ────────────────────────────────────────
         //  Lifecycle
@@ -122,7 +128,11 @@ namespace BlockBlastGame
             _survivalTimer += Time.deltaTime;
             GameEvents.TriggerSurvivalTimerUpdate(_survivalTimer, _survivalTimeLimit);
 
-            if (_survivalTimer >= _survivalTimeLimit)
+            if (_routeNodes.Count > 0)
+            {
+                UpdateRouteProgress();
+            }
+            else if (_survivalTimer >= _survivalTimeLimit)
             {
                 _survivalActive = false;
                 StopWaves();
@@ -168,6 +178,7 @@ namespace BlockBlastGame
             _survivalTimeLimit = ResolveSurvivalTime(stageNumber);
             _survivalTimer = 0f;
             _survivalActive = _survivalTimeLimit > 0f;
+            BuildRouteTimeline();
 
             _wavesRunning = true;
             _waveCoroutine = StartCoroutine(RunWaves());
@@ -195,6 +206,77 @@ namespace BlockBlastGame
             {
                 StopCoroutine(_waveCoroutine);
                 _waveCoroutine = null;
+            }
+        }
+
+        // ────────────────────────────────────────
+        //  Route Timeline (マス消化ベース)
+        // ────────────────────────────────────────
+
+        void BuildRouteTimeline()
+        {
+            _routeNodes.Clear();
+            _consumedNodeCount = 0;
+
+            if (_currentWaveData == null || _survivalTimeLimit <= 0f)
+                return;
+
+            RouteNodeConfig[] configs = _currentWaveData.routeNodes;
+            if (configs == null || configs.Length == 0)
+                return;
+
+            for (int i = 0; i < configs.Length; i++)
+            {
+                var cfg = configs[i] ?? new RouteNodeConfig();
+                _routeNodes.Add(new RouteNodeRuntime
+                {
+                    nodeIndex = i,
+                    eventType = cfg.eventType,
+                    randomShapeIncrease = Mathf.Max(1, cfg.randomShapeIncrease),
+                    spawnEnemy = cfg.spawnEnemy
+                });
+            }
+        }
+
+        void UpdateRouteProgress()
+        {
+            if (_routeNodes.Count == 0 || _survivalTimeLimit <= 0f)
+                return;
+
+            int newConsumed = RouteTimelineMath.GetConsumedCount(
+                _survivalTimer, _survivalTimeLimit, _routeNodes.Count);
+
+            for (int i = _consumedNodeCount; i < newConsumed && i < _routeNodes.Count; i++)
+                TriggerRouteNodeEvents(_routeNodes[i]);
+
+            _consumedNodeCount = newConsumed;
+
+            if (_consumedNodeCount >= _routeNodes.Count)
+            {
+                _survivalActive = false;
+                StopWaves();
+                ClearAllEnemies();
+                GameEvents.TriggerWaveSurvivalClear();
+            }
+        }
+
+        void TriggerRouteNodeEvents(RouteNodeRuntime node)
+        {
+            if (node == null || node.eventTriggered)
+                return;
+
+            node.eventTriggered = true;
+
+            switch (node.eventType)
+            {
+                case RouteEventType.Cake:
+                    GameManager.Instance?.blockSpawner?.IncreaseAvailableShapeCount(node.randomShapeIncrease);
+                    break;
+
+                case RouteEventType.Boss:
+                    if (node.spawnEnemy != null)
+                        SpawnSpecialEnemy(node.spawnEnemy);
+                    break;
             }
         }
 
@@ -252,6 +334,14 @@ namespace BlockBlastGame
                 archRoadSystem.scrollSpeed);
 
             _enemies.Add(ctrl);
+        }
+
+        public void SpawnSpecialEnemy(EnemyData data)
+        {
+            if (data == null)
+                return;
+
+            SpawnEnemy(data);
         }
 
         // ────────────────────────────────────────

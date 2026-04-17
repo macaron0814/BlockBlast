@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHP: 2
   chaseSpeed: 1
-  knockbackPerHit: 1
+  knockbackPerHit: 0.2
   stunDuration: 2
   spawnDistance: 10
   frames:

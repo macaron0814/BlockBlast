@@ -35,7 +35,6 @@ namespace BlockBlastGame
             stageActive = true;
 
             var gm = GameManager.Instance;
-            gm.boardManager.ClearBoard();
             gm.turnManager.baseTurnsPerLineClear = currentStageData.turnsPerLineClear;
             gm.turnManager.InitializeForStage(currentStageData.initialTurns);
             gm.blockSpawner.SetDifficulty(currentStageData.difficultyMultiplier);
