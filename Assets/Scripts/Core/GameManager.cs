@@ -21,6 +21,7 @@ namespace BlockBlastGame
         public SpaceshipBuilder spaceshipBuilder;
         public UIManager uiManager;
         public EnemySystem enemySystem;
+        public SuperChatSpawner superChatSpawner;
 
         [Header("State")]
         public GameState currentState = GameState.Title;

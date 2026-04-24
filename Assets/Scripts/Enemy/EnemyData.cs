@@ -58,6 +58,10 @@ namespace BlockBlastGame
         [Tooltip("被弾エフェクトの色")]
         public Color hitEffectColor = Color.white;
 
+        [Header("撃破ボーナス")]
+        [Tooltip("HP が 0 になった瞬間に追加で表示するスパチャ金額 (円)")]
+        public int defeatBonusAmount = 500;
+
         public static EnemyData CreateDefault(int index = 0)
         {
             var d = CreateInstance<EnemyData>();

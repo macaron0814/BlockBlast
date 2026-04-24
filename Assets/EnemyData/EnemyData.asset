@@ -34,3 +34,4 @@ MonoBehaviour:
   hitEffectFrameRate: 0.05
   hitEffectScale: 1
   hitEffectColor: {r: 1, g: 1, b: 1, a: 1}
+  defeatBonusAmount: 1000

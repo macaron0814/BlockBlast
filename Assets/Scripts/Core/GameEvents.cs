@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace BlockBlastGame
 {
@@ -24,6 +25,7 @@ namespace BlockBlastGame
         public static event Action<int, int> OnWaveStarted;            // waveIndex, totalWaves
         public static event Action<float, float> OnSurvivalTimerUpdate; // elapsed, limit
         public static event Action OnWaveSurvivalClear;
+        public static event Action<Vector3, int> OnEnemyDefeated;       // 敵の位置, ボーナス金額
 
         public static void TriggerTurnChanged(int remainingTurns) => OnTurnChanged?.Invoke(remainingTurns);
         public static void TriggerLineClear(int linesCleared, int comboCount) => OnLineClear?.Invoke(linesCleared, comboCount);
@@ -42,6 +44,7 @@ namespace BlockBlastGame
         public static void TriggerWaveStarted(int waveIndex, int totalWaves) => OnWaveStarted?.Invoke(waveIndex, totalWaves);
         public static void TriggerSurvivalTimerUpdate(float elapsed, float limit) => OnSurvivalTimerUpdate?.Invoke(elapsed, limit);
         public static void TriggerWaveSurvivalClear() => OnWaveSurvivalClear?.Invoke();
+        public static void TriggerEnemyDefeated(Vector3 worldPosition, int bonusAmount) => OnEnemyDefeated?.Invoke(worldPosition, bonusAmount);
 
         public static void ClearAll()
         {
@@ -60,6 +63,7 @@ namespace BlockBlastGame
             OnWaveStarted = null;
             OnSurvivalTimerUpdate = null;
             OnWaveSurvivalClear = null;
+            OnEnemyDefeated = null;
         }
     }
 }

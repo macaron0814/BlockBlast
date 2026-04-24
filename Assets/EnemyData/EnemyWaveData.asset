@@ -15,8 +15,8 @@ MonoBehaviour:
   waves:
   - enemies:
     - {fileID: 11400000, guid: 391bbf5706ddd42bba05d8244ed35817, type: 2}
-    - {fileID: 11400000, guid: 391bbf5706ddd42bba05d8244ed35817, type: 2}
-    - {fileID: 11400000, guid: 391bbf5706ddd42bba05d8244ed35817, type: 2}
+    - {fileID: 11400000, guid: ca27fedca32ab4a148dd7b2602959638, type: 2}
+    - {fileID: 11400000, guid: 5e823ab514620439896c1a0cad2930a2, type: 2}
     - {fileID: 11400000, guid: 391bbf5706ddd42bba05d8244ed35817, type: 2}
     spawnInterval: 5
   intervalBetweenWaves: 5

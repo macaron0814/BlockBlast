@@ -353,7 +353,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
-  m_AdditionalShaderChannelsFlag: 0
+  m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: -1418151699
   m_SortingOrder: 100
@@ -636,6 +636,81 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 89908093}
   m_CullTransparentMesh: 1
+--- !u!1 &93515543
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 93515545}
+  - component: {fileID: 93515544}
+  m_Layer: 0
+  m_Name: SuperChatSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &93515544
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 93515543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4255a9010c3d14116bd87e308e7baeaf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  superChatPrefab: {fileID: 3071632870131062037, guid: 464a657b7e9734639be79b513ec44ec2, type: 3}
+  spawnParent: {fileID: 32875507}
+  spawnAnchoredPosition: {x: 0, y: 0}
+  overrideSpawnPosition: 0
+  stackYOffset: 70
+  maxConcurrent: 5
+  stageConfigs:
+  - totalAmount: 1000
+    targetCount: 6
+  - totalAmount: 3000
+    targetCount: 10
+  defaultStageConfig:
+    totalAmount: 1000
+    targetCount: 10
+  startDelay: 2
+  endSafetyMargin: 1
+  denominations:
+  - amount: 100
+    color: {r: 0.1254902, g: 0.827451, b: 1, a: 1}
+  - amount: 500
+    color: {r: 0.11764706, g: 1, b: 0.54901963, a: 1}
+  - amount: 1000
+    color: {r: 0.89411765, g: 1, b: 0.12156863, a: 1}
+  - amount: 3000
+    color: {r: 1, g: 0.69803923, b: 0.11764706, a: 1}
+  - amount: 5000
+    color: {r: 1, g: 0.11372549, b: 0.11764706, a: 1}
+  - amount: 10000
+    color: {r: 1, g: 0.11372549, b: 0.6313726, a: 1}
+  defeatMinInterval: 0.05
+  _stageEarnings: 0
+--- !u!4 &93515545
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 93515543}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 5.6103954, y: 9.24362, z: 1377.424}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &157829013
 GameObject:
   m_ObjectHideFlags: 0
@@ -1438,7 +1513,7 @@ MonoBehaviour:
   routeConnectorSize: {x: 91.5, y: 134}
   routeSpacing: -64.67
   routeMoveDuration: 3
-  routeMaxVisibleNodes: 4
+  routeMaxVisibleNodes: 3
 --- !u!1 &667842520
 GameObject:
   m_ObjectHideFlags: 0
@@ -3055,7 +3130,7 @@ MonoBehaviour:
   curbInterval: 3
   archRadius: 50
   tileWorldWidth: 1.56
-  scrollSpeed: -5
+  scrollSpeed: -10
   whiteLineOffsetY: 0
   sortingLayer: UI
   roadSortingOrder: 0
@@ -4365,6 +4440,7 @@ MonoBehaviour:
   spaceshipBuilder: {fileID: 1616592778}
   uiManager: {fileID: 635398557}
   enemySystem: {fileID: 1720245483}
+  superChatSpawner: {fileID: 0}
   currentState: 0
   score: 0
 --- !u!1 &1992716501
@@ -4923,6 +4999,68 @@ MonoBehaviour:
     effectiveRadius: 50
     effectiveWidth: 19.4
     totalTiles: 17
+  - name: 
+    sprite: {fileID: 21300000, guid: 3702a0b49305646f4923a0e63258b222, type: 3}
+    parallaxFactor: -0.01
+    offsetY: 2
+    archRadiusOffset: 0
+    sortingLayer: UI
+    sortingOrder: 2
+    scale: {x: 0.5, y: 0.5}
+    tileWorldWidth: 20
+    tiles:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    anglePerTile: 22.230762
+    effectiveRadius: 50
+    effectiveWidth: 19.4
+    totalTiles: 17
+  - name: 
+    sprite: {fileID: 21300000, guid: 3702a0b49305646f4923a0e63258b222, type: 3}
+    parallaxFactor: -0.015
+    offsetY: 1.75
+    archRadiusOffset: 0
+    sortingLayer: UI
+    sortingOrder: 2
+    scale: {x: 0.5, y: 0.5}
+    tileWorldWidth: 5
+    tiles:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    anglePerTile: 22.230762
+    effectiveRadius: 50
+    effectiveWidth: 19.4
+    totalTiles: 17
   baseArchRadius: 50
   baseScrollSpeed: 15
 --- !u!1 &2143628565
@@ -4982,3 +5120,4 @@ SceneRoots:
   - {fileID: 667842523}
   - {fileID: 1720245484}
   - {fileID: 176539263}
+  - {fileID: 93515545}

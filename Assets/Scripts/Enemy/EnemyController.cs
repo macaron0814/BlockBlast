@@ -150,6 +150,7 @@ namespace BlockBlastGame
                 if (_currentHP <= 0)
                 {
                     _currentHP = 0;
+                    GameEvents.TriggerEnemyDefeated(transform.position, _data.defeatBonusAmount);
                     Stun();
                 }
             }

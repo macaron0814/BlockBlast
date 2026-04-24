@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c5af2a1e1b4e4bbb94497c15eb88c66, type: 3}
+  m_Name: EnemyData 4
+  m_EditorClassIdentifier: 
+  maxHP: 40
+  chaseSpeed: 0.1
+  knockbackPerHit: 1
+  stunDuration: 2
+  spawnDistance: 4
+  frames:
+  - {fileID: 21300000, guid: f664ef5584267465e8d8cb2fc30e9997, type: 3}
+  stunFrames: []
+  frameRate: 0.15
+  scale: 0.5
+  hoverHeight: 1.5
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  hitOffset: {x: 0, y: 0}
+  hitAngleRadius: 1
+  hitEffectFrames:
+  - {fileID: 21300000, guid: 9aa3f236263c24f39b76198729b670f8, type: 3}
+  - {fileID: 21300000, guid: 3d7077fe08f914dc4aca398319e16db1, type: 3}
+  - {fileID: 21300000, guid: 5475def8091e34ef0a225c64b44861c8, type: 3}
+  - {fileID: 21300000, guid: f11081fef15f84bc386606a68de527be, type: 3}
+  hitEffectFrameRate: 0.05
+  hitEffectScale: 1
+  hitEffectColor: {r: 1, g: 1, b: 1, a: 1}
+  defeatBonusAmount: 100
