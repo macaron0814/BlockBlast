@@ -56,9 +56,33 @@ namespace BlockBlastGame
                     cell.transform.SetParent(transform);
 
                     var sr = cell.AddComponent<SpriteRenderer>();
-                    sr.sprite = customSprite != null ? customSprite : GetOrCreateSquareSprite();
-                    // カスタムスプライトがある場合は色を変えずにそのまま表示
-                    sr.color  = customSprite != null ? Color.white : GetColorForType(blockData.colorType);
+
+                    // 優先順:
+                    //  1. blockData.cellSprites の (x,y) 位置に設定された個別スプライト (詳細設定)
+                    //  2. blockData.shapeSprite (シェイプ単一画像 / 簡易設定)
+                    //  3. customSprite (BlockSpawner.blockCellSprite から渡される全体共通画像)
+                    //  4. GetOrCreateSquareSprite (フォールバックの自動生成)
+                    Sprite perCell = blockData.GetSpriteForCell(x, y);
+                    if (perCell != null)
+                    {
+                        sr.sprite = perCell;
+                        sr.color = Color.white;
+                    }
+                    else if (blockData.shapeSprite != null)
+                    {
+                        sr.sprite = blockData.shapeSprite;
+                        sr.color = Color.white;
+                    }
+                    else if (customSprite != null)
+                    {
+                        sr.sprite = customSprite;
+                        sr.color = Color.white;
+                    }
+                    else
+                    {
+                        sr.sprite = GetOrCreateSquareSprite();
+                        sr.color = GetColorForType(blockData.colorType);
+                    }
                     sr.sortingLayerName = "Tile";
                     // 行が下（y 小）ほど前面に表示されるよう sortingOrder を設定
                     // 例: h=3 の場合 y=0→12, y=1→11, y=2→10

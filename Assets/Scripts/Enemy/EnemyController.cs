@@ -27,7 +27,12 @@ namespace BlockBlastGame
         float _roadScrollSpeed;
 
         float _knockbackVelocity;
-        const float KnockbackDamping = 4.5f;
+        // ノックバック速度がこの値を下回ったら停止扱い (微小残存を防ぐ)
+        const float KnockbackStopThreshold = 0.05f;
+
+        // 出現時に決まるランダムな高さオフセット (EnemySystem.enemyHoverHeightVariance に基づく)
+        float _hoverOffset;
+
         static readonly List<GameObject> _activeHitEffects = new List<GameObject>();
 
         public bool IsStunned => _isStunned;
@@ -76,6 +81,10 @@ namespace BlockBlastGame
             _currentHP = data.maxHP;
             distanceAngle = data.spawnDistance;
 
+            // 出現時に高さオフセットを決定 (EnemySystem.enemyHoverHeightVariance を消費)
+            float variance = EnemySystem.CurrentHoverHeightVariance;
+            _hoverOffset = variance > 0f ? Random.Range(-variance, variance) : 0f;
+
             int enemyLayer = LayerMask.NameToLayer("Enemy");
             if (enemyLayer >= 0)
                 gameObject.layer = enemyLayer;
@@ -111,13 +120,17 @@ namespace BlockBlastGame
             }
             else
             {
-                distanceAngle -= _data.chaseSpeed * Time.deltaTime;
+                // EnemySystem.enemyMoveSpeedMultiplier を全敵共通の速度倍率として乗算
+                distanceAngle -= _data.chaseSpeed * EnemySystem.CurrentMoveSpeedMultiplier * Time.deltaTime;
             }
 
-            if (_knockbackVelocity > 0.5f)
+            // ノックバック処理: 弾を受けたとき distanceAngle を後退方向 (+) に押し戻す。
+            // 減衰率 (damping) は EnemySystem 側でグローバル指定可能。
+            if (_knockbackVelocity > KnockbackStopThreshold)
             {
                 distanceAngle += _knockbackVelocity * Time.deltaTime;
-                _knockbackVelocity = Mathf.Lerp(_knockbackVelocity, 0f, KnockbackDamping * Time.deltaTime);
+                float damping = EnemySystem.CurrentKnockbackDamping;
+                _knockbackVelocity = Mathf.Lerp(_knockbackVelocity, 0f, damping * Time.deltaTime);
             }
             else
             {
@@ -141,7 +154,12 @@ namespace BlockBlastGame
         /// </summary>
         public void TakeSingleHit(float knockbackMultiplier = 1f)
         {
-            float knockback = _data.knockbackPerHit * knockbackMultiplier;
+            // 個別 EnemyData.knockbackPerHit
+            //   × ライン同時消し倍率 (knockbackMultiplier)
+            //   × EnemySystem.enemyKnockbackMultiplier (全体倍率)
+            float knockback = _data.knockbackPerHit
+                            * knockbackMultiplier
+                            * EnemySystem.CurrentKnockbackMultiplier;
             _knockbackVelocity += knockback;
 
             if (!_isStunned)
@@ -200,7 +218,8 @@ namespace BlockBlastGame
         {
             float visualAngle = -distanceAngle;
             float rad = visualAngle * Mathf.Deg2Rad;
-            float effectiveR = _archRadius + _data.hoverHeight;
+            // EnemyData.hoverHeight (軸) + 出現時に抽選した _hoverOffset (上下振れ)
+            float effectiveR = _archRadius + _data.hoverHeight + _hoverOffset;
             float x = Mathf.Sin(rad) * effectiveR;
             float y = -_archRadius + Mathf.Cos(rad) * effectiveR;
 

@@ -10,7 +10,12 @@ namespace BlockBlastGame
         public int blocksPerSet = 3;
         public Transform[] spawnPoints;
 
+        [Header("Shape Source")]
+        [Tooltip("使用する BlockData アセットをまとめた Registry。\nアサインされていない場合は Resources/BlockShapeRegistry.asset を自動ロードし、それも無ければ allShapes / 静的な BlockShapeLibrary をフォールバックとして使う。")]
+        public BlockShapeRegistry shapeRegistry;
+
         [Header("Runtime")]
+        [Tooltip("Registry が無いとき、または Registry が空のときに利用される BlockData リスト。")]
         public List<BlockData> allShapes;
         public List<BlockPiece> currentPieces = new List<BlockPiece>();
 
@@ -18,8 +23,12 @@ namespace BlockBlastGame
         public GameObject blockPiecePrefab;
 
         [Header("Custom Visuals (optional)")]
-        [Tooltip("ブロックセルに使うスプライト画像を入れてください。空の場合は自動生成スプライトを使用します。")]
+        [Tooltip("ブロックセルに使うスプライト画像を入れてください。空の場合は BlockData.cellSprites もしくは自動生成スプライトを使用します。")]
         public Sprite blockCellSprite;
+
+        [Header("Block Cell Tier (CSV「ブロック増加」)")]
+        [Tooltip("出現させる形状の最大セル数。3=「デフォ(3ブロックまで)」/ 4=「+1(4まで)」/ 5=「+1(5まで)」/ 0=制限なし(全ブロック解放)")]
+        public int currentMaxCells = BlockShapeLibrary.CellTier.Default;
 
         [Header("Drop-in Animation")]
         [Tooltip("ブロック出現時の落下開始 Y オフセット（着地点からどれだけ上から落とすか）")]
@@ -29,11 +38,38 @@ namespace BlockBlastGame
         [Tooltip("各ブロック間の出現遅延（秒）。0 = 同時")]
         public float dropStagger = 0f;
 
+        // 後方互換: 0 以外なら "形状そのものをランダム化する乱数のシード調整" 等で利用可。
+        // 既存スクリプトで参照されている SetDifficulty 等は新 API へリダイレクトする。
         float difficultyMultiplier = 1f;
-        int extraAvailableShapeCount;
 
         void Awake()
         {
+            ResolveShapeSource();
+        }
+
+        /// <summary>
+        /// allShapes に使用する BlockData リストを確定させる。
+        /// 優先順:
+        ///  1. インスペクタで shapeRegistry がアサインされている
+        ///  2. Resources/BlockShapeRegistry.asset (自動ロード)
+        ///  3. インスペクタで allShapes に直接渡されたリスト
+        ///  4. 静的フォールバック (BlockShapeLibrary.GenerateAllShapes)
+        /// </summary>
+        public void ResolveShapeSource()
+        {
+            if (shapeRegistry == null)
+                shapeRegistry = Resources.Load<BlockShapeRegistry>("BlockShapeRegistry");
+
+            if (shapeRegistry != null)
+            {
+                var fromRegistry = shapeRegistry.GetShapes();
+                if (fromRegistry.Count > 0)
+                {
+                    allShapes = fromRegistry;
+                    return;
+                }
+            }
+
             if (allShapes == null || allShapes.Count == 0)
                 allShapes = BlockShapeLibrary.GenerateAllShapes();
         }
@@ -85,10 +121,14 @@ namespace BlockBlastGame
                     var tc = GameManager.Instance?.boardManager?.tilemapController;
                     float sx = tc != null ? tc.tileSpacingX : 0.08f;
                     float sy = tc != null ? tc.tileSpacingY : 0.08f;
-                    piece.Initialize(cloned, blockCellSprite, sx, sy);
+
+                    // BlockData.cellSprites または shapeSprite が設定済みなら BlockPiece は
+                    // そちらを優先する。何も無いシェイプにのみ blockCellSprite が共通で適用される。
+                    bool hasOwnVisual = cloned.HasPerCellSprites() || cloned.shapeSprite != null;
+                    Sprite overrideSprite = hasOwnVisual ? null : blockCellSprite;
+                    piece.Initialize(cloned, overrideSprite, sx, sy);
                     currentPieces.Add(piece);
 
-                    // 上からポトっと落ちるアニメーション
                     StartCoroutine(DropIn(piece.transform, spawnPos, i * dropStagger));
                 }
             }
@@ -97,11 +137,16 @@ namespace BlockBlastGame
         BlockData CloneBlockData(BlockData source, BlockColorType color)
         {
             var clone = ScriptableObject.CreateInstance<BlockData>();
-            clone.blockName = source.blockName;
-            clone.shapeWidth = source.shapeWidth;
-            clone.shapeHeight = source.shapeHeight;
-            clone.shapeFlat = (bool[])source.shapeFlat.Clone();
-            clone.colorType = color;
+            clone.blockName    = source.blockName;
+            clone.shapeWidth   = source.shapeWidth;
+            clone.shapeHeight  = source.shapeHeight;
+            clone.shapeFlat    = (bool[])source.shapeFlat.Clone();
+            clone.colorType    = color;
+            clone.designTheme  = source.designTheme;
+            clone.shapeSprite  = source.shapeSprite;
+            clone.cellSprites  = source.cellSprites != null
+                ? (Sprite[])source.cellSprites.Clone()
+                : null;
             return clone;
         }
 
@@ -109,10 +154,29 @@ namespace BlockBlastGame
         {
             if (allShapes == null || allShapes.Count == 0) return null;
 
-            int maxIndex = Mathf.FloorToInt(allShapes.Count * difficultyMultiplier) + extraAvailableShapeCount;
-            maxIndex = Mathf.Max(maxIndex, 5);
-            maxIndex = Mathf.Min(maxIndex, allShapes.Count);
-            return allShapes[Random.Range(0, maxIndex)];
+            int limit = currentMaxCells <= 0 ? int.MaxValue : currentMaxCells;
+
+            // 最大セル数フィルタ。空になった場合は最小サイズの形状にフォールバック
+            var pool = new List<BlockData>(allShapes.Count);
+            foreach (var s in allShapes)
+            {
+                if (s == null) continue;
+                if (s.GetCellCount() <= limit) pool.Add(s);
+            }
+            if (pool.Count == 0)
+            {
+                // どのシェイプも条件を満たさない極端ケース: 最も小さい形状を 1 個だけ返す
+                BlockData smallest = null;
+                int smallestCells = int.MaxValue;
+                foreach (var s in allShapes)
+                {
+                    if (s == null) continue;
+                    int c = s.GetCellCount();
+                    if (c < smallestCells) { smallestCells = c; smallest = s; }
+                }
+                return smallest;
+            }
+            return pool[Random.Range(0, pool.Count)];
         }
 
         BlockColorType GetRandomColor()
@@ -154,18 +218,58 @@ namespace BlockBlastGame
             return blocks;
         }
 
+        // ────────────────────────────────────────
+        //  Cell Tier API (CSV「ブロック増加」用)
+        // ────────────────────────────────────────
+
+        /// <summary>
+        /// シェイプの最大セル数を直接指定する。0 = 制限なし(全ブロック解放)。
+        /// </summary>
+        public void SetMaxCells(int maxCells)
+        {
+            currentMaxCells = Mathf.Max(0, maxCells);
+        }
+
+        /// <summary>
+        /// 「ブロック増加+N」イベント用: 最大セル数を delta ぶん引き上げる。
+        /// 既に「制限なし」(currentMaxCells == 0) の場合は何もしない。
+        /// </summary>
+        public void IncreaseMaxCells(int delta)
+        {
+            if (delta <= 0) return;
+            if (currentMaxCells <= 0) return;
+            currentMaxCells += delta;
+        }
+
+        /// <summary>
+        /// 全ブロック解放 (currentMaxCells = 0) に切り替え。
+        /// </summary>
+        public void UnlockAllShapes()
+        {
+            currentMaxCells = 0;
+        }
+
+        // ────────────────────────────────────────
+        //  Backward-compat shims
+        // ────────────────────────────────────────
+
+        /// <summary>
+        /// (旧API) 既存呼び出し互換。multiplier ≧ 1 を「全解放」、それ以外は「3 セルまで」へ丸める。
+        /// 新規コードは <see cref="SetMaxCells"/> を使ってください。
+        /// </summary>
         public void SetDifficulty(float multiplier)
         {
             difficultyMultiplier = multiplier;
-            extraAvailableShapeCount = 0;
+            if (multiplier >= 1f) UnlockAllShapes();
+            else SetMaxCells(BlockShapeLibrary.CellTier.Default);
         }
 
+        /// <summary>
+        /// (旧API) 形状追加イベントを最大セル数の引き上げに変換する。
+        /// </summary>
         public void IncreaseAvailableShapeCount(int amount)
         {
-            if (amount <= 0)
-                return;
-
-            extraAvailableShapeCount = Mathf.Min(allShapes != null ? allShapes.Count : amount, extraAvailableShapeCount + amount);
+            IncreaseMaxCells(amount);
         }
 
         IEnumerator DropIn(Transform target, Vector3 landPos, float delay)
@@ -181,7 +285,6 @@ namespace BlockBlastGame
             {
                 elapsed += Time.deltaTime;
                 float t = Mathf.Clamp01(elapsed / dropDuration);
-                // EaseOutBounce 風のイージング（ポトッと着地感）
                 float ease = EaseOutBounce(t);
                 target.position = Vector3.LerpUnclamped(startPos, landPos, ease);
                 yield return null;

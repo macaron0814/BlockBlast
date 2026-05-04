@@ -2,75 +2,137 @@ using UnityEngine;
 
 namespace BlockBlastGame
 {
+    /// <summary>
+    /// ステージ単位の構成データ。CSV「ステージ構成資料」のステージ行に相当する。
+    /// 制限時間 / Wave 数 / ブロック増加初期値 などを保持する。
+    /// </summary>
     [CreateAssetMenu(fileName = "NewStageData", menuName = "BlockBlast/Stage Data")]
     public class StageData : ScriptableObject
     {
+        [Header("Stage Identity")]
         public int stageNumber;
 
-        [Tooltip("Lines to clear to complete this stage")]
-        public int linesToClear = 10;
+        [Tooltip("CSV「ステージの特徴」欄。UI に表示する任意ラベル")]
+        [TextArea]
+        public string stageFeatureNote;
 
-        [Tooltip("Starting turns for this stage (ignored if TurnManager.initialTurns > 0)")]
-        public int initialTurns = 20;
+        [Header("Clear Conditions")]
+        [Tooltip("制限時間 (秒)。CSV「制限時間」列。0 以下なら EnemyWaveData.survivalTime を使用")]
+        public float timeLimitSeconds = 30f;
 
-        [Tooltip("Base turns recovered per single line clear")]
-        public int turnsPerLineClear = 3;
+        [Tooltip("ライン消去ノルマ (Lines To Clear モード時のみ参照)")]
+        public int linesToClear = 9999;
 
-        [Tooltip("Block difficulty multiplier (higher = harder shapes)")]
+        [Header("Turn Settings (Lines To Clear モード時のみ参照)")]
+        [Tooltip("ステージ開始時のターン数 (TurnManager.initialTurns > 0 の場合は無視)")]
+        public int initialTurns = 9999;
+
+        [Tooltip("1ライン消去あたりの基礎ターン回復量")]
+        public int turnsPerLineClear = 9999;
+
+        [Header("Block Cell Tier (CSV「ブロック増加」)")]
+        [Tooltip("ステージ開始時のシェイプ最大セル数。\n3 = 「デフォ(3ブロックまで)」 / 4 = 「+1(4まで)」 / 5 = 「+1(5まで)」 / 0 = 「全ブロック解放(制限なし)」")]
+        public int initialMaxBlockCells = BlockShapeLibrary.CellTier.Default;
+
+        [Header("Difficulty (旧パラメータ・参考値)")]
         [Range(0.1f, 2f)]
         public float difficultyMultiplier = 1f;
 
-        [Tooltip("Number of items available this stage")]
+        [Header("Items")]
+        [Tooltip("このステージで配置されるアイテム数")]
         public int itemCount = 3;
 
+        // ──────────────────────────────────────────────
+        //  CSV ベースのデフォルト値生成
+        //  「ステージ構成資料 - シート1.csv」の各ステージ行を反映する。
+        // ──────────────────────────────────────────────
         public static StageData CreateDefault(int stageNum)
         {
             var data = CreateInstance<StageData>();
             data.stageNumber = stageNum;
+            data.linesToClear = 9999;
+            data.initialTurns = 9999;
+            data.turnsPerLineClear = 9999;
 
             switch (stageNum)
             {
                 case 1:
-                    data.linesToClear = 8;
-                    data.initialTurns = 25;
-                    data.turnsPerLineClear = 3;
-                    data.difficultyMultiplier = 0.6f;
-                    data.itemCount = 2;
+                    // 30秒 / 1Wave / ザコA×4 / デフォ(3ブロック)
+                    data.timeLimitSeconds      = 30f;
+                    data.initialMaxBlockCells  = BlockShapeLibrary.CellTier.Default;
+                    data.difficultyMultiplier  = 0.6f;
+                    data.itemCount             = 2;
+                    data.stageFeatureNote      = "敵がプレイヤーに追いつくことはない";
                     break;
+
                 case 2:
-                    data.linesToClear = 10;
-                    data.initialTurns = 22;
-                    data.turnsPerLineClear = 3;
-                    data.difficultyMultiplier = 0.7f;
-                    data.itemCount = 3;
+                    // 40秒 / 2Wave / 揃えて倒すを学ぶ / 3ブロックまで
+                    data.timeLimitSeconds      = 40f;
+                    data.initialMaxBlockCells  = BlockShapeLibrary.CellTier.Default;
+                    data.difficultyMultiplier  = 0.7f;
+                    data.itemCount             = 3;
+                    data.stageFeatureNote      = "揃えて倒すを学ぶ / ここから END 有";
                     break;
+
                 case 3:
-                    data.linesToClear = 12;
-                    data.initialTurns = 20;
-                    data.turnsPerLineClear = 2;
-                    data.difficultyMultiplier = 0.8f;
-                    data.itemCount = 3;
+                    // 60秒 / 4Wave / 道中で +1 (4ブロックまで) を取得
+                    data.timeLimitSeconds      = 60f;
+                    data.initialMaxBlockCells  = BlockShapeLibrary.CellTier.Default; // 道中ケーキで +1
+                    data.difficultyMultiplier  = 0.8f;
+                    data.itemCount             = 3;
+                    data.stageFeatureNote      = "道中ケーキで 4 ブロックまで解放";
                     break;
+
                 case 4:
-                    data.linesToClear = 15;
-                    data.initialTurns = 18;
-                    data.turnsPerLineClear = 2;
-                    data.difficultyMultiplier = 0.9f;
-                    data.itemCount = 4;
+                    // 60秒 / 4Wave / 4ブロック解放済み / 報酬に差が出始める
+                    data.timeLimitSeconds      = 60f;
+                    data.initialMaxBlockCells  = BlockShapeLibrary.CellTier.Plus1;
+                    data.difficultyMultiplier  = 0.9f;
+                    data.itemCount             = 4;
+                    data.stageFeatureNote      = "敵を倒した時とデフォの報酬に差が出始める";
                     break;
+
                 case 5:
-                    data.linesToClear = 18;
-                    data.initialTurns = 15;
-                    data.turnsPerLineClear = 2;
-                    data.difficultyMultiplier = 1f;
-                    data.itemCount = 5;
+                    // 90秒 / 4Wave / 道中で +1 (5ブロックまで)
+                    data.timeLimitSeconds      = 90f;
+                    data.initialMaxBlockCells  = BlockShapeLibrary.CellTier.Plus1;
+                    data.difficultyMultiplier  = 1f;
+                    data.itemCount             = 5;
+                    data.stageFeatureNote      = "道中ケーキで 5 ブロックまで解放";
                     break;
+
+                case 6:
+                    // 90秒 / 4Wave / 5ブロック解放済み (CSV ではステージ番号欠落だが Wave 構成は記載あり)
+                    data.timeLimitSeconds      = 90f;
+                    data.initialMaxBlockCells  = BlockShapeLibrary.CellTier.Plus2;
+                    data.difficultyMultiplier  = 1.1f;
+                    data.itemCount             = 5;
+                    data.stageFeatureNote      = "中ボス出現";
+                    break;
+
+                case 7:
+                    // 120秒 / 8Wave / 道中で +2 (全ブロック解放) / コインを稼ぐ場所
+                    data.timeLimitSeconds      = 120f;
+                    data.initialMaxBlockCells  = BlockShapeLibrary.CellTier.Plus2;
+                    data.difficultyMultiplier  = 1.2f;
+                    data.itemCount             = 6;
+                    data.stageFeatureNote      = "ボス戦に備えてコインを稼ぐ場所 / 道中で全ブロック解放";
+                    break;
+
+                case 8:
+                    // 160秒 / 12Wave / ボス戦 / 全ブロック解放済み
+                    data.timeLimitSeconds      = 160f;
+                    data.initialMaxBlockCells  = BlockShapeLibrary.CellTier.Unlocked;
+                    data.difficultyMultiplier  = 1.4f;
+                    data.itemCount             = 7;
+                    data.stageFeatureNote      = "ボス戦";
+                    break;
+
                 default:
-                    data.linesToClear = 10;
-                    data.initialTurns = 20;
-                    data.turnsPerLineClear = 3;
-                    data.difficultyMultiplier = 1f;
-                    data.itemCount = 3;
+                    data.timeLimitSeconds      = 60f;
+                    data.initialMaxBlockCells  = BlockShapeLibrary.CellTier.Plus1;
+                    data.difficultyMultiplier  = 1f;
+                    data.itemCount             = 3;
                     break;
             }
 

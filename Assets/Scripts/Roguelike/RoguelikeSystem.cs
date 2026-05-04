@@ -50,8 +50,9 @@ namespace BlockBlastGame
                     break;
 
                 case PerkType.SpecialBlockSpawn:
-                    gm.blockSpawner.SetDifficulty(
-                        Mathf.Min(1f, gm.blockSpawner.allShapes.Count));
+                    // 形状解放パーク: 最大セル数を +1 して新しい形状を解放する。
+                    // 既に「全ブロック解放」(currentMaxCells == 0) なら何も起きない。
+                    gm.blockSpawner.IncreaseMaxCells(1);
                     break;
 
                 case PerkType.ComboMultiplierUp:

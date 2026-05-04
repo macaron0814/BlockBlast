@@ -91,7 +91,13 @@ namespace BlockBlastGame
                     int boardY = boardPosition.y + y;
 
                     grid[boardX, boardY].Fill(blockData.colorType);
-                    tilemapController?.SetBlockTile(boardX, boardY, blockData.colorType);
+
+                    // BlockData の cellSprites / shapeSprite を解決して
+                    // 配置後も BlockPiece と同じデザインを表示する
+                    Sprite designSprite = blockData.GetSpriteForCell(x, y);
+                    if (designSprite == null) designSprite = blockData.shapeSprite;
+
+                    tilemapController?.SetBlockTile(boardX, boardY, blockData.colorType, designSprite);
                 }
             }
 

@@ -37,7 +37,10 @@ namespace BlockBlastGame
             var gm = GameManager.Instance;
             gm.turnManager.baseTurnsPerLineClear = currentStageData.turnsPerLineClear;
             gm.turnManager.InitializeForStage(currentStageData.initialTurns);
-            gm.blockSpawner.SetDifficulty(currentStageData.difficultyMultiplier);
+
+            // CSV「ブロック増加」のステージ初期値を反映。
+            // 道中の追加 (+1 など) は EnemySystem の Cake/Route ノードで処理される。
+            gm.blockSpawner.SetMaxCells(currentStageData.initialMaxBlockCells);
             gm.blockSpawner.SpawnNewSet();
             gm.itemSystem.itemsPerStage = currentStageData.itemCount;
             gm.itemSystem.PlaceItemsForStage(stageNumber);

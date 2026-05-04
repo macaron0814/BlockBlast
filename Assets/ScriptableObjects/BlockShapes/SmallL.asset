@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f9807d0c18e142858bf9dacc540d1d9, type: 3}
+  m_Name: SmallL
+  m_EditorClassIdentifier: 
+  blockName: SmallL
+  colorType: 5
+  shapeFlat: 01010100
+  shapeWidth: 2
+  shapeHeight: 2
+  designTheme: "\u30DF\u30CB\u30B3\u30FC\u30CA\u30FC"
+  cellSprites:
+  - {fileID: 21300000, guid: aea2c6510d8da417e93399aaff6e2b7e, type: 3}
+  - {fileID: 21300000, guid: aea2c6510d8da417e93399aaff6e2b7e, type: 3}
+  - {fileID: 21300000, guid: aea2c6510d8da417e93399aaff6e2b7e, type: 3}
+  - {fileID: 0}

@@ -12,9 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c79c2f04ce31d4a91916fb6ceef7c884, type: 3}
   m_Name: Stage1
   m_EditorClassIdentifier: 
-  stageNumber: 0
+  stageNumber: 1
+  stageFeatureNote: "敵がプレイヤーに追いつくことはない"
+  timeLimitSeconds: 30
   linesToClear: 9999
   initialTurns: 9999
   turnsPerLineClear: 9999
-  difficultyMultiplier: 1
-  itemCount: 3
+  initialMaxBlockCells: 3
+  difficultyMultiplier: 0.6
+  itemCount: 2

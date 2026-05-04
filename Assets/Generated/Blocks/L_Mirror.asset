@@ -17,3 +17,12 @@ MonoBehaviour:
   shapeFlat: 000100010101
   shapeWidth: 2
   shapeHeight: 3
+  designTheme: 
+  shapeSprite: {fileID: 0}
+  cellSprites:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}

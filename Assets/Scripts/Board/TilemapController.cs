@@ -35,9 +35,12 @@ namespace BlockBlastGame
         readonly Dictionary<Vector2Int, GameObject> itemOverlays = new Dictionary<Vector2Int, GameObject>();
         static Sprite _starSprite;
 
-        // 設置済みブロック用のカスタムタイルキャッシュ
+        // 設置済みブロック用のカスタムタイルキャッシュ (BlockSpawner.blockCellSprite 用 / 後方互換)
         Tile _customBlockTile;
         Sprite _cachedBlockSprite;
+
+        // シェイプ別デザイン用のスプライト→タイルキャッシュ
+        readonly Dictionary<Sprite, Tile> _designSpriteTileCache = new Dictionary<Sprite, Tile>();
 
         public void DrawBoard(int width, int height)
         {
@@ -73,28 +76,54 @@ namespace BlockBlastGame
 
         public void SetBlockTile(int x, int y, BlockColorType colorType)
         {
+            SetBlockTile(x, y, colorType, null);
+        }
+
+        /// <summary>
+        /// ブロック配置時のタイル描画。優先順:
+        ///  1. designSprite (BlockData の cellSprites[idx] または shapeSprite を呼び出し側で解決済み)
+        ///  2. BlockSpawner.blockCellSprite (シーン全体共通のフォールバック画像)
+        ///  3. colorTiles[colorType] (デフォルトの色タイル)
+        /// </summary>
+        public void SetBlockTile(int x, int y, BlockColorType colorType, Sprite designSprite)
+        {
             Vector3Int tilePos = new Vector3Int(x + boardOffset.x, y + boardOffset.y, 0);
 
-            // BlockSpawner にカスタムスプライトが設定されている場合は
-            // 設置前と同じ見た目（色変えなし）で配置する
-            var customSprite = GameManager.Instance?.blockSpawner?.blockCellSprite;
-            if (customSprite != null)
+            // 1. シェイプ別デザイン (BlockData) のスプライトが指定されていれば最優先
+            if (designSprite != null)
             {
-                // スプライトが変わったときだけタイルを再生成
-                if (_customBlockTile == null || _cachedBlockSprite != customSprite)
+                if (!_designSpriteTileCache.TryGetValue(designSprite, out var tile) || tile == null)
                 {
-                    _customBlockTile        = ScriptableObject.CreateInstance<Tile>();
-                    _customBlockTile.sprite = customSprite;
-                    _customBlockTile.color  = Color.white;
-                    _cachedBlockSprite      = customSprite;
+                    tile = ScriptableObject.CreateInstance<Tile>();
+                    tile.sprite = designSprite;
+                    tile.color  = Color.white;
+                    _designSpriteTileCache[designSprite] = tile;
                 }
-                blockTilemap.SetTile(tilePos, _customBlockTile);
+                blockTilemap.SetTile(tilePos, tile);
             }
             else
             {
-                int colorIndex = (int)colorType;
-                if (colorTiles != null && colorIndex < colorTiles.Length)
-                    blockTilemap.SetTile(tilePos, colorTiles[colorIndex]);
+                // 2. BlockSpawner にカスタムスプライトが設定されている場合は
+                //    設置前と同じ見た目（色変えなし）で配置する
+                var customSprite = GameManager.Instance?.blockSpawner?.blockCellSprite;
+                if (customSprite != null)
+                {
+                    if (_customBlockTile == null || _cachedBlockSprite != customSprite)
+                    {
+                        _customBlockTile        = ScriptableObject.CreateInstance<Tile>();
+                        _customBlockTile.sprite = customSprite;
+                        _customBlockTile.color  = Color.white;
+                        _cachedBlockSprite      = customSprite;
+                    }
+                    blockTilemap.SetTile(tilePos, _customBlockTile);
+                }
+                else
+                {
+                    // 3. デフォルトの色タイル
+                    int colorIndex = (int)colorType;
+                    if (colorTiles != null && colorIndex < colorTiles.Length)
+                        blockTilemap.SetTile(tilePos, colorTiles[colorIndex]);
+                }
             }
 
             // 行が下（Y 小）ほど Z が手前になるよう設定

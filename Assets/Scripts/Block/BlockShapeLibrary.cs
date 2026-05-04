@@ -132,5 +132,35 @@ namespace BlockBlastGame
             _cachedShapes = shapes;
             return _cachedShapes;
         }
+
+        /// <summary>
+        /// 最大セル数 maxCells 以下のシェイプのみを返す。
+        /// maxCells &lt;= 0 の場合は全シェイプを返す (制限なし)。
+        /// </summary>
+        public static List<BlockData> GetShapesUpToCells(int maxCells)
+        {
+            var all = GenerateAllShapes();
+            if (maxCells <= 0) return new List<BlockData>(all);
+
+            var filtered = new List<BlockData>(all.Count);
+            foreach (var s in all)
+            {
+                if (s == null) continue;
+                if (s.GetCellCount() <= maxCells) filtered.Add(s);
+            }
+            return filtered;
+        }
+
+        /// <summary>
+        /// CSV「ブロック増加」段階に相当する固定ティア値。
+        /// 0=制限なし(全形状解放) / 3,4,5 はそのまま「Nブロックまで」。
+        /// </summary>
+        public static class CellTier
+        {
+            public const int Default = 3;       // 「デフォ(3ブロックまで)」
+            public const int Plus1   = 4;       // 「増加+1(4ブロックまで)」
+            public const int Plus2   = 5;       // 「増加+1(5ブロックまで)」
+            public const int Unlocked = 0;      // 「全ブロック解放」(=制限なし)
+        }
     }
 }

@@ -11,6 +11,9 @@ namespace BlockBlastGame
 
         [Tooltip("ウェーブ内の敵同士の生成間隔 (秒)")]
         public float spawnInterval = 1.5f;
+
+        [Tooltip("ステージ開始からの絶対時間 (秒)。0 以上を指定するとその時刻に Wave 開始。\n-1 (デフォルト) なら従来通り、直前 Wave 終了 + intervalBetweenWaves で開始する。\nCSV「出現秒数」列に対応。")]
+        public float startTimeSeconds = -1f;
     }
 
     [CreateAssetMenu(fileName = "EnemyWaveData", menuName = "BlockBlast/Enemy Wave Data")]
@@ -43,7 +46,7 @@ namespace BlockBlastGame
             {
                 new RouteNodeConfig { eventType = RouteEventType.None },
                 new RouteNodeConfig { eventType = RouteEventType.Shop },
-                new RouteNodeConfig { eventType = RouteEventType.Cake, randomShapeIncrease = 1 },
+                new RouteNodeConfig { eventType = RouteEventType.Cake, maxCellIncrease = 1 },
                 new RouteNodeConfig { eventType = RouteEventType.Boss },
             };
 

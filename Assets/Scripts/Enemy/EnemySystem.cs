@@ -17,6 +17,35 @@ namespace BlockBlastGame
         [Tooltip("ステージごとの制限時間 (秒)。0 以下なら WaveData の survivalTime を使用")]
         public float[] stageSurvivalTimes;
 
+        [Header("Enemy Movement")]
+        [Tooltip("全敵のチェイス速度に掛かる倍率。\n1 = 通常 / 0.5 = 半分の速さ / 2 = 倍速\n個別 EnemyData.chaseSpeed を変えずに全体ペースだけ調整したい時に使用。")]
+        [Range(0f, 5f)]
+        public float enemyMoveSpeedMultiplier = 1f;
+
+        [Header("Enemy Knockback")]
+        [Tooltip("全敵が弾を受けたときのノックバック量に掛かる倍率。\n1 = 通常 / 0 = ノックバックなし / 5 = 5 倍 (派手)\n個別 EnemyData.knockbackPerHit を変えずに全体感を調整したい時に使用。")]
+        [Range(0f, 10f)]
+        public float enemyKnockbackMultiplier = 3f;
+
+        [Tooltip("ノックバック減衰の強さ (1 秒あたりの減衰率)。\n小さいほど勢いが長く残り、大きいほど即停止する。")]
+        [Range(0.5f, 20f)]
+        public float enemyKnockbackDamping = 4.5f;
+
+        [Header("Enemy Spawn Height")]
+        [Tooltip("敵の出現高さに加える上下方向のランダム振れ幅 (ワールド単位)。\n0 = 全員 EnemyData.hoverHeight ぴったり / 0.5 = ±0.5 の範囲でランダム\nわちゃわちゃ出すならこの値を上げる。EnemyData.hoverHeight が「軸」になる。")]
+        [Range(0f, 5f)]
+        public float enemyHoverHeightVariance = 0f;
+
+        // ─── 全敵共通パラメータの static 公開 (EnemyController から参照) ──────────
+        /// <summary>全敵のチェイス速度に掛かる倍率。</summary>
+        public static float CurrentMoveSpeedMultiplier { get; private set; } = 1f;
+        /// <summary>全敵が受けるノックバック量に掛かる倍率。</summary>
+        public static float CurrentKnockbackMultiplier { get; private set; } = 1f;
+        /// <summary>ノックバック減衰の強さ (1 秒あたり)。</summary>
+        public static float CurrentKnockbackDamping    { get; private set; } = 4.5f;
+        /// <summary>敵の出現高さの上下振れ幅 (Initialize 時に消費)。</summary>
+        public static float CurrentHoverHeightVariance { get; private set; } = 0f;
+
         [Header("Bullet Spawn")]
         [Tooltip("弾の発射起点。未設定時はアーチ角度 0")]
         public Transform bulletSpawnPoint;
@@ -88,6 +117,12 @@ namespace BlockBlastGame
 
         void Update()
         {
+            // 全敵共通パラメータを毎フレーム同期 (インスペクタの変更が即反映)
+            CurrentMoveSpeedMultiplier = Mathf.Max(0f, enemyMoveSpeedMultiplier);
+            CurrentKnockbackMultiplier = Mathf.Max(0f, enemyKnockbackMultiplier);
+            CurrentKnockbackDamping    = Mathf.Max(0.01f, enemyKnockbackDamping);
+            CurrentHoverHeightVariance = Mathf.Max(0f, enemyHoverHeightVariance);
+
             if (archRoadSystem == null) return;
 
             float radius = archRoadSystem.archRadius;
@@ -232,7 +267,9 @@ namespace BlockBlastGame
                 {
                     nodeIndex = i,
                     eventType = cfg.eventType,
-                    randomShapeIncrease = Mathf.Max(1, cfg.randomShapeIncrease),
+                    maxCellIncrease = Mathf.Max(0, cfg.maxCellIncrease),
+                    unlockAllShapes = cfg.unlockAllShapes,
+                    randomShapeIncrease = Mathf.Max(0, cfg.randomShapeIncrease),
                     spawnEnemy = cfg.spawnEnemy
                 });
             }
@@ -270,8 +307,25 @@ namespace BlockBlastGame
             switch (node.eventType)
             {
                 case RouteEventType.Cake:
-                    GameManager.Instance?.blockSpawner?.IncreaseAvailableShapeCount(node.randomShapeIncrease);
+                {
+                    var spawner = GameManager.Instance?.blockSpawner;
+                    if (spawner == null) break;
+
+                    // 「全ブロック解放」マスの場合
+                    if (node.unlockAllShapes)
+                    {
+                        spawner.UnlockAllShapes();
+                        break;
+                    }
+
+                    // 新フィールド優先: maxCellIncrease (CSV「ブロック増加 +N」に対応)
+                    int delta = node.maxCellIncrease;
+                    if (delta <= 0) delta = node.randomShapeIncrease; // 旧フィールド フォールバック
+                    if (delta <= 0) delta = 1;
+
+                    spawner.IncreaseMaxCells(delta);
                     break;
+                }
 
                 case RouteEventType.Boss:
                     if (node.spawnEnemy != null)
@@ -289,11 +343,22 @@ namespace BlockBlastGame
             {
                 if (!_wavesRunning) yield break;
 
-                _currentWaveIndex = w;
                 var wave = _currentWaveData.waves[w];
+
+                // Wave に絶対タイミングが指定されていればその時刻まで待機
+                // (CSV「出現秒数」列の値が反映される)
+                if (wave != null && wave.startTimeSeconds >= 0f)
+                {
+                    while (_wavesRunning && _survivalTimer < wave.startTimeSeconds)
+                        yield return null;
+                }
+
+                if (!_wavesRunning) yield break;
+
+                _currentWaveIndex = w;
                 GameEvents.TriggerWaveStarted(w, _currentWaveData.waves.Length);
 
-                if (wave.enemies != null)
+                if (wave != null && wave.enemies != null)
                 {
                     for (int e = 0; e < wave.enemies.Length; e++)
                     {
@@ -309,8 +374,15 @@ namespace BlockBlastGame
                     }
                 }
 
+                // 次 Wave が絶対タイミング指定なら waitForSeconds は不要
+                // (絶対タイミングの場合は次 Wave のループ頭で待機する)
                 if (w < _currentWaveData.waves.Length - 1)
-                    yield return new WaitForSeconds(_currentWaveData.intervalBetweenWaves);
+                {
+                    var nextWave = _currentWaveData.waves[w + 1];
+                    bool nextHasAbsolute = nextWave != null && nextWave.startTimeSeconds >= 0f;
+                    if (!nextHasAbsolute)
+                        yield return new WaitForSeconds(_currentWaveData.intervalBetweenWaves);
+                }
             }
 
             _wavesRunning = false;

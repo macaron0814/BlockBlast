@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0952ef8d1568b461e8cacfc9f98662b1, type: 3}
+  m_Name: Stage3_Waves
+  m_EditorClassIdentifier: 
+  waves:
+  - enemies:
+    - {fileID: 11400000, guid: 889c8836e98704a5b85e60be0d463158, type: 2}
+    - {fileID: 11400000, guid: 1213f03f64f8b4a1890ed870c1c491b4, type: 2}
+    - {fileID: 11400000, guid: 1213f03f64f8b4a1890ed870c1c491b4, type: 2}
+    - {fileID: 11400000, guid: e8653a7f8e3ac4c84a9cbf408ead9197, type: 2}
+    spawnInterval: 1
+    startTimeSeconds: 0
+  - enemies:
+    - {fileID: 11400000, guid: 9d13acce3ca584f9ba26f499ffbde820, type: 2}
+    spawnInterval: 1
+    startTimeSeconds: 5
+  - enemies:
+    - {fileID: 11400000, guid: 889c8836e98704a5b85e60be0d463158, type: 2}
+    - {fileID: 11400000, guid: 889c8836e98704a5b85e60be0d463158, type: 2}
+    - {fileID: 11400000, guid: e8653a7f8e3ac4c84a9cbf408ead9197, type: 2}
+    - {fileID: 11400000, guid: e8653a7f8e3ac4c84a9cbf408ead9197, type: 2}
+    spawnInterval: 1
+    startTimeSeconds: 20
+  intervalBetweenWaves: 5
+  survivalTime: 60
+  routeNodes:
+  - eventType: 3
+    maxCellIncrease: 1
+    randomShapeIncrease: 0
+    unlockAllShapes: 0
+    spawnEnemy: {fileID: 0}
+  - eventType: 2
+    maxCellIncrease: 1
+    randomShapeIncrease: 0
+    unlockAllShapes: 0
+    spawnEnemy: {fileID: 0}
+  - eventType: 0
+    maxCellIncrease: 1
+    randomShapeIncrease: 0
+    unlockAllShapes: 0
+    spawnEnemy: {fileID: 0}
+  - eventType: 0
+    maxCellIncrease: 1
+    randomShapeIncrease: 0
+    unlockAllShapes: 0
+    spawnEnemy: {fileID: 0}

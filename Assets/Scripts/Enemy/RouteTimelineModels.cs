@@ -18,8 +18,14 @@ namespace BlockBlastGame
         [Tooltip("このマスに表示するイベントアイコン")]
         public RouteEventType eventType = RouteEventType.None;
 
-        [Tooltip("Cake: ランダムブロック形状の追加数")]
-        public int randomShapeIncrease = 1;
+        [Tooltip("Cake: ブロック最大セル数の引き上げ量。\nCSV「ブロック増加 +1 (4ブロックまで)」等に対応。\n例: 1 = 「+1 (Nブロックまで)」 / 2 = 「+2 (全ブロック解放)」")]
+        public int maxCellIncrease = 1;
+
+        [Tooltip("(旧) Cake: ランダムブロック形状の追加数。新しい構成では maxCellIncrease を使用してください。\nmaxCellIncrease が 0 のときのみフォールバックとして利用されます。")]
+        public int randomShapeIncrease = 0;
+
+        [Tooltip("Cake: true の場合、このノードで「全ブロック解放」(maxCells=0) に切り替える")]
+        public bool unlockAllShapes = false;
 
         [Tooltip("Boss: スポーンする敵データ")]
         public EnemyData spawnEnemy;
@@ -29,6 +35,8 @@ namespace BlockBlastGame
     {
         public int nodeIndex;
         public RouteEventType eventType;
+        public int maxCellIncrease;
+        public bool unlockAllShapes;
         public int randomShapeIncrease;
         public EnemyData spawnEnemy;
         public bool eventTriggered;

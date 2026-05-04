@@ -12,9 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c79c2f04ce31d4a91916fb6ceef7c884, type: 3}
   m_Name: Stage2
   m_EditorClassIdentifier: 
-  stageNumber: 1
-  linesToClear: 10
-  initialTurns: 30
-  turnsPerLineClear: 3
-  difficultyMultiplier: 1
+  stageNumber: 2
+  stageFeatureNote: "揃えて倒すを学ぶ / ここから END 有"
+  timeLimitSeconds: 40
+  linesToClear: 9999
+  initialTurns: 9999
+  turnsPerLineClear: 9999
+  initialMaxBlockCells: 3
+  difficultyMultiplier: 0.7
   itemCount: 3
