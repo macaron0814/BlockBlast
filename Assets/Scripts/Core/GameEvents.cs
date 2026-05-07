@@ -27,6 +27,10 @@ namespace BlockBlastGame
         public static event Action OnWaveSurvivalClear;
         public static event Action<Vector3, int> OnEnemyDefeated;       // 敵の位置, ボーナス金額
 
+        // Money / Wallet events
+        public static event Action<int> OnMoneyEarned;          // 1 回の収益額 (スパチャ等)
+        public static event Action<int> OnTotalAssetsChanged;   // 総資産の現在値
+
         public static void TriggerTurnChanged(int remainingTurns) => OnTurnChanged?.Invoke(remainingTurns);
         public static void TriggerLineClear(int linesCleared, int comboCount) => OnLineClear?.Invoke(linesCleared, comboCount);
         public static void TriggerLineClearWithCells(int linesCleared, int cellsCleared, int comboCount) => OnLineClearWithCells?.Invoke(linesCleared, cellsCleared, comboCount);
@@ -46,6 +50,9 @@ namespace BlockBlastGame
         public static void TriggerWaveSurvivalClear() => OnWaveSurvivalClear?.Invoke();
         public static void TriggerEnemyDefeated(Vector3 worldPosition, int bonusAmount) => OnEnemyDefeated?.Invoke(worldPosition, bonusAmount);
 
+        public static void TriggerMoneyEarned(int amount) => OnMoneyEarned?.Invoke(amount);
+        public static void TriggerTotalAssetsChanged(int totalAssets) => OnTotalAssetsChanged?.Invoke(totalAssets);
+
         public static void ClearAll()
         {
             OnTurnChanged = null;
@@ -64,6 +71,8 @@ namespace BlockBlastGame
             OnSurvivalTimerUpdate = null;
             OnWaveSurvivalClear = null;
             OnEnemyDefeated = null;
+            OnMoneyEarned = null;
+            OnTotalAssetsChanged = null;
         }
     }
 }

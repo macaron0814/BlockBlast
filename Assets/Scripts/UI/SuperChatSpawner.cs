@@ -357,6 +357,9 @@ namespace BlockBlastGame
             _activeChats.Add(instance);
             _stageEarnings += amount;
 
+            // 総資産 (PlayerWallet) など外部に収益を通知
+            GameEvents.TriggerMoneyEarned(amount);
+
             Debug.Log($"[SuperChatSpawner] Spawn {amount}円  color={color}");
         }
 

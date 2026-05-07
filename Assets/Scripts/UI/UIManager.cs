@@ -26,6 +26,9 @@ namespace BlockBlastGame
         public Button[] perkButtons;
         public Text[] perkTexts;
 
+        [Tooltip("true にするとステージクリア時のパーク 3 択 UI を表示しない (ショップフローに置き換えるとき)")]
+        public bool useShopInsteadOfPerkPanel = true;
+
         [Header("Wave / Survival HUD")]
         public Text waveText;
         public Text survivalTimerText;
@@ -254,6 +257,15 @@ namespace BlockBlastGame
 
         void ShowStageTransition()
         {
+            // ショップフローに置き換える場合はパーク UI を抑制し、
+            // ShopFlowController 側に表示権を譲る。
+            if (useShopInsteadOfPerkPanel)
+            {
+                if (stageTransitionPanel != null)
+                    stageTransitionPanel.SetActive(false);
+                return;
+            }
+
             if (stageTransitionPanel == null) return;
 
             stageTransitionPanel.SetActive(true);

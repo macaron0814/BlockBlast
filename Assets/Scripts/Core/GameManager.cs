@@ -216,6 +216,17 @@ namespace BlockBlastGame
             stageManager.StartStage(nextStage);
         }
 
+        /// <summary>
+        /// パーク選択無しで次ステージへ進める。ショップ購入完了時など、
+        /// パーク 3 択に依存しないフローから呼ばれる想定。
+        /// </summary>
+        public void ProceedToNextStage()
+        {
+            int nextStage = stageManager.currentStageNumber + 1;
+            ChangeState(GameState.Playing);
+            stageManager.StartStage(nextStage);
+        }
+
         public void OnEnemyReachedPlayer()
         {
             if (currentState != GameState.Playing) return;
