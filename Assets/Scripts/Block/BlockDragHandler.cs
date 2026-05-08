@@ -12,7 +12,15 @@ namespace BlockBlastGame
         public Camera mainCamera;
 
         [Header("Settings")]
+        [Tooltip("ドラッグ中、指 (ポインタ) からブロックを上にずらす量 (ワールド単位)。\n" +
+                 "スマホで指がブロックを覆ってしまわないよう、正の値で「指より上」に持ち上げる。\n" +
+                 "0 = 指の真下、1.5 = 指から 1.5 ワールド単位上、など。")]
         public float dragOffsetY = 1.5f;
+
+        [Tooltip("ドラッグ中、指 (ポインタ) からブロックを横にずらす量 (ワールド単位)。\n" +
+                 "通常は 0 のままで OK。指が右利きで右側がよく隠れる場合などに微調整。")]
+        public float dragOffsetX = 0f;
+
         public float snapBackSpeed = 15f;
         public float dragScale = 1f;
         public float idleScale = 0.6f;
@@ -171,7 +179,10 @@ namespace BlockBlastGame
 
         Vector3 GetDraggedPieceWorldPosition(Vector3 pointerWorld)
         {
-            Vector3 draggedWorld = pointerWorld + dragPointerOffset;
+            // pointerWorld + dragPointerOffset … つかんだ瞬間の指↔ブロック中心の相対位置を維持
+            //                + (dragOffsetX, dragOffsetY) … 指より上 (or 横) にブロックをずらして指の影で隠れないようにする
+            Vector3 draggedWorld = pointerWorld + dragPointerOffset
+                                   + new Vector3(dragOffsetX, dragOffsetY, 0f);
             draggedWorld.z = 0f;
             return draggedWorld;
         }

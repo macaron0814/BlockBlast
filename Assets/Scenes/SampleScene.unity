@@ -7995,7 +7995,8 @@ MonoBehaviour:
   boardManager: {fileID: 1760262285}
   blockSpawner: {fileID: 1614425743}
   mainCamera: {fileID: 963194227}
-  dragOffsetY: 1.5
+  dragOffsetY: 1
+  dragOffsetX: 0
   snapBackSpeed: 15
   dragScale: 1
   idleScale: 0.6
