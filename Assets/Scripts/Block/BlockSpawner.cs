@@ -4,6 +4,24 @@ using UnityEngine;
 
 namespace BlockBlastGame
 {
+    /// <summary>
+    /// セル数ごとの出現確率を制御する重みエントリ。
+    /// 「3 セル=10, 4 セル=5, 5 セル=1」のように指定すると 10:5:1 の比で抽選される。
+    /// バケット (同じセル数) 内のシェイプ枚数で自動正規化されるので、
+    /// 「セル数全体としての出現割合」を直接指定できる。
+    /// </summary>
+    [System.Serializable]
+    public class BlockCellCountWeight
+    {
+        [Tooltip("対象とするセル数 (1, 2, 3, ...)")]
+        [Range(1, 16)]
+        public int cellCount = 3;
+
+        [Tooltip("出現重み。0 = 出現しない / 1 = 標準 / 大きいほど出やすい")]
+        [Min(0f)]
+        public float weight = 1f;
+    }
+
     public class BlockSpawner : MonoBehaviour
     {
         [Header("Settings")]
@@ -16,7 +34,8 @@ namespace BlockBlastGame
 
         [Header("Runtime")]
         [Tooltip("Registry が無いとき、または Registry が空のときに利用される BlockData リスト。")]
-        public List<BlockData> allShapes;
+        public List<BlockData> allShapes = new List<BlockData>();
+
         public List<BlockPiece> currentPieces = new List<BlockPiece>();
 
         [Header("Prefab")]
@@ -29,6 +48,18 @@ namespace BlockBlastGame
         [Header("Block Cell Tier (CSV「ブロック増加」)")]
         [Tooltip("出現させる形状の最大セル数。3=「デフォ(3ブロックまで)」/ 4=「+1(4まで)」/ 5=「+1(5まで)」/ 0=制限なし(全ブロック解放)")]
         public int currentMaxCells = BlockShapeLibrary.CellTier.Default;
+
+        [Header("Cell Count Weights (出現確率調整)")]
+        [Tooltip("セル数ごとの出現確率重み。\n" +
+                 "・空のときは「全形状均等抽選」(従来動作)\n" +
+                 "・要素を入れるとセル数バケットの確率比になる (バケット内のシェイプ数で自動正規化)\n" +
+                 "・例: 3セル=10 / 4セル=5 / 5セル=1 → 3:4:5 = 10:5:1 の比で出現\n" +
+                 "・currentMaxCells によるハードリミットは併用される")]
+        public List<BlockCellCountWeight> cellCountWeights = new List<BlockCellCountWeight>();
+
+        [Tooltip("cellCountWeights に未掲載のセル数に適用する既定重み。0 にすると「リスト掲載のセル数しか出ない」")]
+        [Min(0f)]
+        public float defaultWeightForUnlistedCellCount = 1f;
 
         [Header("Drop-in Animation")]
         [Tooltip("ブロック出現時の落下開始 Y オフセット（着地点からどれだけ上から落とすか）")]
@@ -156,13 +187,14 @@ namespace BlockBlastGame
 
             int limit = currentMaxCells <= 0 ? int.MaxValue : currentMaxCells;
 
-            // 最大セル数フィルタ。空になった場合は最小サイズの形状にフォールバック
+            // 1) 最大セル数フィルタを通したプールを作る
             var pool = new List<BlockData>(allShapes.Count);
             foreach (var s in allShapes)
             {
                 if (s == null) continue;
                 if (s.GetCellCount() <= limit) pool.Add(s);
             }
+
             if (pool.Count == 0)
             {
                 // どのシェイプも条件を満たさない極端ケース: 最も小さい形状を 1 個だけ返す
@@ -176,7 +208,68 @@ namespace BlockBlastGame
                 }
                 return smallest;
             }
-            return pool[Random.Range(0, pool.Count)];
+
+            // 2) cellCountWeights が指定されていなければ均等抽選 (従来動作)
+            if (cellCountWeights == null || cellCountWeights.Count == 0)
+                return pool[Random.Range(0, pool.Count)];
+
+            // 3) バケット (同じセル数のシェイプ群) ごとにシェイプ数を集計
+            //    └ バケット内では均等抽選になるよう、各シェイプの重みを (cellCountWeight / バケットサイズ) にする
+            //    これで「セル数 N のブロックが出現する確率」が直接重みで決まる
+            var bucketSize = new Dictionary<int, int>();
+            foreach (var s in pool)
+            {
+                int c = s.GetCellCount();
+                bucketSize.TryGetValue(c, out int n);
+                bucketSize[c] = n + 1;
+            }
+
+            float totalWeight = 0f;
+            var weights = new float[pool.Count];
+            for (int i = 0; i < pool.Count; i++)
+            {
+                int cells = pool[i].GetCellCount();
+                float w = LookupCellCountWeight(cells);
+                if (w <= 0f) { weights[i] = 0f; continue; }
+
+                int bSize = bucketSize.TryGetValue(cells, out int n) && n > 0 ? n : 1;
+                float perShape = w / bSize;
+                weights[i]    = perShape;
+                totalWeight  += perShape;
+            }
+
+            // 4) 重みが全部 0 (= 適用したいセル数が pool に存在しない) なら均等抽選にフォールバック
+            if (totalWeight <= 0f)
+                return pool[Random.Range(0, pool.Count)];
+
+            float r   = Random.value * totalWeight;
+            float acc = 0f;
+            for (int i = 0; i < pool.Count; i++)
+            {
+                if (weights[i] <= 0f) continue;
+                acc += weights[i];
+                if (r <= acc) return pool[i];
+            }
+            return pool[pool.Count - 1];
+        }
+
+        /// <summary>
+        /// cellCountWeights から指定セル数の重みを取得。
+        /// 未掲載なら defaultWeightForUnlistedCellCount を返す。
+        /// </summary>
+        public float LookupCellCountWeight(int cellCount)
+        {
+            if (cellCountWeights != null)
+            {
+                for (int i = 0; i < cellCountWeights.Count; i++)
+                {
+                    var entry = cellCountWeights[i];
+                    if (entry == null) continue;
+                    if (entry.cellCount == cellCount)
+                        return Mathf.Max(0f, entry.weight);
+                }
+            }
+            return Mathf.Max(0f, defaultWeightForUnlistedCellCount);
         }
 
         BlockColorType GetRandomColor()
@@ -247,6 +340,52 @@ namespace BlockBlastGame
         public void UnlockAllShapes()
         {
             currentMaxCells = 0;
+        }
+
+        // ────────────────────────────────────────
+        //  Cell Count Weights API (出現確率調整)
+        // ────────────────────────────────────────
+
+        /// <summary>
+        /// セル数ごとの出現重みを丸ごと差し替える。
+        /// 空 / null を渡すと「重みなし (均等抽選)」に戻る。
+        /// </summary>
+        public void SetCellCountWeights(IList<BlockCellCountWeight> weights)
+        {
+            cellCountWeights.Clear();
+            if (weights == null) return;
+            foreach (var w in weights)
+            {
+                if (w == null) continue;
+                cellCountWeights.Add(new BlockCellCountWeight
+                {
+                    cellCount = w.cellCount,
+                    weight    = Mathf.Max(0f, w.weight)
+                });
+            }
+        }
+
+        /// <summary>
+        /// 指定セル数の重みを 1 件だけ更新 (なければ追加、weight=0 で実質無効化)。
+        /// </summary>
+        public void SetCellCountWeight(int cellCount, float weight)
+        {
+            weight = Mathf.Max(0f, weight);
+            for (int i = 0; i < cellCountWeights.Count; i++)
+            {
+                if (cellCountWeights[i] != null && cellCountWeights[i].cellCount == cellCount)
+                {
+                    cellCountWeights[i].weight = weight;
+                    return;
+                }
+            }
+            cellCountWeights.Add(new BlockCellCountWeight { cellCount = cellCount, weight = weight });
+        }
+
+        /// <summary>重みリストをクリアして均等抽選に戻す。</summary>
+        public void ClearCellCountWeights()
+        {
+            cellCountWeights.Clear();
         }
 
         // ────────────────────────────────────────

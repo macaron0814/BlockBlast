@@ -14,10 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   blockName: Z
   colorType: 0
-  shapeFlat: 010100000101
+  shapeFlat: 010101010101
   shapeWidth: 3
   shapeHeight: 2
   designTheme: "S/Z \u30C1\u30E7\u30B3"
+  shapeSprite: {fileID: 0}
   cellSprites:
   - {fileID: 0}
   - {fileID: 0}

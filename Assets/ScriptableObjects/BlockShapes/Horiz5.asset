@@ -14,13 +14,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   blockName: Horiz5
   colorType: 6
-  shapeFlat: 0101010101
+  shapeFlat: 01010101000000000100
   shapeWidth: 5
-  shapeHeight: 1
+  shapeHeight: 2
   designTheme: "\u30DB\u30C3\u30C8\u30C9\u30C3\u30B0 (1x5)"
+  shapeSprite: {fileID: 0}
   cellSprites:
+  - {fileID: 21300000, guid: a0e768964776842aea1541865711e230, type: 3}
+  - {fileID: 21300000, guid: a0e768964776842aea1541865711e230, type: 3}
+  - {fileID: 21300000, guid: a0e768964776842aea1541865711e230, type: 3}
+  - {fileID: 21300000, guid: a0e768964776842aea1541865711e230, type: 3}
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
+  - {fileID: 21300000, guid: f10d7f86788934e6a865c7cd47d2412a, type: 3}
   - {fileID: 0}

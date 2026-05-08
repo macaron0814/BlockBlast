@@ -41,6 +41,23 @@ namespace BlockBlastGame
             // CSV「ブロック増加」のステージ初期値を反映。
             // 道中の追加 (+1 など) は EnemySystem の Cake/Route ノードで処理される。
             gm.blockSpawner.SetMaxCells(currentStageData.initialMaxBlockCells);
+
+            // セル数ごとの出現確率重みをステージ単位で反映。
+            // ・blockCellCountWeights が指定されていればそれで上書き
+            // ・空 + resetWeightsWhenStageWeightsEmpty = true ならクリア
+            // ・空 + フラグ false なら BlockSpawner 側の現在値を維持 (前ステージの重みを引き継ぐ)
+            if (currentStageData.blockCellCountWeights != null
+                && currentStageData.blockCellCountWeights.Count > 0)
+            {
+                gm.blockSpawner.SetCellCountWeights(currentStageData.blockCellCountWeights);
+                gm.blockSpawner.defaultWeightForUnlistedCellCount =
+                    currentStageData.blockDefaultWeightForUnlistedCellCount;
+            }
+            else if (currentStageData.resetWeightsWhenStageWeightsEmpty)
+            {
+                gm.blockSpawner.ClearCellCountWeights();
+            }
+
             gm.blockSpawner.SpawnNewSet();
             gm.itemSystem.itemsPerStage = currentStageData.itemCount;
             gm.itemSystem.PlaceItemsForStage(stageNumber);

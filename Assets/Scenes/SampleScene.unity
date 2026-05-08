@@ -6105,10 +6105,29 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 2bac4a819c19c49c98da8a3737134d2c, type: 2}
   - {fileID: 11400000, guid: 027b1e08b41274074986737c431c12dc, type: 2}
   - {fileID: 11400000, guid: 44b5f9801ef7a4f46b0d448f6ed1fc80, type: 2}
+  - {fileID: 11400000, guid: ad3047a80782942df9639b3d2a29a686, type: 2}
+  - {fileID: 11400000, guid: 15e1419fb23ad4552924c41eae2f31d8, type: 2}
+  - {fileID: 11400000, guid: 9403ebc6e3343496eb16bd476055619f, type: 2}
   currentPieces: []
   blockPiecePrefab: {fileID: 0}
   blockCellSprite: {fileID: 0}
   currentMaxCells: 3
+  cellCountWeights:
+  - cellCount: 0
+    weight: 5
+  - cellCount: 2
+    weight: 10
+  - cellCount: 3
+    weight: 10
+  - cellCount: 4
+    weight: 5
+  - cellCount: 5
+    weight: 4
+  - cellCount: 6
+    weight: 3
+  - cellCount: 9
+    weight: 1
+  defaultWeightForUnlistedCellCount: 1
   dropStartOffsetY: 2
   dropDuration: 0.3
   dropStagger: 0

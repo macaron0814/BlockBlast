@@ -18,8 +18,9 @@ MonoBehaviour:
   shapeWidth: 2
   shapeHeight: 2
   designTheme: "\u30B5\u30F3\u30C9\u30A4\u30C3\u30C1 (2x2)"
+  shapeSprite: {fileID: 0}
   cellSprites:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 21300000, guid: dd37cbeb292d44e228aa22a659e4230d, type: 3}
+  - {fileID: 21300000, guid: 6aced1cbea9594ea8a5059f1e3e45ca1, type: 3}
+  - {fileID: 21300000, guid: eef63ab38a21b4c4eab69c9c3bc04f34, type: 3}
+  - {fileID: 21300000, guid: ba050e8bc9a7c4e17bf377c4302c5f27, type: 3}

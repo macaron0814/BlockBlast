@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace BlockBlastGame
@@ -33,6 +34,20 @@ namespace BlockBlastGame
         [Header("Block Cell Tier (CSV「ブロック増加」)")]
         [Tooltip("ステージ開始時のシェイプ最大セル数。\n3 = 「デフォ(3ブロックまで)」 / 4 = 「+1(4まで)」 / 5 = 「+1(5まで)」 / 0 = 「全ブロック解放(制限なし)」")]
         public int initialMaxBlockCells = BlockShapeLibrary.CellTier.Default;
+
+        [Header("Block Cell Count Weights (出現確率調整)")]
+        [Tooltip("セル数ごとの出現重み。\n" +
+                 "・空 → 均等抽選 (BlockSpawner.cellCountWeights をそのまま使用)\n" +
+                 "・要素あり → ステージ開始時にこの内容で BlockSpawner.cellCountWeights を上書き\n" +
+                 "・例: 3セル=10 / 4セル=5 / 5セル=1 → 3:4:5 = 10:5:1 の比で出現")]
+        public List<BlockCellCountWeight> blockCellCountWeights = new List<BlockCellCountWeight>();
+
+        [Tooltip("blockCellCountWeights に未掲載のセル数に適用する既定重み。0 = リスト掲載のセル数しか出ない")]
+        [Min(0f)]
+        public float blockDefaultWeightForUnlistedCellCount = 1f;
+
+        [Tooltip("blockCellCountWeights が空のとき、BlockSpawner.cellCountWeights を強制的にクリアして均等抽選に戻すか")]
+        public bool resetWeightsWhenStageWeightsEmpty = false;
 
         [Header("Difficulty (旧パラメータ・参考値)")]
         [Range(0.1f, 2f)]

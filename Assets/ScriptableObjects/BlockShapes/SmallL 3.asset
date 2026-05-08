@@ -10,19 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4f9807d0c18e142858bf9dacc540d1d9, type: 3}
-  m_Name: L_Mirror
+  m_Name: SmallL 3
   m_EditorClassIdentifier: 
-  blockName: L_Mirror
+  blockName: SmallL
   colorType: 5
-  shapeFlat: 000100010101
+  shapeFlat: 00010101
   shapeWidth: 2
-  shapeHeight: 3
-  designTheme: "L \u5B57\u30D1\u30F3"
+  shapeHeight: 2
+  designTheme: "\u30DF\u30CB\u30B3\u30FC\u30CA\u30FC"
   shapeSprite: {fileID: 0}
   cellSprites:
-  - {fileID: 0}
-  - {fileID: 21300000, guid: 43aa9b0fc96c14820a96af5dd1fc537b, type: 3}
-  - {fileID: 0}
-  - {fileID: 21300000, guid: 43aa9b0fc96c14820a96af5dd1fc537b, type: 3}
-  - {fileID: 21300000, guid: 43aa9b0fc96c14820a96af5dd1fc537b, type: 3}
-  - {fileID: 21300000, guid: 43aa9b0fc96c14820a96af5dd1fc537b, type: 3}
+  - {fileID: 21300000, guid: aea2c6510d8da417e93399aaff6e2b7e, type: 3}
+  - {fileID: 21300000, guid: aea2c6510d8da417e93399aaff6e2b7e, type: 3}
+  - {fileID: 21300000, guid: aea2c6510d8da417e93399aaff6e2b7e, type: 3}
+  - {fileID: 21300000, guid: aea2c6510d8da417e93399aaff6e2b7e, type: 3}

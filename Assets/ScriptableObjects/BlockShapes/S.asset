@@ -18,10 +18,11 @@ MonoBehaviour:
   shapeWidth: 3
   shapeHeight: 2
   designTheme: "S/Z \u30C1\u30E7\u30B3"
+  shapeSprite: {fileID: 0}
   cellSprites:
   - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 21300000, guid: 419f4386d569c4b5c885d7fef827bd82, type: 3}
+  - {fileID: 21300000, guid: 419f4386d569c4b5c885d7fef827bd82, type: 3}
+  - {fileID: 21300000, guid: 419f4386d569c4b5c885d7fef827bd82, type: 3}
+  - {fileID: 21300000, guid: 419f4386d569c4b5c885d7fef827bd82, type: 3}
   - {fileID: 0}
