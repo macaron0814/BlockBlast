@@ -36,6 +36,17 @@ namespace BlockBlastGame
         [Range(0f, 5f)]
         public float enemyHoverHeightVariance = 0f;
 
+        [Header("Y-Sort (擬似奥行き)")]
+        [Tooltip("ON: 敵の Y 座標が低いほど手前に表示する (画面下にいる敵が前)。\nOFF: 旧来の distanceAngle ベースで sortingOrder を決める")]
+        public bool sortEnemiesByY = true;
+
+        [Tooltip("Y → sortingOrder への変換倍率。\n大きいほど僅かな Y 差でも順序が大きく変わる。\n例) 100 で Y=0 と Y=0.01 が 1 だけ差が付く")]
+        [Range(1f, 1000f)]
+        public float ySortScale = 100f;
+
+        [Tooltip("Y ソート時のベース sortingOrder。\n他のレイヤー (UI / 道路など) と被らないようにオフセット")]
+        public int ySortBaseOrder = 0;
+
         // ─── 全敵共通パラメータの static 公開 (EnemyController から参照) ──────────
         /// <summary>全敵のチェイス速度に掛かる倍率。</summary>
         public static float CurrentMoveSpeedMultiplier { get; private set; } = 1f;
@@ -45,6 +56,12 @@ namespace BlockBlastGame
         public static float CurrentKnockbackDamping    { get; private set; } = 4.5f;
         /// <summary>敵の出現高さの上下振れ幅 (Initialize 時に消費)。</summary>
         public static float CurrentHoverHeightVariance { get; private set; } = 0f;
+        /// <summary>true: 敵の sortingOrder を Y 座標基準で決める。</summary>
+        public static bool   CurrentSortByY            { get; private set; } = true;
+        /// <summary>Y → sortingOrder の変換倍率。</summary>
+        public static float  CurrentYSortScale         { get; private set; } = 100f;
+        /// <summary>Y ソート時のベース sortingOrder。</summary>
+        public static int    CurrentYSortBaseOrder     { get; private set; } = 0;
 
         [Header("Bullet Spawn")]
         [Tooltip("弾の発射起点。未設定時はアーチ角度 0")]
@@ -122,6 +139,9 @@ namespace BlockBlastGame
             CurrentKnockbackMultiplier = Mathf.Max(0f, enemyKnockbackMultiplier);
             CurrentKnockbackDamping    = Mathf.Max(0.01f, enemyKnockbackDamping);
             CurrentHoverHeightVariance = Mathf.Max(0f, enemyHoverHeightVariance);
+            CurrentSortByY             = sortEnemiesByY;
+            CurrentYSortScale          = Mathf.Max(1f, ySortScale);
+            CurrentYSortBaseOrder      = ySortBaseOrder;
 
             if (archRoadSystem == null) return;
 

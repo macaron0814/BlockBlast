@@ -25,10 +25,29 @@ namespace BlockBlastGame
         public float spawnDistance = 60f;
 
         [Header("ビジュアル")]
+        [Tooltip("セットすると frames / stunFrames より優先され、敵のルートに子としてプレハブを生成する。\n" +
+                 "プレハブ側で SpriteRenderer / Animator / Spinner2D (タイヤ回転) 等を自由に組める。\n" +
+                 "null のときは従来通り frames を使ったコマ送りスプライトで描画。")]
+        public GameObject visualPrefab;
+
+        [Tooltip("プレハブを生成する位置のローカルオフセット (x, y, z)")]
+        public Vector3 visualPrefabOffset = Vector3.zero;
+
+        [Tooltip("プレハブを生成するときの追加ローカル回転 (度)。例: 子側で初期向きを補正したいときに使う")]
+        public Vector3 visualPrefabRotationEuler = Vector3.zero;
+
+        [Tooltip("プレハブを生成するときの追加スケール倍率 (1 = プレハブのまま)")]
+        public float visualPrefabScale = 1f;
+
+        [Tooltip("true: tint をプレハブ内の全 SpriteRenderer に乗算で適用 / false: プレハブ既定色を維持")]
+        public bool applyTintToPrefab = true;
+
+        [Tooltip("(プレハブ未使用時) アニメーションのコマ画像")]
         public Sprite[] frames;
+        [Tooltip("(プレハブ未使用時) スタン中のコマ画像")]
         public Sprite[] stunFrames;
 
-        [Tooltip("秒/コマ")]
+        [Tooltip("秒/コマ (プレハブ未使用時のコマ送り速度)")]
         public float frameRate = 0.15f;
 
         public float scale = 0.8f;

@@ -17,12 +17,16 @@ MonoBehaviour:
   knockbackPerHit: 0.2
   stunDuration: 2
   spawnDistance: 10
-  frames:
-  - {fileID: 21300000, guid: f664ef5584267465e8d8cb2fc30e9997, type: 3}
+  visualPrefab: {fileID: 4610503688568673895, guid: 6a76083e845fe49068f8f974527bb75d, type: 3}
+  visualPrefabOffset: {x: 0, y: 0, z: 0}
+  visualPrefabRotationEuler: {x: 0, y: 0, z: 0}
+  visualPrefabScale: 1
+  applyTintToPrefab: 1
+  frames: []
   stunFrames: []
   frameRate: 0.15
   scale: 1
-  hoverHeight: 1
+  hoverHeight: 0.8
   tint: {r: 1, g: 1, b: 1, a: 1}
   hitOffset: {x: 0, y: 0}
   hitAngleRadius: 1

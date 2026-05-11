@@ -18,7 +18,7 @@ MonoBehaviour:
     - {fileID: 11400000, guid: 1213f03f64f8b4a1890ed870c1c491b4, type: 2}
     - {fileID: 11400000, guid: 1213f03f64f8b4a1890ed870c1c491b4, type: 2}
     - {fileID: 11400000, guid: 1213f03f64f8b4a1890ed870c1c491b4, type: 2}
-    spawnInterval: 1
+    spawnInterval: 3
     startTimeSeconds: 0
   intervalBetweenWaves: 5
   survivalTime: 30

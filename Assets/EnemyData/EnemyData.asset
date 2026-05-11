@@ -17,8 +17,13 @@ MonoBehaviour:
   knockbackPerHit: 1
   stunDuration: 5
   spawnDistance: 10
+  visualPrefab: {fileID: 5604592452998576511, guid: 9932d7aa0899447f78f1727337fff6a0, type: 3}
+  visualPrefabOffset: {x: 0, y: 0, z: 0}
+  visualPrefabRotationEuler: {x: 0, y: 0, z: 0}
+  visualPrefabScale: 1
+  applyTintToPrefab: 1
   frames:
-  - {fileID: 21300000, guid: f664ef5584267465e8d8cb2fc30e9997, type: 3}
+  - {fileID: 0}
   stunFrames: []
   frameRate: 0.15
   scale: 0.5

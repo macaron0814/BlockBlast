@@ -18,7 +18,11 @@ namespace BlockBlastGame
         bool _isStunned;
         float _stunTimer;
 
-        SpriteRenderer _sr;
+        SpriteRenderer _sr;                  // プレハブ未使用時の単一スプライト
+        GameObject _visualInstance;          // プレハブ使用時のインスタンス (子)
+        SpriteRenderer[] _visualRenderers;   // プレハブの子から取得した全 SpriteRenderer (tint/flash 用)
+        Color[] _visualOriginalColors;       // プレハブ各 SR の元の色 (flash 復帰用)
+        bool _usingPrefabVisual;
         float _animTimer;
         int _currentFrame;
 
@@ -89,6 +93,22 @@ namespace BlockBlastGame
             if (enemyLayer >= 0)
                 gameObject.layer = enemyLayer;
 
+            if (data.visualPrefab != null)
+            {
+                SetupPrefabVisual(data);
+            }
+            else
+            {
+                SetupSpriteVisual(data);
+            }
+
+            UpdateVisualPosition();
+        }
+
+        void SetupSpriteVisual(EnemyData data)
+        {
+            _usingPrefabVisual = false;
+
             _sr = gameObject.AddComponent<SpriteRenderer>();
             _sr.sortingLayerName = "Enemy";
             _sr.sortingOrder = 5;
@@ -98,8 +118,43 @@ namespace BlockBlastGame
                 _sr.sprite = data.frames[0];
             else
                 _sr.sprite = GetOrCreateCircleSprite();
+        }
 
-            UpdateVisualPosition();
+        void SetupPrefabVisual(EnemyData data)
+        {
+            _usingPrefabVisual = true;
+
+            _visualInstance = Instantiate(data.visualPrefab, transform);
+            _visualInstance.transform.localPosition = data.visualPrefabOffset;
+            _visualInstance.transform.localRotation = Quaternion.Euler(data.visualPrefabRotationEuler);
+            float pScale = data.visualPrefabScale > 0f ? data.visualPrefabScale : 1f;
+            _visualInstance.transform.localScale = Vector3.one * pScale;
+
+            // プレハブ全 SR のレイヤーや tint を統一管理
+            _visualRenderers = _visualInstance.GetComponentsInChildren<SpriteRenderer>(true);
+            _visualOriginalColors = new Color[_visualRenderers.Length];
+            for (int i = 0; i < _visualRenderers.Length; i++)
+            {
+                var r = _visualRenderers[i];
+                if (r == null) continue;
+
+                // SortingLayer / Order は親 (Enemy) と統一
+                r.sortingLayerName = "Enemy";
+                r.sortingOrder     = 5 + r.sortingOrder; // プレハブ内の相対順を尊重しつつ底上げ
+
+                if (data.applyTintToPrefab)
+                    r.color = r.color * data.tint;
+
+                _visualOriginalColors[i] = r.color;
+            }
+
+            // 子オブジェクトのレイヤーも合わせる
+            int enemyLayer = LayerMask.NameToLayer("Enemy");
+            if (enemyLayer >= 0)
+            {
+                foreach (var t in _visualInstance.GetComponentsInChildren<Transform>(true))
+                    t.gameObject.layer = enemyLayer;
+            }
         }
 
         // ────────────────────────────────────────
@@ -200,6 +255,10 @@ namespace BlockBlastGame
 
         void UpdateAnimation()
         {
+            // プレハブ使用時はプレハブ側の Animator/独自スクリプトに任せる
+            if (_usingPrefabVisual) return;
+            if (_sr == null) return;
+
             Sprite[] frames = (_isStunned && _data.stunFrames != null && _data.stunFrames.Length > 0)
                 ? _data.stunFrames
                 : _data.frames;
@@ -229,15 +288,97 @@ namespace BlockBlastGame
             float depthScale = Mathf.Lerp(1f, 0.25f, Mathf.Clamp01(distanceAngle / 90f));
             transform.localScale = Vector3.one * _data.scale * depthScale;
 
-            _sr.sortingOrder = 5 - Mathf.FloorToInt(distanceAngle / 10f);
+            // sortingOrder:
+            //  ・Y ソート ON  … Y 座標が低いほど大きい order = 手前 (擬似 3D 奥行き)
+            //  ・Y ソート OFF … 旧来通り distanceAngle ベース
+            int order;
+            if (EnemySystem.CurrentSortByY)
+            {
+                order = EnemySystem.CurrentYSortBaseOrder
+                      - Mathf.RoundToInt(transform.position.y * EnemySystem.CurrentYSortScale);
+            }
+            else
+            {
+                order = 5 - Mathf.FloorToInt(distanceAngle / 10f);
+            }
+            ApplySortingOrder(order);
 
             if (_isStunned)
             {
                 float blink = Mathf.Sin(Time.time * 12f) > 0f ? 1f : 0.4f;
-                Color c = _data.tint;
-                c.a = blink;
-                _sr.color = c;
+                ApplyAlpha(blink);
             }
+        }
+
+        // ────────────────────────────────────────
+        //  Visual helpers (sprite モード / prefab モード両対応)
+        // ────────────────────────────────────────
+
+        void ApplySortingOrder(int order)
+        {
+            if (_sr != null) _sr.sortingOrder = order;
+            if (_visualRenderers != null)
+            {
+                for (int i = 0; i < _visualRenderers.Length; i++)
+                    if (_visualRenderers[i] != null)
+                        _visualRenderers[i].sortingOrder = order + i; // プレハブ内の相対順を維持
+            }
+        }
+
+        void ApplyColor(Color c)
+        {
+            if (_sr != null) _sr.color = c;
+            if (_visualRenderers != null)
+            {
+                for (int i = 0; i < _visualRenderers.Length; i++)
+                    if (_visualRenderers[i] != null)
+                        _visualRenderers[i].color = c;
+            }
+        }
+
+        void ApplyAlpha(float alpha)
+        {
+            if (_sr != null)
+            {
+                Color c = _sr.color; c.a = alpha; _sr.color = c;
+            }
+            if (_visualRenderers != null)
+            {
+                for (int i = 0; i < _visualRenderers.Length; i++)
+                {
+                    if (_visualRenderers[i] == null) continue;
+                    Color c = _visualRenderers[i].color;
+                    c.a = alpha;
+                    _visualRenderers[i].color = c;
+                }
+            }
+        }
+
+        void RestoreOriginalColors()
+        {
+            if (_sr != null) _sr.color = _data.tint;
+            if (_visualRenderers != null && _visualOriginalColors != null)
+            {
+                for (int i = 0; i < _visualRenderers.Length && i < _visualOriginalColors.Length; i++)
+                    if (_visualRenderers[i] != null)
+                        _visualRenderers[i].color = _visualOriginalColors[i];
+            }
+        }
+
+        string ResolveSortingLayerName()
+        {
+            if (_sr != null) return _sr.sortingLayerName;
+            if (_visualRenderers != null && _visualRenderers.Length > 0 && _visualRenderers[0] != null)
+                return _visualRenderers[0].sortingLayerName;
+            return "Enemy";
+        }
+
+        int ResolveSortingOrder()
+        {
+            if (_sr != null) return _sr.sortingOrder;
+            if (_visualRenderers != null && _visualRenderers.Length > 0 && _visualRenderers[0] != null)
+                return _visualRenderers[0].sortingOrder;
+            return 5;
         }
 
         void SpawnHitEffect()
@@ -253,8 +394,8 @@ namespace BlockBlastGame
             var sr = obj.AddComponent<SpriteRenderer>();
             sr.sprite           = _data.hitEffectFrames[0];
             sr.color            = _data.hitEffectColor;
-            sr.sortingLayerName = _sr.sortingLayerName;
-            sr.sortingOrder     = _sr.sortingOrder + 2;
+            sr.sortingLayerName = ResolveSortingLayerName();
+            sr.sortingOrder     = ResolveSortingOrder() + 2;
             _activeHitEffects.Add(obj);
 
             StartCoroutine(PlayHitEffectAndDestroy(obj, sr));
@@ -277,30 +418,31 @@ namespace BlockBlastGame
 
         IEnumerator HitFlash()
         {
-            if (_sr == null) yield break;
-            Color orig = _sr.color;
+            if (_sr == null && (_visualRenderers == null || _visualRenderers.Length == 0))
+                yield break;
+
             for (int i = 0; i < 2; i++)
             {
-                _sr.color = Color.white;
+                ApplyColor(Color.white);
                 yield return new WaitForSeconds(0.06f);
-                _sr.color = orig;
+                RestoreOriginalColors();
                 yield return new WaitForSeconds(0.04f);
             }
         }
 
         IEnumerator ReviveFlash()
         {
-            if (_sr == null) yield break;
-            Color c = _data.tint;
+            if (_sr == null && (_visualRenderers == null || _visualRenderers.Length == 0))
+                yield break;
+
             for (int i = 0; i < 4; i++)
             {
-                c.a = 0.2f;
-                _sr.color = c;
+                ApplyAlpha(0.2f);
                 yield return new WaitForSeconds(0.12f);
-                c.a = 1f;
-                _sr.color = c;
+                ApplyAlpha(1f);
                 yield return new WaitForSeconds(0.12f);
             }
+            RestoreOriginalColors();
         }
 
         // ────────────────────────────────────────
