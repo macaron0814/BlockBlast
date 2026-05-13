@@ -7437,6 +7437,12 @@ MonoBehaviour:
   bulletHitAngleOffset: 0
   bulletHitAngleRadius: 0.5
   gameOverAngle: -1
+  lineClearMultiplierTable:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
 --- !u!4 &1720245484
 Transform:
   m_ObjectHideFlags: 0

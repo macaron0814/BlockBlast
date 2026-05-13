@@ -205,21 +205,28 @@ namespace BlockBlastGame
 
         /// <summary>
         /// 1発のヒットを処理する。
-        /// knockbackMultiplier = 同時消しライン数（1ライン=1x, 2ライン=2x）。
+        /// hitMultiplier = 同時消しライン数 (1ライン=1x, 2ライン=2x, 3ライン=3x ...) に対応する倍率。
+        ///                  EnemySystem.lineClearMultiplierTable で解決された値が渡される。
+        /// この倍率は:
+        ///   ・敵 HP の減少量 (damage)   = max(1, RoundToInt(hitMultiplier))
+        ///   ・ノックバック量             = knockbackPerHit × hitMultiplier × 全体倍率
+        /// の両方に効く。
         /// </summary>
-        public void TakeSingleHit(float knockbackMultiplier = 1f)
+        public void TakeSingleHit(float hitMultiplier = 1f)
         {
-            // 個別 EnemyData.knockbackPerHit
-            //   × ライン同時消し倍率 (knockbackMultiplier)
-            //   × EnemySystem.enemyKnockbackMultiplier (全体倍率)
+            // ノックバック (knockbackPerHit × ライン同時消し倍率 × 全体倍率)
             float knockback = _data.knockbackPerHit
-                            * knockbackMultiplier
+                            * hitMultiplier
                             * EnemySystem.CurrentKnockbackMultiplier;
             _knockbackVelocity += knockback;
 
+            // damage: 同時消しライン数倍 (= 倍率を丸めて HP から引く)
+            //   1ライン: -1HP / 2ライン: -2HP / 3ライン: -3HP ...
+            int damage = Mathf.Max(1, Mathf.RoundToInt(hitMultiplier));
+
             if (!_isStunned)
             {
-                _currentHP--;
+                _currentHP -= damage;
                 if (_currentHP <= 0)
                 {
                     _currentHP = 0;

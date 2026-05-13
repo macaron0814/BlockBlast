@@ -88,10 +88,24 @@ namespace BlockBlastGame
         [Tooltip("敵がこの角度以下に到達するとゲームオーバー (度)。値が大きいほどプレイヤーから遠い")]
         public float gameOverAngle = 5f;
 
+        [Header("Line Clear Multiplier (同時消し倍率)")]
+        [Tooltip("同時に消したライン数 (= rows + columns の合計) に対する攻撃倍率の表。\n" +
+                 "・index 0 = 1 ライン同時消し (= 通常)\n" +
+                 "・index 1 = 2 ライン同時消し\n" +
+                 "・index 2 = 3 ライン同時消し ...\n" +
+                 "末尾を超える数は末尾の値が cap として使われる。\n" +
+                 "デフォルト [1,2,3,4,5] = ライン数そのまま。\n" +
+                 "この倍率は\n" +
+                 " ・敵の HP 減少量 (damage) ※ Mathf.RoundToInt で切り捨て\n" +
+                 " ・敵のノックバック量\n" +
+                 "の両方に同じ値で乗る。")]
+        public List<float> lineClearMultiplierTable = new List<float> { 1f, 2f, 3f, 4f, 5f };
+
         readonly List<EnemyController> _enemies = new List<EnemyController>();
         readonly List<PlayerBullet> _activeBullets = new List<PlayerBullet>();
 
-        float _knockbackMultiplier = 1f;
+        // 同時消しライン数から計算される倍率 (damage + knockback 両方に効く)
+        float _lineClearMultiplier = 1f;
 
         // --- Wave state ---
         EnemyWaveData _currentWaveData;
@@ -203,8 +217,21 @@ namespace BlockBlastGame
         void HandleLineClearWithCells(int linesCleared, int cellsCleared, int comboCount)
         {
             if (cellsCleared <= 0 || _enemies.Count == 0) return;
-            _knockbackMultiplier = Mathf.Max(1f, linesCleared);
+            _lineClearMultiplier = ResolveLineClearMultiplier(linesCleared);
             StartCoroutine(FireBulletBurst(cellsCleared));
+        }
+
+        /// <summary>
+        /// 同時消しライン数 → 攻撃倍率の解決。
+        /// lineClearMultiplierTable[linesCleared - 1] を返す。末尾以上は末尾値で cap。
+        /// </summary>
+        public float ResolveLineClearMultiplier(int linesCleared)
+        {
+            if (linesCleared <= 0) return 0f;
+            if (lineClearMultiplierTable == null || lineClearMultiplierTable.Count == 0)
+                return Mathf.Max(1f, linesCleared);
+            int idx = Mathf.Clamp(linesCleared - 1, 0, lineClearMultiplierTable.Count - 1);
+            return Mathf.Max(0f, lineClearMultiplierTable[idx]);
         }
 
         void HandleStageChanged(int stageNumber)
@@ -569,7 +596,7 @@ namespace BlockBlastGame
                     if (bullet.PrevHitAngle - combinedRadius <= enemyDist
                         && bullet.HitAngle + combinedRadius >= enemyDist)
                     {
-                        enemy.TakeSingleHit(_knockbackMultiplier);
+                        enemy.TakeSingleHit(_lineClearMultiplier);
                         bullet.SnapAndKill(enemy.HitPosition);
                         _activeBullets.RemoveAt(b);
                         hit = true;
