@@ -18,13 +18,14 @@ MonoBehaviour:
   shapeWidth: 3
   shapeHeight: 3
   designTheme: "\u30D4\u30B6 (3x3)"
+  shapeSprite: {fileID: 0}
   cellSprites:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 21300000, guid: e6ee99ec6cf1b4112b6e1e9e09994367, type: 3}
+  - {fileID: 21300000, guid: 6cc577f68359a4637ae13044439b195a, type: 3}
+  - {fileID: 21300000, guid: d63b4e2b2d49048ac979939ce807f56e, type: 3}
+  - {fileID: 21300000, guid: 8605094c5dba24a0593b08eac8ac2d0a, type: 3}
+  - {fileID: 21300000, guid: 3637ce138436e45bba0447bfeb97a644, type: 3}
+  - {fileID: 21300000, guid: e491f265a92fa4e099aa272c95b705ab, type: 3}
+  - {fileID: 21300000, guid: 95b8f66c5858a4251aa61934bfd9f5e3, type: 3}
+  - {fileID: 21300000, guid: b1cad8f7434474cbead6dd79a0230c32, type: 3}
+  - {fileID: 21300000, guid: 66647ee21fb1347ad91068ce139249d5, type: 3}

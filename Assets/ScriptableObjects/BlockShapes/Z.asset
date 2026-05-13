@@ -20,9 +20,9 @@ MonoBehaviour:
   designTheme: "S/Z \u30C1\u30E7\u30B3"
   shapeSprite: {fileID: 0}
   cellSprites:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 21300000, guid: 68c22c7aeaf9f4a4e847e6d1f884d2ec, type: 3}
+  - {fileID: 21300000, guid: 83a3a617f95264e929197fbbde2026fe, type: 3}
+  - {fileID: 21300000, guid: 380ed10eaee814ed49dfa2e2d548a329, type: 3}
+  - {fileID: 21300000, guid: 8f3486315c5b04e7893b3752ff6826b0, type: 3}
+  - {fileID: 21300000, guid: c5b8f6d5356e84fd5a92cc6908ad0103, type: 3}
+  - {fileID: 21300000, guid: e72d36fa73eb949cea0d6634a4e4319c, type: 3}
