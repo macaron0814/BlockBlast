@@ -1,0 +1,82 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c46d808b469f4e7b8356cac4a096c02, type: 3}
+  m_Name: ShopItemEffectTable
+  m_EditorClassIdentifier: 
+  entries:
+  - category: 0
+    values:
+    - 1.01
+    - 1.02
+    - 1.05
+    - 1.1
+    displayFormat: "{0}\u500D"
+    forceInteger: 0
+  - category: 1
+    values:
+    - 1.05
+    - 1.2
+    - 1.5
+    - 2
+    displayFormat: "{0}\u500D"
+    forceInteger: 0
+  - category: 2
+    values:
+    - 1
+    - 3
+    - 5
+    displayFormat: +{0}
+    forceInteger: 1
+  - category: 3
+    values:
+    - 1
+    - 3
+    - 5
+    displayFormat: +{0}
+    forceInteger: 1
+  - category: 4
+    values:
+    - 1.1
+    - 1.25
+    displayFormat: "{0}\u500D"
+    forceInteger: 0
+  - category: 5
+    values:
+    - 1
+    displayFormat: "\u5168\u30EA\u30BB\u30C3\u30C8"
+    forceInteger: 1
+  - category: 6
+    values:
+    - 1
+    displayFormat: "\u76E4\u9762\u6551\u6E08"
+    forceInteger: 1
+  - category: 7
+    values:
+    - 100
+    - 300
+    - 500
+    - 1000
+    displayFormat: "\u30D7\u30E9\u30B9{0}"
+    forceInteger: 1
+  - category: 8
+    values:
+    - 1
+    - 3
+    - 5
+    - 10
+    displayFormat: +{0}%
+    forceInteger: 1
+  - category: 9
+    values:
+    - 1
+    displayFormat: "\u4E00\u5EA6\u52A9\u304B\u308B"
+    forceInteger: 1

@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba03a054a29cb46beafb6ac01080bd33, type: 3}
+  m_Name: ShopItem_25_LuckUp_SR
+  m_EditorClassIdentifier: 
+  id: 25
+  displayName: "\u904BUP"
+  category: 8
+  tierIndex: 2
+  rarity: 2
+  price: 2500
+  icon: {fileID: 0}
+  descriptionTemplate: "\u826F\u3044\u30D6\u30ED\u30C3\u30AF\u304C\u51FA\u3084\u3059\u304F\u306A\u308B
+    {value}"

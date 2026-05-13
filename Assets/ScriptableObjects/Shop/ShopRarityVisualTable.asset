@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ed92b42a8472d4016a9b993d5a79d8cc, type: 3}
+  m_Name: ShopRarityVisualTable
+  m_EditorClassIdentifier: 
+  entries:
+  - rarity: 0
+    displayLabel: N
+    frameColor: {r: 1, g: 1, b: 1, a: 1}
+    backgroundColor: {r: 1, g: 1, b: 1, a: 1}
+    textColor: {r: 0, g: 0, b: 0, a: 1}
+    valueColor: {r: 1, g: 0.85, b: 0.15, a: 1}
+    priceColor: {r: 0, g: 0, b: 0, a: 1}
+    frameSprite: {fileID: 0}
+    backgroundSprite: {fileID: 21300000, guid: 5b5f4e05740e54743950798a54af2e6d, type: 3}
+    badgeSprite: {fileID: 21300000, guid: 45398da21d26c47298562ba3702b6dc4, type: 3}
+  - rarity: 1
+    displayLabel: R
+    frameColor: {r: 1, g: 1, b: 1, a: 1}
+    backgroundColor: {r: 1, g: 1, b: 1, a: 1}
+    textColor: {r: 1, g: 1, b: 1, a: 1}
+    valueColor: {r: 1, g: 0.85, b: 0.15, a: 1}
+    priceColor: {r: 1, g: 1, b: 1, a: 1}
+    frameSprite: {fileID: 0}
+    backgroundSprite: {fileID: 21300000, guid: 8118093b67673403fad50a8a35fb4a54, type: 3}
+    badgeSprite: {fileID: 21300000, guid: 9c5585bf48a0441a1983e23ceac441e5, type: 3}
+  - rarity: 2
+    displayLabel: SR
+    frameColor: {r: 1, g: 1, b: 1, a: 1}
+    backgroundColor: {r: 1, g: 1, b: 1, a: 1}
+    textColor: {r: 0.55, g: 0.35, b: 0.05, a: 1}
+    valueColor: {r: 1, g: 0.85, b: 0.15, a: 1}
+    priceColor: {r: 1, g: 1, b: 1, a: 1}
+    frameSprite: {fileID: 0}
+    backgroundSprite: {fileID: 21300000, guid: 9bc43a7cec4b24811b6009ee7bc69461, type: 3}
+    badgeSprite: {fileID: 21300000, guid: bc210d452ec6546b1a0af43561f18bc7, type: 3}
+  - rarity: 4
+    displayLabel: UR
+    frameColor: {r: 1, g: 1, b: 1, a: 1}
+    backgroundColor: {r: 1, g: 1, b: 1, a: 1}
+    textColor: {r: 0.7, g: 0.05, b: 0.05, a: 1}
+    valueColor: {r: 1, g: 0.85, b: 0.15, a: 1}
+    priceColor: {r: 1, g: 1, b: 1, a: 1}
+    frameSprite: {fileID: 0}
+    backgroundSprite: {fileID: 21300000, guid: cd8262b4a283841d9ae99c121a355574, type: 3}
+    badgeSprite: {fileID: 21300000, guid: 7bb5599e2a46f430ea6d12ce9038c9a2, type: 3}

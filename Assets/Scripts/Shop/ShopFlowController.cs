@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -51,6 +52,24 @@ namespace BlockBlastGame
 
         [Tooltip("UIManager の useShopInsteadOfPerkPanel を自動で true にする (パーク 3 択 UI を抑制)")]
         public bool autoDisablePerkPanel = true;
+
+        [Tooltip("ON: OpenShop 時に cardSelector.FillCardsFromPool(currentStagePool) を呼び出して\n" +
+                 "カードの中身を自動で抽選・反映する。OFF: 既存カード設定をそのまま使う。")]
+        public bool autoFillCardsOnOpen = true;
+
+        [Tooltip("ステージ番号 (1..N) → ShopItemPool のマッピング。\n" +
+                 "GameManager.CurrentStage に対応するエントリがあればそれを使う。\n" +
+                 "見つからなければ cardSelector.defaultPool が使われる。")]
+        public List<StagePoolEntry> stagePools = new List<StagePoolEntry>();
+
+        [System.Serializable]
+        public class StagePoolEntry
+        {
+            [Tooltip("対応するステージ番号 (1..N)")]
+            public int stage = 1;
+            [Tooltip("そのステージのショップで使う抽出プール")]
+            public ShopItemPool pool;
+        }
 
         [Tooltip("ON: ShopArrivalSequence の演出が走っているとき、OnStageClear で直接 OpenShop しない\n" +
                  "(Sequence が中央到着時に自前で OpenShop を呼ぶ)\n" +
@@ -152,11 +171,35 @@ namespace BlockBlastGame
             _shopOpen = true;
             _purchaseInFlight = false;
 
-            if (cardSelector != null)
+            // カード自動抽選 (autoFillCardsOnOpen が ON のとき)
+            if (autoFillCardsOnOpen && cardSelector != null)
+            {
+                var pool = ResolveStagePool();
+                cardSelector.FillCardsFromPool(pool);
+            }
+            else if (cardSelector != null)
+            {
                 cardSelector.DeselectAll();
+            }
 
             shopPanel.SetActive(true);
             onShopOpened?.Invoke();
+        }
+
+        /// <summary>現在のステージに該当する ShopItemPool を返す (なければ null=defaultPool フォールバック)。</summary>
+        ShopItemPool ResolveStagePool()
+        {
+            int currentStage = 1;
+            var gm = GameManager.Instance;
+            if (gm != null && gm.stageManager != null)
+                currentStage = gm.stageManager.currentStageNumber;
+
+            for (int i = 0; i < stagePools.Count; i++)
+            {
+                if (stagePools[i] != null && stagePools[i].stage == currentStage)
+                    return stagePools[i].pool;
+            }
+            return null;
         }
 
         // ─────────────────────────────────────

@@ -34,6 +34,40 @@ namespace BlockBlastGame
         [Tooltip("カードに紐づくアイテム (任意)。購入時の参照用に使える。")]
         public ItemData itemData;
 
+        [Tooltip("ショップ用アイテム定義 (CSV のアイテム1行分)。Apply() で反映される。")]
+        public ShopItemData shopItemData;
+
+        [Header("Item Visual References (Apply で書き換える対象)")]
+        [Tooltip("アイテムアイコン (item.icon を流し込む)")]
+        public Image iconImage;
+
+        [Tooltip("ON: Apply 時に iconImage.SetNativeSize() を呼んで元画像サイズに合わせる。\n" +
+                 "OFF: RectTransform のサイズはそのまま (Layout 等で固定したい場合)")]
+        public bool useNativeIconSize = true;
+
+        [Tooltip("レアリティ枠 (色 / スプライトを差し替える)")]
+        public Image frameImage;
+
+        [Tooltip("レアリティ背景 (色 / スプライトを差し替える)")]
+        public Image backgroundImage;
+
+        [Tooltip("レアリティバッジのアイコン (任意)。Sprite を差し替える")]
+        public Image rarityBadgeImage;
+
+        [Tooltip("レアリティバッジのテキスト (任意)。\"N\" / \"SSR\" などを書く")]
+        public TMP_Text rarityBadgeText;
+
+        [Tooltip("アイテム名テキスト (任意)")]
+        public TMP_Text nameText;
+
+        [Tooltip("説明文テキスト (任意)。{value} はテーブルから差し込まれる")]
+        public TMP_Text descriptionText;
+
+        [Header("Sale Visual (任意)")]
+        [Tooltip("SSR セール時に表示する GameObject (\"半額！\" バッジ など)。\n" +
+                 "Apply で SetActive(isOnSale) される")]
+        public GameObject saleBadge;
+
         [Header("Click Source")]
         [Tooltip("UI Button を使う場合はここに割り当て (省略時は IPointerClickHandler 経由)。")]
         public Button targetButton;
@@ -179,6 +213,131 @@ namespace BlockBlastGame
             bool affordable = cost <= 0 || totalAssets >= cost;
             _affordable = affordable;
             ApplyAffordabilityVisuals();
+        }
+
+        // ─────────────────────────────────────
+        //  アイテム反映 API
+        // ─────────────────────────────────────
+
+        /// <summary>
+        /// ShopItemData の中身をこのカードに反映する。
+        /// 効果値テーブル + レアリティ見た目テーブルがあれば説明文/見た目も合わせて更新。
+        /// finalPrice / isOnSale は ShopItemPool.Draw() の結果をそのまま渡せる。
+        /// </summary>
+        public void Apply(ShopItemData item,
+                          ShopItemEffectTable effectTable = null,
+                          ShopRarityVisualTable visualTable = null,
+                          int? finalPrice = null,
+                          bool isOnSale = false)
+        {
+            shopItemData = item;
+            if (item == null)
+            {
+                if (saleBadge != null) saleBadge.SetActive(false);
+                return;
+            }
+
+            // 価格
+            cost = finalPrice ?? item.price;
+            displayName = item.ResolveDisplayName();
+
+            // アイコン
+            if (iconImage != null)
+            {
+                iconImage.sprite  = item.icon;
+                iconImage.enabled = (item.icon != null);
+
+                // 元画像サイズに合わせる (useNativeIconSize=ON のとき)
+                if (useNativeIconSize && item.icon != null)
+                    iconImage.SetNativeSize();
+            }
+
+            // レアリティビジュアル (説明文の value 色決定に使うので、説明文より「先」に解決)
+            ShopRarityVisualTable.RarityEntry ve = null;
+            if (visualTable != null)
+            {
+                ve = visualTable.Get(item.rarity);
+                if (ve != null)
+                {
+                    if (frameImage != null)
+                    {
+                        frameImage.color = ve.frameColor;
+                        if (ve.frameSprite != null) frameImage.sprite = ve.frameSprite;
+                    }
+                    if (backgroundImage != null)
+                    {
+                        backgroundImage.color = ve.backgroundColor;
+                        if (ve.backgroundSprite != null) backgroundImage.sprite = ve.backgroundSprite;
+                    }
+                    if (rarityBadgeImage != null && ve.badgeSprite != null)
+                    {
+                        rarityBadgeImage.sprite  = ve.badgeSprite;
+                        rarityBadgeImage.enabled = true;
+                    }
+                    if (rarityBadgeText != null)
+                    {
+                        rarityBadgeText.text  = visualTable.GetLabel(item.rarity);
+                        rarityBadgeText.color = ve.textColor;
+                    }
+                    if (nameText != null) nameText.color = ve.textColor;
+
+                    // 値段テキストの「買えるときの色」をレアリティ依存に上書き
+                    // (買えないときの赤は priceColorUnaffordable 側で維持される)
+                    priceColorAffordable = ve.priceColor;
+                }
+            }
+            else if (rarityBadgeText != null)
+            {
+                rarityBadgeText.text = item.rarity.ToString();
+            }
+
+            // 名前
+            if (nameText != null) nameText.text = item.ResolveDisplayName();
+
+            // 説明文 ({value} / {amount} を効果テーブルで差し替え、レアリティ色で <color> 囲み)
+            if (descriptionText != null)
+            {
+                string desc = item.descriptionTemplate ?? "";
+                if (effectTable != null)
+                {
+                    string formatted = effectTable.GetFormatted(item.category, item.tierIndex);
+                    // レアリティの value 色を TMP の rich text タグで適用
+                    string colored = formatted;
+                    if (ve != null)
+                    {
+                        string hex = ColorUtility.ToHtmlStringRGB(ve.valueColor);
+                        // <b> は数字を強調しすぎる場合があるのでオフ。<color>のみ。
+                        colored = $"<color=#{hex}>{formatted}</color>";
+                    }
+                    desc = desc.Replace("{value}", colored)
+                               .Replace("{amount}", colored);
+                }
+                descriptionText.richText = true; // 念のため明示的に有効化
+                descriptionText.text     = desc;
+            }
+
+            // 価格テキスト
+            string priceStr = cost.ToString();
+            if (priceText    != null) priceText.text    = priceStr;
+            if (priceTextTMP != null) priceTextTMP.text = priceStr;
+
+            // セールバッジ
+            if (saleBadge != null) saleBadge.SetActive(isOnSale);
+
+            // 所持金との照合をやり直す (cost が変わるので)
+            RefreshAffordability();
+        }
+
+        /// <summary>アイテムを外す (空スロットにする)。</summary>
+        public void ClearItem()
+        {
+            shopItemData = null;
+            if (iconImage != null)        { iconImage.sprite = null; iconImage.enabled = false; }
+            if (nameText  != null)        nameText.text = "";
+            if (descriptionText != null)  descriptionText.text = "";
+            if (saleBadge != null)        saleBadge.SetActive(false);
+            cost = 0;
+            RefreshAffordability();
         }
 
         void ApplyAffordabilityVisuals()

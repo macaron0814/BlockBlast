@@ -54,6 +54,20 @@ namespace BlockBlastGame
         [Tooltip("参照するウォレット (空のとき PlayerWallet.Instance を使用)")]
         public PlayerWallet wallet;
 
+        [Header("Item Data Source")]
+        [Tooltip("ShopItemData の集約。Open 時にここから抽選してカードに反映する。")]
+        public ShopItemDatabase itemDatabase;
+
+        [Tooltip("効果値の中央テーブル (倍率/個数)。null だと説明文の {value} は素の文字列のまま。")]
+        public ShopItemEffectTable effectTable;
+
+        [Tooltip("レアリティの見た目テーブル (枠色 / バッジ等)")]
+        public ShopRarityVisualTable rarityVisualTable;
+
+        [Tooltip("デフォルト抽出プール。FillCardsFromPool() で明示指定しなければこれが使われる。\n" +
+                 "(例: Stage1Shop_Pool / Stage2Shop_Pool / Vending3_Pool)")]
+        public ShopItemPool defaultPool;
+
         [Header("Behavior")]
         [Tooltip("同じカードを再タップしたとき選択を解除する (true: トグル動作, false: 維持)")]
         public bool toggleSameCardDeselects = false;
@@ -220,6 +234,52 @@ namespace BlockBlastGame
         {
             OnDisable();
             OnEnable();
+        }
+
+        // ─────────────────────────────────────
+        //  アイテム抽選 → カード反映
+        // ─────────────────────────────────────
+
+        /// <summary>
+        /// ShopItemPool を使ってカードに ShopItemData を流し込む。
+        /// pool=null のときは defaultPool を使う。database が無いときは何もしない。
+        /// </summary>
+        public void FillCardsFromPool(ShopItemPool pool = null)
+        {
+            var usePool = pool != null ? pool : defaultPool;
+            if (usePool == null || itemDatabase == null)
+            {
+                Debug.LogWarning("[ShopCardSelector] FillCardsFromPool: pool または itemDatabase が未設定");
+                return;
+            }
+
+            var picks = usePool.Draw(itemDatabase);
+            ApplyPicksToCards(picks);
+        }
+
+        /// <summary>抽選結果リストをカード群に反映する。</summary>
+        public void ApplyPicksToCards(List<ShopItemPool.DrawResult> picks)
+        {
+            for (int i = 0; i < cards.Count; i++)
+            {
+                var card = cards[i];
+                if (card == null) continue;
+
+                if (i < picks.Count && picks[i] != null && picks[i].item != null)
+                {
+                    var p = picks[i];
+                    card.gameObject.SetActive(true);
+                    card.Apply(p.item, effectTable, rarityVisualTable, p.finalPrice, p.isOnSale);
+                }
+                else
+                {
+                    // 抽選結果が枚数に満たない場合は余ったカードを非表示
+                    card.ClearItem();
+                    card.gameObject.SetActive(false);
+                }
+            }
+
+            DeselectAll();
         }
     }
 }
