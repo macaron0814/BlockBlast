@@ -31,6 +31,9 @@ namespace BlockBlastGame
         public static event Action<int> OnMoneyEarned;          // 1 回の収益額 (スパチャ等)
         public static event Action<int> OnTotalAssetsChanged;   // 総資産の現在値
 
+        // Route node events
+        public static event Action OnShopRouteNodeReached;      // ルート上の Shop マスに到達
+
         public static void TriggerTurnChanged(int remainingTurns) => OnTurnChanged?.Invoke(remainingTurns);
         public static void TriggerLineClear(int linesCleared, int comboCount) => OnLineClear?.Invoke(linesCleared, comboCount);
         public static void TriggerLineClearWithCells(int linesCleared, int cellsCleared, int comboCount) => OnLineClearWithCells?.Invoke(linesCleared, cellsCleared, comboCount);
@@ -53,6 +56,8 @@ namespace BlockBlastGame
         public static void TriggerMoneyEarned(int amount) => OnMoneyEarned?.Invoke(amount);
         public static void TriggerTotalAssetsChanged(int totalAssets) => OnTotalAssetsChanged?.Invoke(totalAssets);
 
+        public static void TriggerShopRouteNodeReached() => OnShopRouteNodeReached?.Invoke();
+
         public static void ClearAll()
         {
             OnTurnChanged = null;
@@ -73,6 +78,7 @@ namespace BlockBlastGame
             OnEnemyDefeated = null;
             OnMoneyEarned = null;
             OnTotalAssetsChanged = null;
+            OnShopRouteNodeReached = null;
         }
     }
 }

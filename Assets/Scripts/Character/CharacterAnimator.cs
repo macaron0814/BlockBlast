@@ -216,6 +216,37 @@ namespace BlockBlastGame
             });
         }
 
+        /// <summary>
+        /// 道路揺れ (RoadBumpLoop) を一時停止 / 再開する。
+        /// ショップ到来など外部演出で anchoredPosition を制御したいときに使う。
+        /// </summary>
+        /// <param name="enable">true = 揺れを再開 / false = 停止</param>
+        /// <param name="resetToBase">停止/再開時に anchoredPosition を _basePosition に戻すか</param>
+        public void SetRoadBumpEnabled(bool enable, bool resetToBase = true)
+        {
+            if (_bumpCoroutine != null)
+            {
+                StopCoroutine(_bumpCoroutine);
+                _bumpCoroutine = null;
+            }
+
+            if (resetToBase && _rect != null)
+                _rect.anchoredPosition = _basePosition;
+
+            if (enable && _rect != null)
+                _bumpCoroutine = StartCoroutine(RoadBumpLoop());
+        }
+
+        /// <summary>
+        /// 現在の anchoredPosition を新たな揺れ基準位置として再設定する。
+        /// ショップ閉店後にプレイヤー UI 位置が変わっている場合に呼ぶ。
+        /// </summary>
+        public void RebaseRoadBumpToCurrent()
+        {
+            if (_rect != null)
+                _basePosition = _rect.anchoredPosition;
+        }
+
         // ─────────────────────────────────────────────────
         //  コルーチン — 通常コマ送り
         // ─────────────────────────────────────────────────

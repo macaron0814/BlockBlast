@@ -308,7 +308,11 @@ namespace BlockBlastGame
 
             _consumedNodeCount = newConsumed;
 
-            if (_consumedNodeCount >= _routeNodes.Count)
+            // 最終ノードまで消化した時点でステージクリア (= WaveSurvivalClear) を発火する。
+            // ただし最終ノードが Shop で PauseSurvivalForShop() により _survivalActive=false
+            // になっている場合は、ShopArrivalSequence → ShopFlowController.OpenShop の流れで
+            // 次ステージに進めるので、ここでは発火しない (二重起動防止)。
+            if (_consumedNodeCount >= _routeNodes.Count && _survivalActive)
             {
                 _survivalActive = false;
                 StopWaves();
@@ -351,7 +355,56 @@ namespace BlockBlastGame
                     if (node.spawnEnemy != null)
                         SpawnSpecialEnemy(node.spawnEnemy);
                     break;
+
+                case RouteEventType.Shop:
+                    // ショップ到来演出は ShopArrivalSequence が担当する。
+                    // EnemySystem はサバイバルタイマー停止 + Wave 停止までを行い、
+                    // 演出側からの BeginEnemyExitToShop() でフィールドの敵を整理する。
+                    Debug.Log("[EnemySystem] Shop ルートノードを消費 → OnShopRouteNodeReached を発火");
+                    PauseSurvivalForShop();
+                    GameEvents.TriggerShopRouteNodeReached();
+                    break;
             }
+        }
+
+        /// <summary>
+        /// ショップ演出中はサバイバルタイマーと Wave スポーンを止める。
+        /// ステージ再開 / 次ステージ開始時に StartStage 経由で再初期化される。
+        /// </summary>
+        public void PauseSurvivalForShop()
+        {
+            _survivalActive = false;
+            StopWaves();
+        }
+
+        /// <summary>
+        /// ショップ到来演出からの呼び出し。
+        /// 既存の敵を distanceAngle 増加方向に押し流して後方へ退場させ、
+        /// duration 秒後に全消去する。
+        /// </summary>
+        public Coroutine BeginEnemyExitToShop(float exitSpeed, float duration, bool clearOnFinish = true)
+        {
+            return StartCoroutine(SlideEnemiesAway(exitSpeed, duration, clearOnFinish));
+        }
+
+        IEnumerator SlideEnemiesAway(float exitSpeed, float duration, bool clearOnFinish)
+        {
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float dt = Time.deltaTime;
+                for (int i = 0; i < _enemies.Count; i++)
+                {
+                    var e = _enemies[i];
+                    if (e == null) continue;
+                    e.distanceAngle += exitSpeed * dt;
+                }
+                yield return null;
+            }
+
+            if (clearOnFinish)
+                ClearAllEnemies();
         }
 
         IEnumerator RunWaves()

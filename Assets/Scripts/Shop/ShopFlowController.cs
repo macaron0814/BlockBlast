@@ -52,6 +52,14 @@ namespace BlockBlastGame
         [Tooltip("UIManager の useShopInsteadOfPerkPanel を自動で true にする (パーク 3 択 UI を抑制)")]
         public bool autoDisablePerkPanel = true;
 
+        [Tooltip("ON: ShopArrivalSequence の演出が走っているとき、OnStageClear で直接 OpenShop しない\n" +
+                 "(Sequence が中央到着時に自前で OpenShop を呼ぶ)\n" +
+                 "Sequence を使わない場合 (パークパネルの完全代替として shop を即時表示したい場合) は OFF")]
+        public bool deferOpenWhenArrivalSequenceActive = true;
+
+        [Tooltip("オプション。明示的にアサインすれば検索コストが減る。空なら FindObjectOfType で自動取得")]
+        public ShopArrivalSequence arrivalSequence;
+
         [Header("Events")]
         [Tooltip("ショップが開いたとき発火")]
         public UnityEvent onShopOpened;
@@ -121,6 +129,20 @@ namespace BlockBlastGame
                 ProceedToNextStageImmediate();
                 return;
             }
+
+            // ShopArrivalSequence による到着演出中は、OpenShop は演出側に任せる。
+            // ここで OpenShop してしまうと敵退場・ショップ画像スライドが一切再生されない。
+            if (deferOpenWhenArrivalSequenceActive)
+            {
+                if (arrivalSequence == null)
+                    arrivalSequence = FindObjectOfType<ShopArrivalSequence>();
+                if (arrivalSequence != null && arrivalSequence.IsSequenceRunning)
+                {
+                    Debug.Log("[ShopFlowController] ShopArrivalSequence 実行中のため OpenShop を保留 (演出側で開く)");
+                    return;
+                }
+            }
+
             OpenShop();
         }
 

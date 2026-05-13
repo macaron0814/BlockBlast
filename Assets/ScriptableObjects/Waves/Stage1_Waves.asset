@@ -23,8 +23,8 @@ MonoBehaviour:
   intervalBetweenWaves: 5
   survivalTime: 30
   routeNodes:
-  - eventType: 0
-    maxCellIncrease: 1
+  - eventType: 1
+    maxCellIncrease: 0
     randomShapeIncrease: 0
     unlockAllShapes: 0
     spawnEnemy: {fileID: 0}
