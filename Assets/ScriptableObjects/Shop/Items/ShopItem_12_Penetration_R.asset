@@ -19,4 +19,4 @@ MonoBehaviour:
   rarity: 1
   price: 1000
   icon: {fileID: 21300000, guid: 7d16e4de29bbb4b0cab14d86f2a1b81e, type: 3}
-  descriptionTemplate: "\u30D7\u30EA\u304C\u30C6\u30AD\u3092{value}\u305F\u3044\u3064\u3089\u306C\u304F\u305E\u3063\uFF01\u30BA\u30D0\u30C3\u3068\u306C\u3051\u308D\u3063\uFF01\uFF01"
+  descriptionTemplate: "\u30D7\u30EA\u304C\u30C6\u30AD\u3092{value}\n\u305F\u3044\u3064\u3089\u306C\u304F\u305E\u3063\uFF01\n\u30BA\u30D0\u30C3\u3068\u306C\u3051\u308D\u3063\uFF01\uFF01"
