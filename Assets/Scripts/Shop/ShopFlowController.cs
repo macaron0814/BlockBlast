@@ -79,6 +79,14 @@ namespace BlockBlastGame
         [Tooltip("オプション。明示的にアサインすれば検索コストが減る。空なら FindObjectOfType で自動取得")]
         public ShopArrivalSequence arrivalSequence;
 
+        [Header("Effect Application")]
+        [Tooltip("ON: 購入時に PlayerEffectState.ApplyPurchase を呼び出し、\n" +
+                 "アイテム効果 (弾サイズ / 弾速 / 弾数 / 貫通 / プレイヤースピード / 盤面リセット) を実反映する")]
+        public bool applyEffectsOnPurchase = true;
+
+        [Tooltip("空なら PlayerEffectState.Instance を自動取得。明示アサインも可")]
+        public PlayerEffectState playerEffectState;
+
         [Header("Events")]
         [Tooltip("ショップが開いたとき発火")]
         public UnityEvent onShopOpened;
@@ -219,8 +227,22 @@ namespace BlockBlastGame
                     wallet.TrySpend(card.cost);
             }
 
-            // ※ カードに紐づく実際の効果適用 (アイテム付与・パーク発動 etc.) は
-            //   onPurchaseCompleted の購読側で後から実装する想定。
+            // アイテム効果を実反映
+            if (applyEffectsOnPurchase && card.shopItemData != null)
+            {
+                var pes = playerEffectState != null ? playerEffectState : PlayerEffectState.Instance;
+                if (pes == null) pes = FindObjectOfType<PlayerEffectState>();
+                if (pes != null)
+                {
+                    ShopItemEffectTable et = cardSelector != null ? cardSelector.effectTable : null;
+                    pes.ApplyPurchase(card.shopItemData, et);
+                }
+                else
+                {
+                    Debug.LogWarning("[ShopFlowController] PlayerEffectState が見つからないためアイテム効果を適用できません。シーンに PlayerEffectState コンポーネントを配置してください。");
+                }
+            }
+
             onPurchaseCompleted?.Invoke(card);
 
             StartCoroutine(CloseAfterDelay(closeDelayAfterPurchase));

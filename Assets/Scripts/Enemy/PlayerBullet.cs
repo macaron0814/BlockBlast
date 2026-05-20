@@ -25,6 +25,11 @@ namespace BlockBlastGame
         float _hitAngleRadius;
         float _viewportExitMargin = 0.05f;
 
+        // 貫通: 残り何体まで貫けるか (0 = 通常 / 1 体ヒットで消滅)
+        int _remainingPenetration;
+        // 同フレーム / 同弾内で同じ敵に複数回ヒットしないように管理
+        readonly System.Collections.Generic.HashSet<int> _hitEnemyIds = new System.Collections.Generic.HashSet<int>();
+
         // 発射起点からアーチに乗るまでのブレンド
         Vector3 _launchStartPos;
         bool _hasLaunchBlend;
@@ -42,6 +47,45 @@ namespace BlockBlastGame
         public float HitAngle       => _currentAngle + _hitAngleOffset;
         public float PrevHitAngle   => _prevAngle    + _hitAngleOffset;
         public float HitAngleRadius => _hitAngleRadius;
+
+        /// <summary>残り貫通可能数 (0 のとき、ヒットすると消える)</summary>
+        public int RemainingPenetration => _remainingPenetration;
+
+        /// <summary>貫通カウントをセットする。発射直後に呼ぶ想定。</summary>
+        public void SetPenetration(int count)
+        {
+            _remainingPenetration = Mathf.Max(0, count);
+        }
+
+        /// <summary>指定の敵 ID にすでにこの弾がヒット済みか。</summary>
+        public bool HasHitEnemy(int enemyId) => _hitEnemyIds.Contains(enemyId);
+
+        /// <summary>
+        /// 敵にヒットしたときに呼ぶ。
+        ///   ・残り貫通 > 0 → カウントを 1 減らして true (= 生き残る) を返す
+        ///   ・残り貫通 = 0 → false (= 消滅すべき) を返す
+        /// hitPos はヒット時の見た目スナップ用 (貫通中は短いフラッシュのみ)
+        /// </summary>
+        public bool ApplyHitAndCheckSurvive(int enemyId, Vector3 hitPos)
+        {
+            _hitEnemyIds.Add(enemyId);
+            if (_remainingPenetration > 0)
+            {
+                _remainingPenetration--;
+                StartCoroutine(PenetrationFlash());
+                return true;
+            }
+            return false;
+        }
+
+        System.Collections.IEnumerator PenetrationFlash()
+        {
+            if (_sr == null) yield break;
+            Color saved = _sr.color;
+            _sr.color = Color.white;
+            yield return new WaitForSeconds(0.04f);
+            if (_sr != null) _sr.color = saved;
+        }
 
         /// <param name="overrideStartPos">指定時、この位置からアーチ軌道へ短くブレンドして飛び出す</param>
         /// <param name="sprite">弾のスプライト。null の場合はデフォルト丸を使用</param>

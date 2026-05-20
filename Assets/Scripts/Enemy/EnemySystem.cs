@@ -63,6 +63,13 @@ namespace BlockBlastGame
         /// <summary>Y ソート時のベース sortingOrder。</summary>
         public static int    CurrentYSortBaseOrder     { get; private set; } = 0;
 
+        /// <summary>
+        /// プレイヤースピード倍率。1.0 = 通常、1.25 = 25% 速い感覚に見せる。
+        /// 敵側にこの逆数が掛かることで「敵が遅くなる = プレイヤーが速くなった」感覚を作る。
+        /// PlayerEffectState.PlayerSpeedMultiplier と同期される。
+        /// </summary>
+        public static float CurrentPlayerSpeedMultiplier { get; private set; } = 1f;
+
         [Header("Bullet Spawn")]
         [Tooltip("弾の発射起点。未設定時はアーチ角度 0")]
         public Transform bulletSpawnPoint;
@@ -103,6 +110,15 @@ namespace BlockBlastGame
 
         readonly List<EnemyController> _enemies = new List<EnemyController>();
         readonly List<PlayerBullet> _activeBullets = new List<PlayerBullet>();
+        readonly List<BulletHitCandidate> _bulletHitCandidates = new List<BulletHitCandidate>();
+
+        struct BulletHitCandidate
+        {
+            public EnemyController enemy;
+            public int enemyId;
+            public Vector3 hitPosition;
+            public float distanceToPlayerX;
+        }
 
         // 同時消しライン数から計算される倍率 (damage + knockback 両方に効く)
         float _lineClearMultiplier = 1f;
@@ -156,6 +172,11 @@ namespace BlockBlastGame
             CurrentSortByY             = sortEnemiesByY;
             CurrentYSortScale          = Mathf.Max(1f, ySortScale);
             CurrentYSortBaseOrder      = ySortBaseOrder;
+
+            // PlayerEffectState の倍率を毎フレーム同期 (ショップで購入したら即反映)
+            CurrentPlayerSpeedMultiplier = PlayerEffectState.Instance != null
+                ? Mathf.Max(0.01f, PlayerEffectState.Instance.PlayerSpeedMultiplier)
+                : 1f;
 
             if (archRoadSystem == null) return;
 
@@ -218,7 +239,14 @@ namespace BlockBlastGame
         {
             if (cellsCleared <= 0 || _enemies.Count == 0) return;
             _lineClearMultiplier = ResolveLineClearMultiplier(linesCleared);
-            StartCoroutine(FireBulletBurst(cellsCleared));
+
+            // ショップの "弾数+" 効果を加算
+            int bulletCountBonus = PlayerEffectState.Instance != null
+                ? PlayerEffectState.Instance.BulletCountBonus
+                : 0;
+            int totalBullets = Mathf.Max(0, cellsCleared + bulletCountBonus);
+
+            StartCoroutine(FireBulletBurst(totalBullets));
         }
 
         /// <summary>
@@ -550,9 +578,20 @@ namespace BlockBlastGame
                 startAngle = Mathf.Max(startAngle, 0f);
             }
 
+            // ショップ効果: BulletSize / BulletSpeed / Penetration を適用
+            float sizeMul  = 1f;
+            float speedMul = 1f;
+            int   penetration = 0;
+            if (PlayerEffectState.Instance != null)
+            {
+                sizeMul     = Mathf.Max(0.01f, PlayerEffectState.Instance.BulletSizeMultiplier);
+                speedMul    = Mathf.Max(0.01f, PlayerEffectState.Instance.BulletSpeedMultiplier);
+                penetration = PlayerEffectState.Instance.PenetrationBonus;
+            }
+
             var bullet = obj.AddComponent<PlayerBullet>();
             bullet.Initialize(
-                bulletSpeed,
+                bulletSpeed * speedMul,
                 bulletBounceHeight,
                 bulletBounceFrequency,
                 radius,
@@ -561,10 +600,11 @@ namespace BlockBlastGame
                 overrideStartPos,
                 bulletSprite,
                 bulletColor,
-                bulletScale,
+                bulletScale * sizeMul,
                 bulletHitAngleOffset,
-                bulletHitAngleRadius,
+                bulletHitAngleRadius * sizeMul,
                 bulletViewportExitMargin);
+            bullet.SetPenetration(penetration);
 
             _activeBullets.Add(bullet);
         }
@@ -575,6 +615,12 @@ namespace BlockBlastGame
 
         void CheckBulletCollisions()
         {
+            // ショップ "弾でかくなる" 倍率はダメージにのみ反映する (ノックバックには掛けない)
+            float bulletSizeDamageMul = PlayerEffectState.Instance != null
+                ? Mathf.Max(0.01f, PlayerEffectState.Instance.BulletSizeMultiplier)
+                : 1f;
+            float playerX = GetPlayerReferenceX();
+
             for (int b = _activeBullets.Count - 1; b >= 0; b--)
             {
                 var bullet = _activeBullets[b];
@@ -584,11 +630,20 @@ namespace BlockBlastGame
                     continue;
                 }
 
-                bool hit = false;
+                bool destroyed = false;
+
+                _bulletHitCandidates.Clear();
+
+                // まず「このフレームで当たり判定に入っている敵」を全部集める。
+                // その後、プレイヤーの X 座標に近い順に処理することで、
+                // 判定範囲が重なったときも手前の敵から当たるようにする。
                 for (int e = 0; e < _enemies.Count; e++)
                 {
                     var enemy = _enemies[e];
                     if (enemy == null) continue;
+
+                    int enemyId = enemy.GetInstanceID();
+                    if (bullet.HasHitEnemy(enemyId)) continue;
 
                     float combinedRadius = bullet.HitAngleRadius + enemy.HitAngleRadius;
                     float enemyDist = enemy.HitAngleCenter;
@@ -596,20 +651,60 @@ namespace BlockBlastGame
                     if (bullet.PrevHitAngle - combinedRadius <= enemyDist
                         && bullet.HitAngle + combinedRadius >= enemyDist)
                     {
-                        enemy.TakeSingleHit(_lineClearMultiplier);
-                        bullet.SnapAndKill(enemy.HitPosition);
-                        _activeBullets.RemoveAt(b);
-                        hit = true;
-                        break;
+                        Vector3 hitPosition = enemy.HitPosition;
+                        _bulletHitCandidates.Add(new BulletHitCandidate
+                        {
+                            enemy = enemy,
+                            enemyId = enemyId,
+                            hitPosition = hitPosition,
+                            distanceToPlayerX = Mathf.Abs(hitPosition.x - playerX)
+                        });
                     }
                 }
 
-                if (!hit && bullet.CurrentAngle > 180f)
+                if (_bulletHitCandidates.Count > 0)
+                {
+                    _bulletHitCandidates.Sort((a, b2) => a.distanceToPlayerX.CompareTo(b2.distanceToPlayerX));
+
+                    // 同一弾が同フレーム内に複数の敵に当たり得る (貫通)
+                    // → 手前順にヒット処理し、ヒットごとに penetration 残数を確認
+                    for (int i = 0; i < _bulletHitCandidates.Count; i++)
+                    {
+                        var candidate = _bulletHitCandidates[i];
+                        var enemy = candidate.enemy;
+                        if (enemy == null) continue;
+
+                        enemy.TakeSingleHit(_lineClearMultiplier, bulletSizeDamageMul);
+
+                        // 残り貫通数があれば生き残る、なければ消滅
+                        bool survives = bullet.ApplyHitAndCheckSurvive(candidate.enemyId, candidate.hitPosition);
+                        if (!survives)
+                        {
+                            bullet.SnapAndKill(candidate.hitPosition);
+                            _activeBullets.RemoveAt(b);
+                            destroyed = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!destroyed && bullet.CurrentAngle > 180f)
                 {
                     bullet.Kill();
                     _activeBullets.RemoveAt(b);
                 }
             }
+        }
+
+        float GetPlayerReferenceX()
+        {
+            if (bulletSpawnPoint != null)
+                return bulletSpawnPoint.position.x;
+
+            if (archRoadSystem != null)
+                return archRoadSystem.transform.position.x;
+
+            return 0f;
         }
 
         // ────────────────────────────────────────

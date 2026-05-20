@@ -46,6 +46,26 @@ namespace BlockBlastGame
                      "※買えないときの色 (赤) は ShopCard.priceColorUnaffordable 側で別管理。")]
             public Color priceColor = Color.white;
 
+            [Header("Text Outline (TMP)")]
+            [Tooltip("名前 / 説明文 / レアリティ / 値段 TMP テキストに付けるフチ色。\n" +
+                     "ShopCard 側で TMP_Text.fontMaterial の Outline Color に反映される。")]
+            public Color textOutlineColor = Color.black;
+
+            [Tooltip("名前 / 説明文 / レアリティ / 値段 TMP テキストに付けるフチ幅。\n" +
+                     "0 = フチなし。TMP の Outline Width は一般的に 0〜0.5 程度で調整。")]
+            [Range(0f, 1f)]
+            public float textOutlineWidth = 0f;
+
+            [Header("Price Text Outline (TMP)")]
+            [Tooltip("値段 TMP テキスト専用のフチ色。\n" +
+                     "名前 / 説明文 / レアリティとは別に、値段だけ違うフチにしたい時に使う。")]
+            public Color priceTextOutlineColor = Color.black;
+
+            [Tooltip("値段 TMP テキスト専用のフチ幅。\n" +
+                     "0 = フチなし。TMP の Outline Width は一般的に 0〜0.5 程度で調整。")]
+            [Range(0f, 1f)]
+            public float priceTextOutlineWidth = 0f;
+
             [Tooltip("枠用のスプライト (任意)。指定すれば ShopCard の frameImage に当てる")]
             public Sprite frameSprite;
 

@@ -82,6 +82,10 @@ namespace BlockBlastGame
         [Tooltip("スケール変化にかける秒数 (0 = 即時)")]
         public float scaleAnimDuration = 0.12f;
 
+        [Header("Selection Outline")]
+        [Tooltip("選択中だけ表示する画像縁。UIImageOutline をカードの枠 Image などに付けてここへ割り当て")]
+        public UIImageOutline selectionOutline;
+
         [Header("Affordability Visuals (所持金不足時の見た目)")]
         [Tooltip("カードのルート (枠) の HueShiftFilter。彩度 0 でグレースケール化。任意。")]
         public HueShiftFilter cardRootFilter;
@@ -182,6 +186,8 @@ namespace BlockBlastGame
             if (_selected == selected) return;
             _selected = selected;
             BeginScaleAnim(selected ? selectedScale : idleScale);
+            if (selectionOutline != null)
+                selectionOutline.SetVisible(selected);
         }
 
         public void ResetVisualToIdle()
@@ -189,6 +195,8 @@ namespace BlockBlastGame
             _selected = false;
             ApplyScaleImmediate(idleScale);
             _animToScale = -1f;
+            if (selectionOutline != null)
+                selectionOutline.SetVisible(false);
         }
 
         // ─────────────────────────────────────
@@ -277,9 +285,14 @@ namespace BlockBlastGame
                     if (rarityBadgeText != null)
                     {
                         rarityBadgeText.text  = visualTable.GetLabel(item.rarity);
-                        rarityBadgeText.color = ve.textColor;
+                        ApplyTmpStyle(rarityBadgeText, ve.textColor, ve.textOutlineColor, ve.textOutlineWidth);
                     }
-                    if (nameText != null) nameText.color = ve.textColor;
+                    if (nameText != null)
+                    {
+                        ApplyTmpStyle(nameText, ve.textColor, ve.textOutlineColor, ve.textOutlineWidth);
+                    }
+                    ApplyTmpStyle(descriptionText, ve.textColor, ve.textOutlineColor, ve.textOutlineWidth);
+                    ApplyTmpStyle(priceTextTMP, ve.priceColor, ve.priceTextOutlineColor, ve.priceTextOutlineWidth);
 
                     // 値段テキストの「買えるときの色」をレアリティ依存に上書き
                     // (買えないときの赤は priceColorUnaffordable 側で維持される)
@@ -326,6 +339,31 @@ namespace BlockBlastGame
 
             // 所持金との照合をやり直す (cost が変わるので)
             RefreshAffordability();
+        }
+
+        void ApplyTmpStyle(TMP_Text text, Color textColor, Color outlineColor, float outlineWidth)
+        {
+            if (text == null) return;
+
+            text.color = textColor;
+
+            // TMP_Text.outlineWidth の setter は、TMP 内部マテリアルが未初期化の状態だと
+            // TextMeshProUGUI.SetOutlineThickness 側で NullReference を出すことがある。
+            // そのためプロパティ直指定は避け、fontMaterial が取得できた場合だけ
+            // shader property を直接更新する。
+            float width = Mathf.Max(0f, outlineWidth);
+
+            var mat = text.fontMaterial;
+            if (mat != null)
+            {
+                mat.SetColor(TMPro.ShaderUtilities.ID_OutlineColor, outlineColor);
+                mat.SetFloat(TMPro.ShaderUtilities.ID_OutlineWidth, width);
+                text.fontMaterial = mat;
+            }
+
+            text.UpdateMeshPadding();
+            text.SetMaterialDirty();
+            text.SetVerticesDirty();
         }
 
         /// <summary>アイテムを外す (空スロットにする)。</summary>

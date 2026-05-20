@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
+using TMPro;
 
 namespace BlockBlastGame
 {
@@ -49,6 +50,22 @@ namespace BlockBlastGame
 
         [Tooltip("有効時の色")]
         public Color enabledTint = Color.white;
+
+        [Header("Selected Price Display")]
+        [Tooltip("選択中カードの価格表示ルート。選択なしのとき非表示にしたい場合に指定")]
+        public GameObject selectedPriceRoot;
+
+        [Tooltip("選択中カードの価格表示 (uGUI Text)。任意")]
+        public Text selectedPriceText;
+
+        [Tooltip("選択中カードの価格表示 (TMP)。任意")]
+        public TMP_Text selectedPriceTextTMP;
+
+        [Tooltip("価格表示フォーマット。{0} に価格が入る")]
+        public string selectedPriceFormat = "{0}";
+
+        [Tooltip("選択解除時に表示する文字。空なら空欄")]
+        public string noSelectionPriceText = "";
 
         [Header("Wallet Source")]
         [Tooltip("参照するウォレット (空のとき PlayerWallet.Instance を使用)")]
@@ -110,6 +127,7 @@ namespace BlockBlastGame
 
             _selected = null;
             UpdateBuyButtonVisual();
+            UpdateSelectedPriceVisual();
             onSelectionChanged?.Invoke(null);
         }
 
@@ -143,6 +161,7 @@ namespace BlockBlastGame
                     _selected.SetSelected(false);
                     _selected = null;
                     UpdateBuyButtonVisual();
+                    UpdateSelectedPriceVisual();
                     onSelectionChanged?.Invoke(null);
                 }
                 return;
@@ -155,6 +174,7 @@ namespace BlockBlastGame
             _selected.SetSelected(true);
 
             UpdateBuyButtonVisual();
+            UpdateSelectedPriceVisual();
             onSelectionChanged?.Invoke(_selected);
         }
 
@@ -227,7 +247,22 @@ namespace BlockBlastGame
                 _selected.SetSelected(false);
             _selected = null;
             UpdateBuyButtonVisual();
+            UpdateSelectedPriceVisual();
             onSelectionChanged?.Invoke(null);
+        }
+
+        void UpdateSelectedPriceVisual()
+        {
+            bool hasSelection = _selected != null;
+            if (selectedPriceRoot != null)
+                selectedPriceRoot.SetActive(hasSelection);
+
+            string text = hasSelection
+                ? string.Format(selectedPriceFormat, _selected.cost)
+                : noSelectionPriceText;
+
+            if (selectedPriceText != null) selectedPriceText.text = text;
+            if (selectedPriceTextTMP != null) selectedPriceTextTMP.text = text;
         }
 
         public void RebuildBindings()

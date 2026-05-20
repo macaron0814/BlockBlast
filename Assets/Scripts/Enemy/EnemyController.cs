@@ -165,18 +165,28 @@ namespace BlockBlastGame
         {
             if (_data == null) return;
 
+            // ショップ "プレイヤースピード上昇" は敵を相対的に遅くする形で表現する。
+            // ・PlayerSpeedMultiplier = 1.25 (= 25% 速い) のとき敵の距離縮小レートを 1/1.25 = 0.8 にする。
+            // ・道路スクロールと敵 chase の両方に同じ係数を掛ける
+            //   (道路スクロールはワールド全体の動きなので、両方掛けて整合性を取る)
+            float playerSpeedMul   = Mathf.Max(0.01f, EnemySystem.CurrentPlayerSpeedMultiplier);
+            float enemySlowFactor  = 1f / playerSpeedMul;
+
             if (_isStunned)
             {
                 _stunTimer -= Time.deltaTime;
                 // 道路スクロールと逆方向に同速度を加えることで
                 // ワールド上で敵が静止し、プレイヤーが前進するほど後退して見える
-                distanceAngle -= _roadScrollSpeed * Time.deltaTime;
+                distanceAngle -= _roadScrollSpeed * enemySlowFactor * Time.deltaTime;
                 if (_stunTimer <= 0f) Revive();
             }
             else
             {
                 // EnemySystem.enemyMoveSpeedMultiplier を全敵共通の速度倍率として乗算
-                distanceAngle -= _data.chaseSpeed * EnemySystem.CurrentMoveSpeedMultiplier * Time.deltaTime;
+                distanceAngle -= _data.chaseSpeed
+                               * EnemySystem.CurrentMoveSpeedMultiplier
+                               * enemySlowFactor
+                               * Time.deltaTime;
             }
 
             // ノックバック処理: 弾を受けたとき distanceAngle を後退方向 (+) に押し戻す。
@@ -208,21 +218,23 @@ namespace BlockBlastGame
         /// hitMultiplier = 同時消しライン数 (1ライン=1x, 2ライン=2x, 3ライン=3x ...) に対応する倍率。
         ///                  EnemySystem.lineClearMultiplierTable で解決された値が渡される。
         /// この倍率は:
-        ///   ・敵 HP の減少量 (damage)   = max(1, RoundToInt(hitMultiplier))
+        ///   ・敵 HP の減少量 (damage)   = max(1, RoundToInt(hitMultiplier × damageOnlyMultiplier))
         ///   ・ノックバック量             = knockbackPerHit × hitMultiplier × 全体倍率
-        /// の両方に効く。
+        /// 同時消しライン数倍 (hitMultiplier) はノックバックとダメージの両方に効くが、
+        /// damageOnlyMultiplier (= ショップの "弾でかくなる" 効果) はダメージのみに効く。
         /// </summary>
-        public void TakeSingleHit(float hitMultiplier = 1f)
+        public void TakeSingleHit(float hitMultiplier = 1f, float damageOnlyMultiplier = 1f)
         {
             // ノックバック (knockbackPerHit × ライン同時消し倍率 × 全体倍率)
+            // ※ ショップ「弾でかくなる」の倍率はここには掛けない
             float knockback = _data.knockbackPerHit
                             * hitMultiplier
                             * EnemySystem.CurrentKnockbackMultiplier;
             _knockbackVelocity += knockback;
 
-            // damage: 同時消しライン数倍 (= 倍率を丸めて HP から引く)
-            //   1ライン: -1HP / 2ライン: -2HP / 3ライン: -3HP ...
-            int damage = Mathf.Max(1, Mathf.RoundToInt(hitMultiplier));
+            // damage: 同時消しライン数倍 × ショップ弾サイズ倍率 を丸めて HP から引く
+            //   1ライン: -1HP / 2ライン: -2HP / 3ライン: -3HP ... × bullet size multiplier
+            int damage = Mathf.Max(1, Mathf.RoundToInt(hitMultiplier * damageOnlyMultiplier));
 
             if (!_isStunned)
             {
