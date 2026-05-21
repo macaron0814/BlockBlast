@@ -102,7 +102,7 @@ namespace BlockBlastGame
         [Tooltip("通常時 (買える) の価格テキスト色")]
         public Color priceColorAffordable = Color.white;
 
-        [Tooltip("買えないとき (赤) の価格テキスト色")]
+        [Tooltip("旧仕様用。現在は買えない時も価格テキストは priceColorAffordable のまま維持し、カード全体のグレースケールで表現する")]
         public Color priceColorUnaffordable = new Color(1f, 0.25f, 0.25f, 1f);
 
         [Tooltip("HueShiftFilter 無いとき: 買えない時のルート tint (グレー代替)")]
@@ -392,10 +392,10 @@ namespace BlockBlastGame
                 cardRootImage.color = _affordable ? rootEnabledTint : rootDisabledTint;
             }
 
-            // 価格テキスト色 (赤 / 通常)
-            Color priceColor = _affordable ? priceColorAffordable : priceColorUnaffordable;
-            if (priceText != null)    priceText.color    = priceColor;
-            if (priceTextTMP != null) priceTextTMP.color = priceColor;
+            // 価格テキストは買えない時もレアリティ由来の本来色を維持する。
+            // 所持金不足の表現はカード全体のグレースケールで行う。
+            if (priceText != null)    priceText.color    = priceColorAffordable;
+            if (priceTextTMP != null) priceTextTMP.color = priceColorAffordable;
         }
 
         void BeginScaleAnim(float targetScale)

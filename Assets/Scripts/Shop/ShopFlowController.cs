@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UI;
 
 namespace BlockBlastGame
 {
@@ -45,6 +46,13 @@ namespace BlockBlastGame
 
         [Tooltip("購入後、自動で次ステージへ進める")]
         public bool autoProceedAfterPurchase = true;
+
+        [Header("Exit Button")]
+        [Tooltip("購入せずにショップを出るボタン。押すと効果適用なし / 支払いなしで次ステージへ進む")]
+        public Button exitButton;
+
+        [Tooltip("出口ボタンを押した後、自動で次ステージへ進める")]
+        public bool autoProceedAfterExit = true;
 
         [Header("Open Behavior")]
         [Tooltip("起動時 (Awake) にショップを非表示にする")]
@@ -124,12 +132,14 @@ namespace BlockBlastGame
         {
             GameEvents.OnStageClear += HandleStageClear;
             BindSelectorEvents(true);
+            BindExitButton(true);
         }
 
         void OnDisable()
         {
             GameEvents.OnStageClear -= HandleStageClear;
             BindSelectorEvents(false);
+            BindExitButton(false);
         }
 
         void BindSelectorEvents(bool subscribe)
@@ -142,6 +152,14 @@ namespace BlockBlastGame
                 cardSelector.onPurchaseAffordable.AddListener(HandlePurchaseAffordable);
                 cardSelector.onPurchaseInsufficientFunds.AddListener(HandlePurchaseInsufficient);
             }
+        }
+
+        void BindExitButton(bool subscribe)
+        {
+            if (exitButton == null) return;
+            exitButton.onClick.RemoveListener(HandleExitButton);
+            if (subscribe)
+                exitButton.onClick.AddListener(HandleExitButton);
         }
 
         // ─────────────────────────────────────
@@ -252,6 +270,20 @@ namespace BlockBlastGame
         {
             // 「お金が足りません」演出は ShopCardSelector.onPurchaseInsufficientFunds で
             // 後から繋ぐ予定。ここでは何もせずショップを開いたままにする。
+        }
+
+        void HandleExitButton()
+        {
+            if (!_shopOpen || _purchaseInFlight) return;
+
+            Debug.Log("[ShopFlowController] 購入せずにショップを退出");
+            _purchaseInFlight = true;
+
+            // 購入処理 / 支払い / アイテム効果適用は一切行わず、ショップだけ閉じる。
+            CloseShop();
+
+            if (autoProceedAfterExit)
+                ProceedToNextStageImmediate();
         }
 
         IEnumerator CloseAfterDelay(float delay)
