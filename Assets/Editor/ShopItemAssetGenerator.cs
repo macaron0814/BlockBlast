@@ -183,7 +183,9 @@ public static class ShopItemAssetGenerator
             outline: Color.white,
             outlineWidth: 0.08f,
             priceOutline: Color.white,
-            priceOutlineWidth: 0.08f);
+            priceOutlineWidth: 0.08f,
+            valueOutline: Color.white,
+            valueOutlineWidth: 0.08f);
         UpsertRarity(table, byR, Rarity.R,   "R",
             frame: new Color(0.40f,0.78f,1.00f),
             bg:    new Color(0.85f,0.93f,1.00f),
@@ -193,7 +195,9 @@ public static class ShopItemAssetGenerator
             outline: Color.white,
             outlineWidth: 0.08f,
             priceOutline: Color.white,
-            priceOutlineWidth: 0.08f);
+            priceOutlineWidth: 0.08f,
+            valueOutline: Color.white,
+            valueOutlineWidth: 0.08f);
         UpsertRarity(table, byR, Rarity.SR,  "SR",
             frame: new Color(0.65f,0.30f,1.00f),
             bg:    new Color(0.92f,0.85f,1.00f),
@@ -203,7 +207,9 @@ public static class ShopItemAssetGenerator
             outline: Color.white,
             outlineWidth: 0.09f,
             priceOutline: Color.white,
-            priceOutlineWidth: 0.09f);
+            priceOutlineWidth: 0.09f,
+            valueOutline: Color.white,
+            valueOutlineWidth: 0.09f);
         UpsertRarity(table, byR, Rarity.SSR, "SSR",
             frame: new Color(1.00f,0.78f,0.20f),
             bg:    new Color(1.00f,0.97f,0.85f),
@@ -213,7 +219,9 @@ public static class ShopItemAssetGenerator
             outline: Color.white,
             outlineWidth: 0.10f,
             priceOutline: Color.white,
-            priceOutlineWidth: 0.10f);
+            priceOutlineWidth: 0.10f,
+            valueOutline: Color.white,
+            valueOutlineWidth: 0.10f);
         UpsertRarity(table, byR, Rarity.UR,  "UR",
             frame: new Color(1.00f,0.40f,0.40f),
             bg:    new Color(1.00f,0.85f,0.85f),
@@ -223,13 +231,16 @@ public static class ShopItemAssetGenerator
             outline: Color.white,
             outlineWidth: 0.10f,
             priceOutline: Color.white,
-            priceOutlineWidth: 0.10f);
+            priceOutlineWidth: 0.10f,
+            valueOutline: Color.white,
+            valueOutlineWidth: 0.10f);
     }
 
     static void UpsertRarity(ShopRarityVisualTable table,
                              Dictionary<Rarity, ShopRarityVisualTable.RarityEntry> byR,
                              Rarity rarity, string label, Color frame, Color bg, Color text, Color value, Color price,
-                                 Color outline, float outlineWidth, Color priceOutline, float priceOutlineWidth)
+                                 Color outline, float outlineWidth, Color priceOutline, float priceOutlineWidth,
+                                 Color valueOutline, float valueOutlineWidth)
     {
         if (byR.ContainsKey(rarity)) return;
         var ne = new ShopRarityVisualTable.RarityEntry
@@ -243,8 +254,10 @@ public static class ShopItemAssetGenerator
             priceColor = price,
             textOutlineColor = outline,
             textOutlineWidth = outlineWidth,
-                priceTextOutlineColor = priceOutline,
-                priceTextOutlineWidth = priceOutlineWidth,
+            priceTextOutlineColor = priceOutline,
+            priceTextOutlineWidth = priceOutlineWidth,
+            valueTextOutlineColor = valueOutline,
+            valueTextOutlineWidth = valueOutlineWidth,
         };
         table.entries.Add(ne);
     }

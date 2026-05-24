@@ -11,6 +11,14 @@ namespace BlockBlastGame
         public BlockSpawner blockSpawner;
         public Camera mainCamera;
 
+        [Header("Shop Arrival Lock")]
+        [Tooltip("ON: ShopArrivalSequence の到来演出中 (= ステージ経過時間が尽きてショップへ遷移する間) は、\n" +
+                 "新規つかみ・配置を禁止し、つかみ中のブロックは元の位置に戻す。")]
+        public bool lockDuringShopArrival = true;
+
+        [Tooltip("ショップ到来演出の参照。空なら Start で自動取得 (FindObjectOfType)")]
+        public ShopArrivalSequence shopArrivalSequence;
+
         [Header("Settings")]
         [Tooltip("ドラッグ中、指 (ポインタ) からブロックを上にずらす量 (ワールド単位)。\n" +
                  "スマホで指がブロックを覆ってしまわないよう、正の値で「指より上」に持ち上げる。\n" +
@@ -35,11 +43,23 @@ namespace BlockBlastGame
         bool lastPreviewCanPlace;
         Vector2Int lastPreviewPos = InvalidPreviewPos;
 
+        void Start()
+        {
+            if (shopArrivalSequence == null)
+                shopArrivalSequence = FindObjectOfType<ShopArrivalSequence>();
+        }
+
         void Update()
         {
             var state = GameManager.Instance.currentState;
-            if (state != GameState.Playing)
+            bool shopArriving = lockDuringShopArrival
+                                && shopArrivalSequence != null
+                                && shopArrivalSequence.IsSequenceRunning;
+
+            if (state != GameState.Playing || shopArriving)
             {
+                // ショップ到来中につかみっぱなしのブロックは、置けないままなので
+                // 「指を離したときと同じ」= 元の位置に戻して破棄。
                 if (isDragging)
                     CancelCurrentDrag();
 

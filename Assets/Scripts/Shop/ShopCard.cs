@@ -63,6 +63,16 @@ namespace BlockBlastGame
         [Tooltip("説明文テキスト (任意)。{value} はテーブルから差し込まれる")]
         public TMP_Text descriptionText;
 
+        [Tooltip("倍率 / 個数 (\"1.1倍\" \"+3個\" 等) を出す専用 TMP_Text (任意)。\n" +
+                 "アサインすると、説明文中の {value} 部分とは別にここに値文字列が書き込まれ、\n" +
+                 "ShopRarityVisualTable.valueTextOutline* で個別フチを当てられる。\n" +
+                 "アサインしない場合は今まで通り descriptionText 内の {value} を <color> で囲むだけになる。")]
+        public TMP_Text valueText;
+
+        [Tooltip("ON: valueText を使う場合、説明文側の {value} は空文字に置換して二重表示を防ぐ。\n" +
+                 "OFF: 説明文内にもインラインで値文字列が表示される (色のみ反映)。")]
+        public bool valueTextReplacesDescriptionValue = true;
+
         [Header("Sale Visual (任意)")]
         [Tooltip("SSR セール時に表示する GameObject (\"半額！\" バッジ など)。\n" +
                  "Apply で SetActive(isOnSale) される")]
@@ -293,6 +303,8 @@ namespace BlockBlastGame
                     }
                     ApplyTmpStyle(descriptionText, ve.textColor, ve.textOutlineColor, ve.textOutlineWidth);
                     ApplyTmpStyle(priceTextTMP, ve.priceColor, ve.priceTextOutlineColor, ve.priceTextOutlineWidth);
+                    // 値専用テキストは value 色 + value 専用フチを適用
+                    ApplyTmpStyle(valueText, ve.valueColor, ve.valueTextOutlineColor, ve.valueTextOutlineWidth);
 
                     // 値段テキストの「買えるときの色」をレアリティ依存に上書き
                     // (買えないときの赤は priceColorUnaffordable 側で維持される)
@@ -307,21 +319,42 @@ namespace BlockBlastGame
             // 名前
             if (nameText != null) nameText.text = item.ResolveDisplayName();
 
+            // 値文字列 (倍率 / 個数) を解決
+            string valueFormatted = null;
+            if (effectTable != null)
+                valueFormatted = effectTable.GetFormatted(item.category, item.tierIndex);
+
+            // 値専用 TMP (任意): 値文字列をここに別出力。フチ・色は ApplyTmpStyle で既に当てている。
+            if (valueText != null)
+            {
+                valueText.richText = true;
+                valueText.text     = valueFormatted ?? "";
+            }
+
             // 説明文 ({value} / {amount} を効果テーブルで差し替え、レアリティ色で <color> 囲み)
             if (descriptionText != null)
             {
                 string desc = item.descriptionTemplate ?? "";
-                if (effectTable != null)
+                if (valueFormatted != null)
                 {
-                    string formatted = effectTable.GetFormatted(item.category, item.tierIndex);
-                    // レアリティの value 色を TMP の rich text タグで適用
-                    string colored = formatted;
-                    if (ve != null)
+                    // valueText が割り当てられていて二重表示を避けたい場合は説明文側の {value} を空に置換
+                    bool stripFromDescription = (valueText != null && valueTextReplacesDescriptionValue);
+
+                    string colored;
+                    if (stripFromDescription)
+                    {
+                        colored = "";
+                    }
+                    else if (ve != null)
                     {
                         string hex = ColorUtility.ToHtmlStringRGB(ve.valueColor);
-                        // <b> は数字を強調しすぎる場合があるのでオフ。<color>のみ。
-                        colored = $"<color=#{hex}>{formatted}</color>";
+                        colored = $"<color=#{hex}>{valueFormatted}</color>";
                     }
+                    else
+                    {
+                        colored = valueFormatted;
+                    }
+
                     desc = desc.Replace("{value}", colored)
                                .Replace("{amount}", colored);
                 }
@@ -373,6 +406,7 @@ namespace BlockBlastGame
             if (iconImage != null)        { iconImage.sprite = null; iconImage.enabled = false; }
             if (nameText  != null)        nameText.text = "";
             if (descriptionText != null)  descriptionText.text = "";
+            if (valueText != null)        valueText.text = "";
             if (saleBadge != null)        saleBadge.SetActive(false);
             cost = 0;
             RefreshAffordability();

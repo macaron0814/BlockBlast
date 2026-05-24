@@ -66,6 +66,17 @@ namespace BlockBlastGame
             [Range(0f, 1f)]
             public float priceTextOutlineWidth = 0f;
 
+            [Header("Value Text Outline (TMP, ShopCard.valueText 用)")]
+            [Tooltip("ShopCard.valueText (倍率/個数を出す専用 TMP) のフチ色。\n" +
+                     "TMP の仕様上、説明文内の {value} 部分だけインラインでフチを変えるのは難しいため、\n" +
+                     "値段専用テキストと同様に「値専用 TMP」を別アサインしてそちらにフチを適用する。")]
+            public Color valueTextOutlineColor = Color.black;
+
+            [Tooltip("ShopCard.valueText 専用のフチ幅。\n" +
+                     "0 = フチなし。TMP の Outline Width は一般的に 0〜0.5 程度で調整。")]
+            [Range(0f, 1f)]
+            public float valueTextOutlineWidth = 0f;
+
             [Tooltip("枠用のスプライト (任意)。指定すれば ShopCard の frameImage に当てる")]
             public Sprite frameSprite;
 

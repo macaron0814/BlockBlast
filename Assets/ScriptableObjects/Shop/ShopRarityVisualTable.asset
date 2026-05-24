@@ -18,12 +18,14 @@ MonoBehaviour:
     frameColor: {r: 1, g: 1, b: 1, a: 1}
     backgroundColor: {r: 1, g: 1, b: 1, a: 1}
     textColor: {r: 0, g: 0, b: 0, a: 1}
-    valueColor: {r: 1, g: 0.85, b: 0.15, a: 1}
+    valueColor: {r: 0, g: 0, b: 0, a: 1}
     priceColor: {r: 0, g: 0, b: 0, a: 1}
     textOutlineColor: {r: 0, g: 0, b: 0, a: 1}
     textOutlineWidth: 0
     priceTextOutlineColor: {r: 0, g: 0, b: 0, a: 1}
     priceTextOutlineWidth: 0
+    valueTextOutlineColor: {r: 0, g: 0, b: 0, a: 1}
+    valueTextOutlineWidth: 0.5
     frameSprite: {fileID: 0}
     backgroundSprite: {fileID: 21300000, guid: 5b5f4e05740e54743950798a54af2e6d, type: 3}
     badgeSprite: {fileID: 21300000, guid: 45398da21d26c47298562ba3702b6dc4, type: 3}
@@ -32,12 +34,14 @@ MonoBehaviour:
     frameColor: {r: 1, g: 1, b: 1, a: 1}
     backgroundColor: {r: 1, g: 1, b: 1, a: 1}
     textColor: {r: 1, g: 1, b: 1, a: 1}
-    valueColor: {r: 1, g: 0.85, b: 0.15, a: 1}
+    valueColor: {r: 1, g: 1, b: 1, a: 1}
     priceColor: {r: 1, g: 1, b: 1, a: 1}
     textOutlineColor: {r: 0.13029547, g: 0.29668242, b: 0.4528302, a: 1}
     textOutlineWidth: 0.5
     priceTextOutlineColor: {r: 0.13029547, g: 0.29668242, b: 0.4528302, a: 1}
     priceTextOutlineWidth: 0.5
+    valueTextOutlineColor: {r: 0, g: 0, b: 0, a: 1}
+    valueTextOutlineWidth: 0.5
     frameSprite: {fileID: 0}
     backgroundSprite: {fileID: 21300000, guid: 8118093b67673403fad50a8a35fb4a54, type: 3}
     badgeSprite: {fileID: 21300000, guid: 9c5585bf48a0441a1983e23ceac441e5, type: 3}
@@ -46,12 +50,14 @@ MonoBehaviour:
     frameColor: {r: 1, g: 1, b: 1, a: 1}
     backgroundColor: {r: 1, g: 1, b: 1, a: 1}
     textColor: {r: 1, g: 0.14509805, b: 0, a: 1}
-    valueColor: {r: 1, g: 0.85, b: 0.15, a: 1}
+    valueColor: {r: 1, g: 0, b: 0, a: 1}
     priceColor: {r: 1, g: 0, b: 0, a: 1}
     textOutlineColor: {r: 1, g: 1, b: 1, a: 1}
     textOutlineWidth: 0.3
     priceTextOutlineColor: {r: 1, g: 1, b: 1, a: 1}
     priceTextOutlineWidth: 0.3
+    valueTextOutlineColor: {r: 0, g: 0, b: 0, a: 1}
+    valueTextOutlineWidth: 0.5
     frameSprite: {fileID: 0}
     backgroundSprite: {fileID: 21300000, guid: 9bc43a7cec4b24811b6009ee7bc69461, type: 3}
     badgeSprite: {fileID: 21300000, guid: bc210d452ec6546b1a0af43561f18bc7, type: 3}
@@ -60,12 +66,14 @@ MonoBehaviour:
     frameColor: {r: 1, g: 1, b: 1, a: 1}
     backgroundColor: {r: 1, g: 1, b: 1, a: 1}
     textColor: {r: 1, g: 1, b: 1, a: 1}
-    valueColor: {r: 1, g: 0.85, b: 0.15, a: 1}
+    valueColor: {r: 1, g: 1, b: 1, a: 1}
     priceColor: {r: 1, g: 1, b: 1, a: 1}
     textOutlineColor: {r: 1, g: 0.25, b: 0.58669376, a: 1}
     textOutlineWidth: 0.3
     priceTextOutlineColor: {r: 1, g: 0.25, b: 0.58669376, a: 1}
     priceTextOutlineWidth: 0.3
+    valueTextOutlineColor: {r: 0, g: 0, b: 0, a: 1}
+    valueTextOutlineWidth: 0.5
     frameSprite: {fileID: 0}
     backgroundSprite: {fileID: 21300000, guid: cd8262b4a283841d9ae99c121a355574, type: 3}
     badgeSprite: {fileID: 21300000, guid: 7bb5599e2a46f430ea6d12ce9038c9a2, type: 3}

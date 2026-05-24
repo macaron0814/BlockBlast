@@ -48,11 +48,15 @@ namespace BlockBlastGame
         [Tooltip("Sprite フォールバック時のスケール")]
         public float shopSpriteScale = 1f;
 
-        [Tooltip("ショップビジュアル用 Sorting Layer 名")]
-        public string shopSortingLayer = "Enemy";
+        [Tooltip("ON: ArchRoadSystem の SortingLayer / roadSortingOrder を基準に、ショップを道路の 1 つ後ろへ自動配置する。\n" +
+                 "通常は ON 推奨。ParallaxBackground(-10) < Shop(-1) < ArchRoadSystem Road(0) のような並びになる。")]
+        public bool autoPlaceShopBehindRoad = true;
 
-        [Tooltip("ショップビジュアル用 Sorting Order")]
-        public int shopSortingOrder = 50;
+        [Tooltip("autoPlaceShopBehindRoad=OFF のときに使うショップビジュアル用 Sorting Layer 名")]
+        public string shopSortingLayer = "UI";
+
+        [Tooltip("autoPlaceShopBehindRoad=OFF のときに使うショップビジュアル用 Sorting Order")]
+        public int shopSortingOrder = -1;
 
         [Header("Shop Fade In (ポップイン防止)")]
         [Tooltip("ON: スポーン時 alpha=0 → 接近に合わせて 1 に上げる (急に現れるのを防ぐ)")]
@@ -536,6 +540,7 @@ namespace BlockBlastGame
             {
                 go = Instantiate(shopPrefab);
                 go.name = "ShopVisualInstance";
+                ApplyShopSorting(go);
                 if (verboseLog) Debug.Log("[ShopArrivalSequence] shopPrefab を Instantiate");
             }
             else
@@ -545,24 +550,7 @@ namespace BlockBlastGame
                 {
                     createdSR = go.AddComponent<SpriteRenderer>();
                     createdSR.sprite = shopSprite;
-
-                    // SortingLayer が登録されていない場合は警告を出して "Default" にフォールバック
-                    bool layerFound = (shopSortingLayer == "Default");
-                    if (!layerFound)
-                    {
-                        foreach (var l in SortingLayer.layers)
-                            if (l.name == shopSortingLayer) { layerFound = true; break; }
-                    }
-                    if (layerFound)
-                    {
-                        createdSR.sortingLayerName = shopSortingLayer;
-                    }
-                    else
-                    {
-                        Debug.LogWarning($"[ShopArrivalSequence] Sorting Layer '{shopSortingLayer}' が未登録です。'Default' にフォールバックします。Project Settings > Tags and Layers で登録してください。");
-                        createdSR.sortingLayerName = "Default";
-                    }
-                    createdSR.sortingOrder = shopSortingOrder;
+                    ApplyShopSorting(go);
                     if (verboseLog)
                         Debug.Log($"[ShopArrivalSequence] shopSprite SpriteRenderer 生成: sprite='{shopSprite.name}', layer='{createdSR.sortingLayerName}', order={createdSR.sortingOrder}");
                 }
@@ -578,6 +566,54 @@ namespace BlockBlastGame
             go.transform.SetParent(null, worldPositionStays: true);
 
             return go;
+        }
+
+        void ApplyShopSorting(GameObject root)
+        {
+            if (root == null) return;
+
+            string layerName = ResolveShopSortingLayer();
+            int order = ResolveShopSortingOrder();
+
+            if (!SortingLayerExists(layerName))
+            {
+                Debug.LogWarning($"[ShopArrivalSequence] Sorting Layer '{layerName}' が未登録です。'Default' にフォールバックします。Project Settings > Tags and Layers で登録してください。");
+                layerName = "Default";
+            }
+
+            var renderers = root.GetComponentsInChildren<SpriteRenderer>(includeInactive: true);
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                var sr = renderers[i];
+                if (sr == null) continue;
+                sr.sortingLayerName = layerName;
+                sr.sortingOrder = order;
+            }
+
+            if (verboseLog)
+                Debug.Log($"[ShopArrivalSequence] Shop sorting 適用: layer='{layerName}', order={order}, renderers={renderers.Length}");
+        }
+
+        string ResolveShopSortingLayer()
+        {
+            if (autoPlaceShopBehindRoad && archRoadSystem != null)
+                return archRoadSystem.sortingLayer;
+            return shopSortingLayer;
+        }
+
+        int ResolveShopSortingOrder()
+        {
+            if (autoPlaceShopBehindRoad && archRoadSystem != null)
+                return archRoadSystem.roadSortingOrder - 1;
+            return shopSortingOrder;
+        }
+
+        bool SortingLayerExists(string layerName)
+        {
+            if (layerName == "Default") return true;
+            foreach (var l in SortingLayer.layers)
+                if (l.name == layerName) return true;
+            return false;
         }
 
         /// <summary>
