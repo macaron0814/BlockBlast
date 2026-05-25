@@ -182,9 +182,16 @@ namespace BlockBlastGame
             }
             else
             {
+                // EnemyData.chaseSpeed は敵ごとの基準速度として維持し、
+                // 必要なら距離に応じて「遠いほど速く、近いほど遅い」倍率を追加で掛ける。
+                float distanceSpeedMultiplier = EnemySystem.ResolveDistanceChaseSpeedMultiplier(
+                    distanceAngle,
+                    _data.spawnDistance);
+
                 // EnemySystem.enemyMoveSpeedMultiplier を全敵共通の速度倍率として乗算
                 distanceAngle -= _data.chaseSpeed
                                * EnemySystem.CurrentMoveSpeedMultiplier
+                               * distanceSpeedMultiplier
                                * enemySlowFactor
                                * Time.deltaTime;
             }

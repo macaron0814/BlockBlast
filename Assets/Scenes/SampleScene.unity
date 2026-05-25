@@ -377,6 +377,7 @@ RectTransform:
   - {fileID: 635398556}
   - {fileID: 2143628566}
   - {fileID: 157049202}
+  - {fileID: 1487148782}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -1506,7 +1507,7 @@ MonoBehaviour:
   deferOpenWhenArrivalSequenceActive: 1
   arrivalSequence: {fileID: 794086517}
   applyEffectsOnPurchase: 1
-  playerEffectState: {fileID: 0}
+  playerEffectState: {fileID: 69182998}
   onShopOpened:
     m_PersistentCalls:
       m_Calls: []
@@ -4835,9 +4836,9 @@ MonoBehaviour:
   shopPrefab: {fileID: 0}
   shopSprite: {fileID: 21300000, guid: 83ecb115edc20475d947c24b7b266636, type: 3}
   shopSpriteScale: 1
-  autoPlaceShopBehindRoad: 1
+  autoPlaceShopBehindRoad: 0
   shopSortingLayer: UI
-  shopSortingOrder: 50
+  shopSortingOrder: 0
   enableShopFadeIn: 1
   shopFadeInDuration: 1.2
   shopArriveDistance: 0
@@ -8364,12 +8365,12 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1487148781}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2020234262}
+  m_Father: {fileID: 32875507}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
@@ -10221,6 +10222,34 @@ MonoBehaviour:
   - 120
   - 160
   enemyMoveSpeedMultiplier: 0.05
+  useDistanceBasedChaseSpeed: 1
+  nearChaseSpeedMultiplier: 0.5
+  farChaseSpeedMultiplier: 2
+  distanceChaseSpeedCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  preserveDistanceChaseArrivalTime: 1
   enemyKnockbackMultiplier: 3
   enemyKnockbackDamping: 4.5
   enemyHoverHeightVariance: 0.3
@@ -12186,7 +12215,6 @@ RectTransform:
   - {fileID: 1306865230}
   - {fileID: 616173609}
   - {fileID: 1240252297}
-  - {fileID: 1487148782}
   - {fileID: 2137383876}
   - {fileID: 590353481}
   m_Father: {fileID: 0}

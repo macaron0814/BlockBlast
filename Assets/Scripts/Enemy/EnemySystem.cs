@@ -22,6 +22,23 @@ namespace BlockBlastGame
         [Range(0f, 5f)]
         public float enemyMoveSpeedMultiplier = 1f;
 
+        [Tooltip("ON: 敵が遠いほど速く、プレイヤーに近づくほど遅くなる。\nEnemyData.chaseSpeed は基準速度としてそのまま使う。")]
+        public bool useDistanceBasedChaseSpeed = false;
+
+        [Tooltip("プレイヤーに最も近い位置での速度倍率。\n例: 0.5 なら chaseSpeed=4 の敵は近距離で 2 になる。")]
+        [Range(0.05f, 5f)]
+        public float nearChaseSpeedMultiplier = 0.5f;
+
+        [Tooltip("出現位置付近での速度倍率。\n例: 2 なら chaseSpeed=4 の敵は遠距離で 8 になる。")]
+        [Range(0.05f, 5f)]
+        public float farChaseSpeedMultiplier = 2f;
+
+        [Tooltip("距離 0=プレイヤー付近 / 1=出現位置付近。\nY=0 で near、Y=1 で far の間を補間する。\n直線なら一定グラデーション、Ease 系なら近距離で粘る/遠距離で一気に来る調整ができる。")]
+        public AnimationCurve distanceChaseSpeedCurve = AnimationCurve.Linear(0f, 0f, 1f, 1f);
+
+        [Tooltip("ON: 遠距離を速く・近距離を遅くしても、ノックバック等が無い場合の到達時間が従来の一定速度と同じになるよう自動補正する。")]
+        public bool preserveDistanceChaseArrivalTime = true;
+
         [Header("Enemy Knockback")]
         [Tooltip("全敵が弾を受けたときのノックバック量に掛かる倍率。\n1 = 通常 / 0 = ノックバックなし / 5 = 5 倍 (派手)\n個別 EnemyData.knockbackPerHit を変えずに全体感を調整したい時に使用。")]
         [Range(0f, 10f)]
@@ -50,6 +67,16 @@ namespace BlockBlastGame
         // ─── 全敵共通パラメータの static 公開 (EnemyController から参照) ──────────
         /// <summary>全敵のチェイス速度に掛かる倍率。</summary>
         public static float CurrentMoveSpeedMultiplier { get; private set; } = 1f;
+        /// <summary>true: 距離に応じてチェイス速度倍率を変える。</summary>
+        public static bool CurrentUseDistanceBasedChaseSpeed { get; private set; } = false;
+        /// <summary>プレイヤー付近での速度倍率。</summary>
+        public static float CurrentNearChaseSpeedMultiplier { get; private set; } = 0.5f;
+        /// <summary>出現位置付近での速度倍率。</summary>
+        public static float CurrentFarChaseSpeedMultiplier { get; private set; } = 2f;
+        /// <summary>距離別速度の補間カーブ。</summary>
+        public static AnimationCurve CurrentDistanceChaseSpeedCurve { get; private set; } = AnimationCurve.Linear(0f, 0f, 1f, 1f);
+        /// <summary>到達時間を従来と揃えるための補正倍率。</summary>
+        public static float CurrentDistanceChaseTimeNormalizeMultiplier { get; private set; } = 1f;
         /// <summary>全敵が受けるノックバック量に掛かる倍率。</summary>
         public static float CurrentKnockbackMultiplier { get; private set; } = 1f;
         /// <summary>ノックバック減衰の強さ (1 秒あたり)。</summary>
@@ -172,6 +199,15 @@ namespace BlockBlastGame
         {
             // 全敵共通パラメータを毎フレーム同期 (インスペクタの変更が即反映)
             CurrentMoveSpeedMultiplier = Mathf.Max(0f, enemyMoveSpeedMultiplier);
+            CurrentUseDistanceBasedChaseSpeed = useDistanceBasedChaseSpeed;
+            CurrentNearChaseSpeedMultiplier = Mathf.Max(0.01f, nearChaseSpeedMultiplier);
+            CurrentFarChaseSpeedMultiplier = Mathf.Max(0.01f, farChaseSpeedMultiplier);
+            CurrentDistanceChaseSpeedCurve = distanceChaseSpeedCurve != null
+                ? distanceChaseSpeedCurve
+                : AnimationCurve.Linear(0f, 0f, 1f, 1f);
+            CurrentDistanceChaseTimeNormalizeMultiplier = preserveDistanceChaseArrivalTime
+                ? CalculateDistanceChaseTimeNormalizeMultiplier()
+                : 1f;
             CurrentKnockbackMultiplier = Mathf.Max(0f, enemyKnockbackMultiplier);
             CurrentKnockbackDamping    = Mathf.Max(0.01f, enemyKnockbackDamping);
             CurrentHoverHeightVariance = Mathf.Max(0f, enemyHoverHeightVariance);
@@ -266,6 +302,50 @@ namespace BlockBlastGame
                 return Mathf.Max(1f, linesCleared);
             int idx = Mathf.Clamp(linesCleared - 1, 0, lineClearMultiplierTable.Count - 1);
             return Mathf.Max(0f, lineClearMultiplierTable[idx]);
+        }
+
+        /// <summary>
+        /// 敵の残り距離に応じたチェイス速度倍率。
+        /// normalizedDistance: 0 = プレイヤー付近 / 1 = 出現位置付近。
+        /// </summary>
+        public static float ResolveDistanceChaseSpeedMultiplier(float distanceAngle, float spawnDistance)
+        {
+            if (!CurrentUseDistanceBasedChaseSpeed) return 1f;
+            if (spawnDistance <= 0.01f) return 1f;
+
+            float normalizedDistance = Mathf.Clamp01(distanceAngle / spawnDistance);
+            float baseMultiplier = EvaluateDistanceChaseBaseMultiplier(normalizedDistance);
+            return Mathf.Max(0.01f, baseMultiplier * CurrentDistanceChaseTimeNormalizeMultiplier);
+        }
+
+        static float EvaluateDistanceChaseBaseMultiplier(float normalizedDistance)
+        {
+            float t = CurrentDistanceChaseSpeedCurve != null
+                ? Mathf.Clamp01(CurrentDistanceChaseSpeedCurve.Evaluate(normalizedDistance))
+                : normalizedDistance;
+
+            return Mathf.Lerp(CurrentNearChaseSpeedMultiplier, CurrentFarChaseSpeedMultiplier, t);
+        }
+
+        static float CalculateDistanceChaseTimeNormalizeMultiplier()
+        {
+            if (!CurrentUseDistanceBasedChaseSpeed) return 1f;
+
+            const int samples = 32;
+            float inverseSpeedArea = 0f;
+            float previous = 1f / Mathf.Max(0.01f, EvaluateDistanceChaseBaseMultiplier(0f));
+
+            for (int i = 1; i <= samples; i++)
+            {
+                float t = i / (float)samples;
+                float current = 1f / Mathf.Max(0.01f, EvaluateDistanceChaseBaseMultiplier(t));
+                inverseSpeedArea += (previous + current) * 0.5f / samples;
+                previous = current;
+            }
+
+            // 到達時間 = 従来時間 * inverseSpeedArea / normalize。
+            // normalize を inverseSpeedArea にすると、総到達時間が従来と揃う。
+            return Mathf.Max(0.01f, inverseSpeedArea);
         }
 
         void HandleStageChanged(int stageNumber)
