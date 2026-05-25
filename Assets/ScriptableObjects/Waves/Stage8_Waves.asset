@@ -67,12 +67,12 @@ MonoBehaviour:
   intervalBetweenWaves: 5
   survivalTime: 160
   routeNodes:
-  - eventType: 2
+  - eventType: 0
     maxCellIncrease: 1
     randomShapeIncrease: 0
     unlockAllShapes: 0
     spawnEnemy: {fileID: 0}
-  - eventType: 2
+  - eventType: 0
     maxCellIncrease: 1
     randomShapeIncrease: 0
     unlockAllShapes: 0
@@ -83,6 +83,46 @@ MonoBehaviour:
     unlockAllShapes: 0
     spawnEnemy: {fileID: 0}
   - eventType: 0
+    maxCellIncrease: 1
+    randomShapeIncrease: 0
+    unlockAllShapes: 0
+    spawnEnemy: {fileID: 0}
+  - eventType: 0
+    maxCellIncrease: 1
+    randomShapeIncrease: 0
+    unlockAllShapes: 0
+    spawnEnemy: {fileID: 0}
+  - eventType: 2
+    maxCellIncrease: 1
+    randomShapeIncrease: 0
+    unlockAllShapes: 0
+    spawnEnemy: {fileID: 0}
+  - eventType: 0
+    maxCellIncrease: 1
+    randomShapeIncrease: 0
+    unlockAllShapes: 0
+    spawnEnemy: {fileID: 0}
+  - eventType: 0
+    maxCellIncrease: 1
+    randomShapeIncrease: 0
+    unlockAllShapes: 0
+    spawnEnemy: {fileID: 0}
+  - eventType: 2
+    maxCellIncrease: 1
+    randomShapeIncrease: 0
+    unlockAllShapes: 0
+    spawnEnemy: {fileID: 0}
+  - eventType: 0
+    maxCellIncrease: 1
+    randomShapeIncrease: 0
+    unlockAllShapes: 0
+    spawnEnemy: {fileID: 0}
+  - eventType: 0
+    maxCellIncrease: 1
+    randomShapeIncrease: 0
+    unlockAllShapes: 0
+    spawnEnemy: {fileID: 0}
+  - eventType: 5
     maxCellIncrease: 1
     randomShapeIncrease: 0
     unlockAllShapes: 0

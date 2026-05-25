@@ -9,7 +9,8 @@ namespace BlockBlastGame
         Shop = 1,
         VendingMachine = 2,
         Cake = 3,
-        Boss = 4
+        Boss = 4,
+        Clear = 5
     }
 
     [Serializable]

@@ -301,7 +301,7 @@ namespace BlockBlastGame
             float x = Mathf.Sin(rad) * effectiveR;
             float y = -_archRadius + Mathf.Cos(rad) * effectiveR;
 
-            transform.position = _archCenter + new Vector3(x, y, 0f);
+            transform.position = _archCenter + new Vector3(x, y, 0f) + EnemySystem.CurrentEventVisualOffset;
             transform.rotation = Quaternion.Euler(0f, 0f, -visualAngle);
 
             float depthScale = Mathf.Lerp(1f, 0.25f, Mathf.Clamp01(distanceAngle / 90f));

@@ -11,7 +11,7 @@ using BlockBlastGame;
 ///   ・ShopRarityVisualTable  (レアリティの見た目)
 ///   ・ShopItemData × 27      (アイテム1個ずつ)
 ///   ・ShopItemDatabase       (上の 27 個を集約)
-///   ・ShopItemPool × 6       (Stage1Shop / Stage2Shop / Stage3Shop / Stage7Shop / Vending3 / ClearReward)
+///   ・ShopItemPool           (Stage shop / Stage vending / ClearReward)
 /// を Assets/ScriptableObjects/Shop/ 以下に一括生成する。
 ///
 /// メニュー: Tools / BlockBlast / Setup Shop Item Assets
@@ -308,6 +308,14 @@ public static class ShopItemAssetGenerator
         CreatePool("Stage5Shop_Pool", new[]{Rarity.R, Rarity.SR, Rarity.SSR},                6, false, 1.0f);
         CreatePool("Stage6Shop_Pool", new[]{Rarity.R, Rarity.SR, Rarity.SSR},                6, false, 1.0f);
         CreatePool("Stage7Shop_Pool", new[]{Rarity.N, Rarity.R, Rarity.SR, Rarity.SSR, Rarity.UR}, 6, true, 0.5f); // SSR セール確定
+        // CSV の自販機行に直接対応 (VendingMachineFlowController.vendingStagePools に割り当てる)
+        CreatePool("Stage3Vending1_Pool", new[]{Rarity.N, Rarity.R},                         3, false, 1.0f);
+        CreatePool("Stage7Vending1_Pool", new[]{Rarity.N, Rarity.R, Rarity.SR},              3, false, 1.0f);
+        CreatePool("Stage8Vending1_Pool", new[]{Rarity.N, Rarity.R, Rarity.SR},              3, false, 1.0f);
+        CreatePool("Stage8Vending2_Pool", new[]{Rarity.R, Rarity.SR},                        3, false, 1.0f);
+        CreatePool("Stage8Vending3_Pool", new[]{Rarity.R, Rarity.SR},                        3, false, 1.0f);
+
+        // 汎用フォールバック
         CreatePool("Vending3_Pool",   new[]{Rarity.N, Rarity.R, Rarity.SR},                  3, false, 1.0f);
         CreatePool("ClearReward_Pool",new[]{Rarity.SSR, Rarity.UR},                          3, false, 1.0f);
     }

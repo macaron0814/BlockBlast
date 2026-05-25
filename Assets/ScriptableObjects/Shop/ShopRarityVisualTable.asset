@@ -77,3 +77,19 @@ MonoBehaviour:
     frameSprite: {fileID: 0}
     backgroundSprite: {fileID: 21300000, guid: cd8262b4a283841d9ae99c121a355574, type: 3}
     badgeSprite: {fileID: 21300000, guid: 7bb5599e2a46f430ea6d12ce9038c9a2, type: 3}
+  - rarity: 3
+    displayLabel: SSR
+    frameColor: {r: 1, g: 0.78, b: 0.2, a: 1}
+    backgroundColor: {r: 1, g: 0.97, b: 0.85, a: 1}
+    textColor: {r: 0.55, g: 0.35, b: 0.05, a: 1}
+    valueColor: {r: 1, g: 0.6, b: 0, a: 1}
+    priceColor: {r: 0.9, g: 0.5, b: 0.05, a: 1}
+    textOutlineColor: {r: 1, g: 1, b: 1, a: 1}
+    textOutlineWidth: 0.1
+    priceTextOutlineColor: {r: 1, g: 1, b: 1, a: 1}
+    priceTextOutlineWidth: 0.1
+    valueTextOutlineColor: {r: 1, g: 1, b: 1, a: 1}
+    valueTextOutlineWidth: 0.1
+    frameSprite: {fileID: 0}
+    backgroundSprite: {fileID: 0}
+    badgeSprite: {fileID: 0}

@@ -70,6 +70,12 @@ namespace BlockBlastGame
         /// </summary>
         public static float CurrentPlayerSpeedMultiplier { get; private set; } = 1f;
 
+        /// <summary>
+        /// ルートイベント演出中だけ敵全体に乗せる見た目オフセット。
+        /// 自販機到着などでプレイヤー UI と敵を同じ方向へスライドさせるために使う。
+        /// </summary>
+        public static Vector3 CurrentEventVisualOffset { get; private set; } = Vector3.zero;
+
         [Header("Bullet Spawn")]
         [Tooltip("弾の発射起点。未設定時はアーチ角度 0")]
         public Transform bulletSpawnPoint;
@@ -419,6 +425,25 @@ namespace BlockBlastGame
                     PauseSurvivalForShop();
                     GameEvents.TriggerShopRouteNodeReached();
                     break;
+
+                case RouteEventType.VendingMachine:
+                    // 自販機到来演出は VendingMachineArrivalSequence が担当する。
+                    // こちらはステージ途中 (= ステージ続行) なので Wave は停めず、
+                    // サバイバルタイマーのカウントだけ一時的に止める。
+                    // 到着 → Canvas オープン中は GamePauseService.Pause で全停止される。
+                    Debug.Log("[EnemySystem] VendingMachine ルートノードを消費 → OnVendingMachineRouteNodeReached を発火");
+                    PauseSurvivalTickOnly();
+                    GameEvents.TriggerVendingMachineRouteNodeReached();
+                    break;
+
+                case RouteEventType.Clear:
+                    // ゲーム全体のクリアマス。ショップのように通常ステージ進行へは戻らず、
+                    // Wave / survival を止めてリザルト表示へ遷移する。
+                    Debug.Log("[EnemySystem] Clear ルートノードを消費 → OnGameClearRouteNodeReached を発火");
+                    PauseSurvivalForShop();
+                    ClearAllEnemies();
+                    GameEvents.TriggerGameClearRouteNodeReached();
+                    break;
             }
         }
 
@@ -430,6 +455,37 @@ namespace BlockBlastGame
         {
             _survivalActive = false;
             StopWaves();
+        }
+
+        /// <summary>
+        /// サバイバルタイマーの「ティック (= 経過時間更新)」だけを止める。
+        /// Wave スポーンや既存敵の動きには干渉しない。
+        ///
+        /// ・自販機演出中などステージ途中で時間経過を一時止めたいケース用。
+        /// ・全体一時停止 (GamePauseService.Pause) と組み合わせて、
+        ///   到着シーケンス開始 → 全停止 → Canvas → 再開、の流れを通すための土台。
+        /// </summary>
+        public void PauseSurvivalTickOnly()
+        {
+            _survivalActive = false;
+            Debug.Log("[EnemySystem] PauseSurvivalTickOnly: survival tick OFF (waves は継続)");
+        }
+
+        /// <summary>
+        /// PauseSurvivalTickOnly() で止めたサバイバルタイマーを再開する。
+        /// _survivalTimeLimit が 0 だと開始しない。
+        /// </summary>
+        public void ResumeSurvivalTick()
+        {
+            if (_survivalTimeLimit > 0f)
+            {
+                _survivalActive = true;
+                Debug.Log("[EnemySystem] ResumeSurvivalTick: survival tick ON");
+            }
+            else
+            {
+                Debug.Log("[EnemySystem] ResumeSurvivalTick: survivalTimeLimit=0 のため再開しない");
+            }
         }
 
         /// <summary>
@@ -724,5 +780,10 @@ namespace BlockBlastGame
         }
 
         public List<EnemyController> GetActiveEnemies() => _enemies;
+
+        public static void SetEventVisualOffset(Vector3 offset)
+        {
+            CurrentEventVisualOffset = offset;
+        }
     }
 }

@@ -55,6 +55,11 @@ MonoBehaviour:
     randomShapeIncrease: 0
     unlockAllShapes: 0
     spawnEnemy: {fileID: 0}
+  - eventType: 0
+    maxCellIncrease: 1
+    randomShapeIncrease: 0
+    unlockAllShapes: 0
+    spawnEnemy: {fileID: 0}
   - eventType: 3
     maxCellIncrease: 0
     randomShapeIncrease: 0
@@ -66,6 +71,21 @@ MonoBehaviour:
     unlockAllShapes: 0
     spawnEnemy: {fileID: 0}
   - eventType: 0
+    maxCellIncrease: 1
+    randomShapeIncrease: 0
+    unlockAllShapes: 0
+    spawnEnemy: {fileID: 0}
+  - eventType: 0
+    maxCellIncrease: 1
+    randomShapeIncrease: 0
+    unlockAllShapes: 0
+    spawnEnemy: {fileID: 0}
+  - eventType: 0
+    maxCellIncrease: 1
+    randomShapeIncrease: 0
+    unlockAllShapes: 0
+    spawnEnemy: {fileID: 0}
+  - eventType: 1
     maxCellIncrease: 1
     randomShapeIncrease: 0
     unlockAllShapes: 0

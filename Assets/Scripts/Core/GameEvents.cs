@@ -33,6 +33,9 @@ namespace BlockBlastGame
 
         // Route node events
         public static event Action OnShopRouteNodeReached;      // ルート上の Shop マスに到達
+        public static event Action OnVendingMachineRouteNodeReached; // ルート上の VendingMachine マスに到達
+        public static event Action OnGameClearRouteNodeReached; // ルート上の Clear マスに到達
+        public static event Action OnGameClear;                 // ゲーム全体のクリア演出 / リザルト表示
 
         public static void TriggerTurnChanged(int remainingTurns) => OnTurnChanged?.Invoke(remainingTurns);
         public static void TriggerLineClear(int linesCleared, int comboCount) => OnLineClear?.Invoke(linesCleared, comboCount);
@@ -57,6 +60,9 @@ namespace BlockBlastGame
         public static void TriggerTotalAssetsChanged(int totalAssets) => OnTotalAssetsChanged?.Invoke(totalAssets);
 
         public static void TriggerShopRouteNodeReached() => OnShopRouteNodeReached?.Invoke();
+        public static void TriggerVendingMachineRouteNodeReached() => OnVendingMachineRouteNodeReached?.Invoke();
+        public static void TriggerGameClearRouteNodeReached() => OnGameClearRouteNodeReached?.Invoke();
+        public static void TriggerGameClear() => OnGameClear?.Invoke();
 
         public static void ClearAll()
         {
@@ -79,6 +85,9 @@ namespace BlockBlastGame
             OnMoneyEarned = null;
             OnTotalAssetsChanged = null;
             OnShopRouteNodeReached = null;
+            OnVendingMachineRouteNodeReached = null;
+            OnGameClearRouteNodeReached = null;
+            OnGameClear = null;
         }
     }
 }

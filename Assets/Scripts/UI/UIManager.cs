@@ -47,6 +47,7 @@ namespace BlockBlastGame
         public Sprite routeVendingSprite;
         public Sprite routeCakeSprite;
         public Sprite routeBossSprite;
+        public Sprite routeClearSprite;
         public Vector2 routeAnchoredPosition = new Vector2(0f, -260f);
         public Vector2 routeNodeSize = new Vector2(116f, 62f);
         public Vector2 routeEventIconSize = new Vector2(88f, 88f);
@@ -59,6 +60,20 @@ namespace BlockBlastGame
         public float routeMoveDuration = 3f;
         [Tooltip("一度に表示するマスの最大数。0 = 制限なし")]
         public int routeMaxVisibleNodes = 4;
+        [Tooltip("Clear イベント用 Sprite が未設定のとき、イベントタイルに表示する文字")]
+        public string routeClearLabel = "クリア";
+        public Font routeEventLabelFont;
+        public int routeEventLabelFontSize = 24;
+        public Color routeEventLabelColor = Color.white;
+
+        [Header("Game Clear Result")]
+        [Tooltip("ゲーム全体クリア時に表示するリザルト画面。未設定なら Spaceship Panel をフォールバック表示")]
+        public GameObject gameClearResultPanel;
+        public Text gameClearTitleText;
+        public Text gameClearMessageText;
+        public Button gameClearOkButton;
+        public string gameClearTitle = "ゲームクリア";
+        public string gameClearMessage = "";
 
         float blinkTimer;
         bool blinkVisible = true;
@@ -67,6 +82,7 @@ namespace BlockBlastGame
         readonly List<RectTransform> _routeNodeRects = new List<RectTransform>();
         readonly List<Image> _routeNodeBaseImages = new List<Image>();
         readonly List<Image> _routeEventImages = new List<Image>();
+        readonly List<Text> _routeEventTexts = new List<Text>();
         readonly List<Image> _routeConnectorImages = new List<Image>();
         Image _routeCurrentImage;
         Image _routeCurrentBaseImage;
@@ -85,6 +101,7 @@ namespace BlockBlastGame
             GameEvents.OnGameOver += ShowGameOver;
             GameEvents.OnStageClear += ShowStageTransition;
             GameEvents.OnSpaceshipBuild += ShowSpaceshipBuild;
+            GameEvents.OnGameClear += ShowGameClearResult;
             GameEvents.OnWaveStarted += UpdateWaveDisplay;
             GameEvents.OnSurvivalTimerUpdate += UpdateSurvivalTimer;
         }
@@ -99,6 +116,7 @@ namespace BlockBlastGame
             GameEvents.OnGameOver -= ShowGameOver;
             GameEvents.OnStageClear -= ShowStageTransition;
             GameEvents.OnSpaceshipBuild -= ShowSpaceshipBuild;
+            GameEvents.OnGameClear -= ShowGameClearResult;
             GameEvents.OnWaveStarted -= UpdateWaveDisplay;
             GameEvents.OnSurvivalTimerUpdate -= UpdateSurvivalTimer;
         }
@@ -108,12 +126,16 @@ namespace BlockBlastGame
             if (gameOverPanel != null) gameOverPanel.SetActive(false);
             if (stageTransitionPanel != null) stageTransitionPanel.SetActive(false);
             if (spaceshipPanel != null) spaceshipPanel.SetActive(false);
+            if (gameClearResultPanel != null) gameClearResultPanel.SetActive(false);
 
             if (restartButton != null)
                 restartButton.onClick.AddListener(() => GameManager.Instance.RestartGame());
 
             if (launchButton != null)
                 launchButton.onClick.AddListener(OnLaunchSpaceship);
+
+            if (gameClearOkButton != null)
+                gameClearOkButton.onClick.AddListener(OnGameClearOk);
         }
 
         void Update()
@@ -311,6 +333,22 @@ namespace BlockBlastGame
             }
         }
 
+        void ShowGameClearResult()
+        {
+            if (gameClearResultPanel != null)
+            {
+                gameClearResultPanel.SetActive(true);
+                if (gameClearTitleText != null)
+                    gameClearTitleText.text = gameClearTitle;
+                if (gameClearMessageText != null)
+                    gameClearMessageText.text = gameClearMessage;
+                return;
+            }
+
+            // 専用リザルト画面が未設定なら、既存のゲームクリア用 Spaceship Panel をフォールバックとして使う。
+            ShowSpaceshipBuild(new List<ItemData>());
+        }
+
         // ════════════════════════════════════════
         //  Route HUD  ─  うさぎ固定 / マス消化スクロール
         // ════════════════════════════════════════
@@ -426,9 +464,23 @@ namespace BlockBlastGame
                 eventImage.preserveAspect = true;
                 eventImage.raycastTarget = false;
 
+                var textObject = new GameObject($"RouteEventText_{index}", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
+                textObject.transform.SetParent(nodeRect, false);
+                var textRect = textObject.GetComponent<RectTransform>();
+                textRect.anchorMin = textRect.anchorMax = textRect.pivot = new Vector2(0.5f, 0.5f);
+                var eventText = textObject.GetComponent<Text>();
+                eventText.raycastTarget = false;
+                eventText.alignment = TextAnchor.MiddleCenter;
+                eventText.font = routeEventLabelFont != null
+                    ? routeEventLabelFont
+                    : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                eventText.fontSize = routeEventLabelFontSize;
+                eventText.color = routeEventLabelColor;
+
                 _routeNodeRects.Add(nodeRect);
                 _routeNodeBaseImages.Add(nodeImage);
                 _routeEventImages.Add(eventImage);
+                _routeEventTexts.Add(eventText);
             }
 
             int connectorCount = Mathf.Max(0, nodeCount - 1);
@@ -531,6 +583,10 @@ namespace BlockBlastGame
                 RectTransform eventRect = _routeEventImages[i].rectTransform;
                 eventRect.sizeDelta = routeEventIconSize;
                 eventRect.anchoredPosition = routeEventOffset;
+
+                RectTransform eventTextRect = _routeEventTexts[i].rectTransform;
+                eventTextRect.sizeDelta = routeEventIconSize;
+                eventTextRect.anchoredPosition = routeEventOffset;
             }
 
             // うさぎ ↔ 最初の可視ノード間のコネクター
@@ -576,9 +632,21 @@ namespace BlockBlastGame
                 _routeNodeBaseImages[i].sprite = routeBaseSprite;
 
                 Image eventImage = _routeEventImages[i];
-                Sprite eventSprite = GetRouteEventSprite(enemySystem.RouteNodes[i].GetDisplayEventType());
+                var eventType = enemySystem.RouteNodes[i].GetDisplayEventType();
+                Sprite eventSprite = GetRouteEventSprite(eventType);
+                string eventLabel = GetRouteEventLabel(eventType);
+
                 eventImage.sprite = eventSprite;
                 eventImage.enabled = eventSprite != null;
+
+                Text eventText = _routeEventTexts[i];
+                eventText.text = eventSprite == null ? eventLabel : string.Empty;
+                eventText.enabled = eventSprite == null && !string.IsNullOrEmpty(eventLabel);
+                eventText.font = routeEventLabelFont != null
+                    ? routeEventLabelFont
+                    : eventText.font;
+                eventText.fontSize = routeEventLabelFontSize;
+                eventText.color = routeEventLabelColor;
             }
 
             for (int i = 0; i < _routeConnectorImages.Count; i++)
@@ -605,7 +673,17 @@ namespace BlockBlastGame
                 RouteEventType.VendingMachine => routeVendingSprite,
                 RouteEventType.Cake => routeCakeSprite,
                 RouteEventType.Boss => routeBossSprite,
+                RouteEventType.Clear => routeClearSprite,
                 _ => null
+            };
+        }
+
+        string GetRouteEventLabel(RouteEventType eventType)
+        {
+            return eventType switch
+            {
+                RouteEventType.Clear => routeClearLabel,
+                _ => string.Empty
             };
         }
 
@@ -619,6 +697,14 @@ namespace BlockBlastGame
         {
             if (spaceshipPanel != null)
                 spaceshipPanel.SetActive(false);
+
+            GameManager.Instance.ChangeState(GameState.Ending);
+        }
+
+        void OnGameClearOk()
+        {
+            if (gameClearResultPanel != null)
+                gameClearResultPanel.SetActive(false);
 
             GameManager.Instance.ChangeState(GameState.Ending);
         }

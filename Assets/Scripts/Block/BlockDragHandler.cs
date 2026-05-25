@@ -56,9 +56,13 @@ namespace BlockBlastGame
                                 && shopArrivalSequence != null
                                 && shopArrivalSequence.IsSequenceRunning;
 
-            if (state != GameState.Playing || shopArriving)
+            // GamePauseService.Pause("VendingMachine") 等で世界が停止しているときも
+            // Input は届くので、ここで明示的にロックする (= つかみ・配置を禁止)。
+            bool worldPaused = GamePauseService.IsPaused;
+
+            if (state != GameState.Playing || shopArriving || worldPaused)
             {
-                // ショップ到来中につかみっぱなしのブロックは、置けないままなので
+                // ショップ到来中 / ポーズ中につかみっぱなしのブロックは、置けないままなので
                 // 「指を離したときと同じ」= 元の位置に戻して破棄。
                 if (isDragging)
                     CancelCurrentDrag();

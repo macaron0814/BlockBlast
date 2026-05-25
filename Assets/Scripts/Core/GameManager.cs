@@ -43,17 +43,25 @@ namespace BlockBlastGame
         void OnEnable()
         {
             GameEvents.OnWaveSurvivalClear += HandleWaveSurvivalClear;
+            GameEvents.OnGameClearRouteNodeReached += HandleGameClearRouteNodeReached;
         }
 
         void OnDisable()
         {
             GameEvents.OnWaveSurvivalClear -= HandleWaveSurvivalClear;
+            GameEvents.OnGameClearRouteNodeReached -= HandleGameClearRouteNodeReached;
         }
 
         void HandleWaveSurvivalClear()
         {
             if (currentState != GameState.Playing) return;
             OnStageClear();
+        }
+
+        void HandleGameClearRouteNodeReached()
+        {
+            if (currentState != GameState.Playing) return;
+            OnGameClear();
         }
 
         bool gameStarted;
@@ -206,6 +214,13 @@ namespace BlockBlastGame
                 ChangeState(GameState.StageTransition);
                 GameEvents.TriggerStageClear();
             }
+        }
+
+        public void OnGameClear()
+        {
+            EnemyController.ClearAllHitEffects();
+            ChangeState(GameState.Ending);
+            GameEvents.TriggerGameClear();
         }
 
         public void ProceedToNextStage(PerkType selectedPerk)
