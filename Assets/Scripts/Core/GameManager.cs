@@ -26,6 +26,14 @@ namespace BlockBlastGame
         [Header("State")]
         public GameState currentState = GameState.Title;
 
+        [Header("Debug")]
+        [Tooltip("ON: ゲーム開始時に stage 1 ではなく debugStartStage から開始する。\nビルド確認や途中ステージの調整用。")]
+        public bool startFromDebugStage = false;
+
+        [Tooltip("startFromDebugStage が ON のときの開始ステージ番号。")]
+        [Min(1)]
+        public int debugStartStage = 1;
+
         public int score;
 
         void Awake()
@@ -86,11 +94,83 @@ namespace BlockBlastGame
 
         public void StartGame()
         {
+            StartGameAtStage(ResolveStartStage());
+        }
+
+        public void StartGameAtStage(int stageNumber)
+        {
+            stageNumber = Mathf.Max(1, stageNumber);
+
             score = 0;
             GameEvents.TriggerScoreChanged(score);
             comboSystem?.ResetCombo();
             ChangeState(GameState.Playing);
-            stageManager.StartStage(1);
+
+            if (startFromDebugStage)
+                LogDebugStageReadiness(stageNumber);
+
+            stageManager.StartStage(stageNumber);
+        }
+
+        void LogDebugStageReadiness(int stageNumber)
+        {
+            int idx = stageNumber - 1;
+
+            bool hasStageData = stageManager != null
+                && stageManager.stageDataAssets != null
+                && idx >= 0
+                && idx < stageManager.stageDataAssets.Length
+                && stageManager.stageDataAssets[idx] != null;
+
+            bool hasWaveData = enemySystem != null
+                && enemySystem.stageWaves != null
+                && idx >= 0
+                && idx < enemySystem.stageWaves.Length
+                && enemySystem.stageWaves[idx] != null;
+
+            bool hasSurvivalTime = enemySystem != null
+                && enemySystem.stageSurvivalTimes != null
+                && idx >= 0
+                && idx < enemySystem.stageSurvivalTimes.Length
+                && enemySystem.stageSurvivalTimes[idx] > 0f;
+
+            Debug.Log($"[GameManager] Debug start: stage {stageNumber} | StageData={hasStageData} / EnemyWaveData={hasWaveData} / SurvivalTime={hasSurvivalTime}");
+
+            if (!hasStageData)
+                Debug.LogWarning($"[GameManager] stage {stageNumber} の StageData が StageManager.stageDataAssets に無いため、ルール (ターン / ブロック増加 / ライン目標) が既定値になります。");
+            if (!hasWaveData)
+                Debug.LogWarning($"[GameManager] stage {stageNumber} の EnemyWaveData が EnemySystem.stageWaves に無いため、敵出現とミニマップが既定値になります。");
+            if (!hasSurvivalTime)
+                Debug.LogWarning($"[GameManager] stage {stageNumber} の stageSurvivalTimes が 0 / 未設定です。EnemyWaveData.survivalTime にフォールバックします。");
+        }
+
+        int ResolveStartStage()
+        {
+            if (!startFromDebugStage) return 1;
+
+            // EnemySystem 側 (Wave / ミニマップ) と StageManager 側 (ルール) のどちらか長い方を上限にする。
+            // どちらも未設定なら無制限に通す (Clamp しない)。
+            int dataStageCount = stageManager != null && stageManager.stageDataAssets != null
+                ? stageManager.stageDataAssets.Length
+                : 0;
+            int totalStages = stageManager != null ? stageManager.totalStages : 0;
+            int waveStageCount = enemySystem != null && enemySystem.stageWaves != null
+                ? enemySystem.stageWaves.Length
+                : 0;
+
+            int maxStage = Mathf.Max(dataStageCount, totalStages, waveStageCount);
+            if (maxStage <= 0) return Mathf.Max(1, debugStartStage);
+
+            return Mathf.Clamp(debugStartStage, 1, maxStage);
+        }
+
+        [ContextMenu("Debug/Restart From Debug Stage")]
+        void RestartFromDebugStage()
+        {
+            if (stageManager == null) return;
+
+            gameStarted = true;
+            StartGameAtStage(ResolveStartStage());
         }
 
         public void ChangeState(GameState newState)

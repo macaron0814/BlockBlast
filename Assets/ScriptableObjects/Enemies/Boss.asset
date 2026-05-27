@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHP: 150
   chaseSpeed: 1
-  knockbackPerHit: 0.05
+  knockbackPerHit: 0
   stunDuration: 2
   spawnDistance: 10
   visualPrefab: {fileID: 799164950518486213, guid: f848b715a7ad045faa2555101c66e99a, type: 3}
@@ -25,8 +25,8 @@ MonoBehaviour:
   frames: []
   stunFrames: []
   frameRate: 0.15
-  scale: 1.4
-  hoverHeight: 0.8
+  scale: 0.6
+  hoverHeight: 0.5
   tint: {r: 1, g: 1, b: 1, a: 1}
   hitOffset: {x: 0, y: 0}
   hitAngleRadius: 0.5

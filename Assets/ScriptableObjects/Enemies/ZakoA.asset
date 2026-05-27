@@ -27,7 +27,7 @@ MonoBehaviour:
   stunFrames: []
   frameRate: 0.15
   scale: 0.6
-  hoverHeight: 0.8
+  hoverHeight: 0.9
   tint: {r: 1, g: 1, b: 1, a: 1}
   hitOffset: {x: 0, y: 0}
   hitAngleRadius: 0.5

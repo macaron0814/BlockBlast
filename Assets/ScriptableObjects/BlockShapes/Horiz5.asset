@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   blockName: Horiz5
   colorType: 6
-  shapeFlat: 01010101000000000100
-  shapeWidth: 5
+  shapeFlat: 0101010100000001
+  shapeWidth: 4
   shapeHeight: 2
   designTheme: "\u30DB\u30C3\u30C8\u30C9\u30C3\u30B0 (1x5)"
   shapeSprite: {fileID: 0}
@@ -27,6 +27,4 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
-  - {fileID: 0}
   - {fileID: 21300000, guid: f10d7f86788934e6a865c7cd47d2412a, type: 3}
-  - {fileID: 0}

@@ -11730,6 +11730,8 @@ MonoBehaviour:
   enemySystem: {fileID: 1720245483}
   superChatSpawner: {fileID: 93515544}
   currentState: 0
+  startFromDebugStage: 1
+  debugStartStage: 4
   score: 0
 --- !u!1 &1992716501
 GameObject:
@@ -12271,6 +12273,8 @@ MonoBehaviour:
   currentStageNumber: 0
   totalStages: 5
   stageDataAssets: []
+  autoLoadStageDataAssets: 1
+  autoLoadResourcesPath: Stages
   currentStageData: {fileID: 0}
   stageActive: 0
   linesCleared: 0
