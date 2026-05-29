@@ -441,6 +441,13 @@ namespace BlockBlastGame
             if (_routeNodes.Count == 0 || _survivalTimeLimit <= 0f)
                 return;
 
+            if (GameManager.Instance != null)
+            {
+                GameState state = GameManager.Instance.currentState;
+                if (state == GameState.GameOver || state == GameState.Ending)
+                    return;
+            }
+
             int newConsumed = RouteTimelineMath.GetConsumedCount(
                 _survivalTimer, _survivalTimeLimit, _routeNodes.Count);
 

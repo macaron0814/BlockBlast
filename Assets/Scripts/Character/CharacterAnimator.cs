@@ -247,6 +247,29 @@ namespace BlockBlastGame
                 _basePosition = _rect.anchoredPosition;
         }
 
+        /// <summary>
+        /// 全アニメ / 揺れ / パルスを止め、指定スプライトで静止表示にする。
+        /// ゲームオーバー時にプレイヤー画像を専用テクスチャへ差し替えて固定する用途。
+        /// </summary>
+        public void ShowStaticSprite(Sprite sprite, bool resetPosition = true)
+        {
+            if (_animCoroutine != null)  { StopCoroutine(_animCoroutine);  _animCoroutine = null; }
+            if (_bumpCoroutine != null)  { StopCoroutine(_bumpCoroutine);  _bumpCoroutine = null; }
+            if (_pulseCoroutine != null) { StopCoroutine(_pulseCoroutine); _pulseCoroutine = null; }
+
+            // 以降の自動アニメ起動を抑止 (ライン消去・ゲームオーバー再生で上書きされないように)
+            autoOnLineClear = false;
+            enableRoadBump = false;
+
+            if (resetPosition && _rect != null)
+            {
+                _rect.anchoredPosition = _basePosition;
+                _rect.localScale = _baseScale;
+            }
+
+            SetSprite(sprite);
+        }
+
         // ─────────────────────────────────────────────────
         //  コルーチン — 通常コマ送り
         // ─────────────────────────────────────────────────

@@ -266,6 +266,9 @@ namespace BlockBlastGame
 
         void ShowGameOver(GameOverType type)
         {
+            if (ResultFlowController.ShouldSuppressLegacyGameOverPanel)
+                return;
+
             if (gameOverPanel == null) return;
 
             gameOverPanel.SetActive(true);

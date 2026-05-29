@@ -333,6 +333,7 @@ namespace BlockBlastGame
         {
             gameStarted = false;
             GameEvents.ClearAll();
+            GamePauseService.ResetAll();
             Time.timeScale = 1f;
             UnityEngine.SceneManagement.SceneManager.LoadScene(
                 UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
