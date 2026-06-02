@@ -704,6 +704,8 @@ namespace BlockBlastGame
         {
             if (archRoadSystem == null) return;
 
+            SoundManager.Play(SoundCue.BulletShoot);
+
             var obj = new GameObject("PlayerBullet");
             obj.transform.SetParent(transform);
 
@@ -817,6 +819,7 @@ namespace BlockBlastGame
                         var enemy = candidate.enemy;
                         if (enemy == null) continue;
 
+                        SoundManager.Play(SoundCue.BulletHit);
                         enemy.TakeSingleHit(_lineClearMultiplier, bulletSizeDamageMul);
 
                         // 残り貫通数があれば生き残る、なければ消滅

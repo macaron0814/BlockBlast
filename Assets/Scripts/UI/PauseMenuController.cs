@@ -122,6 +122,8 @@ namespace BlockBlastGame
             _isOpening = true;
             _isOpen = true;
 
+            SoundManager.Play(SoundCue.Pause);
+
             // まずゲームを止める。blur 演出は unscaled time で進める。
             GamePauseService.Pause(PauseHandle);
 
@@ -170,6 +172,7 @@ namespace BlockBlastGame
             if (blurOverlay != null)
                 blurOverlay.HideImmediate();
 
+            SoundManager.Play(SoundCue.Pause);
             GamePauseService.Resume(PauseHandle);
             onPauseClosed?.Invoke();
         }

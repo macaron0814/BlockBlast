@@ -173,6 +173,7 @@ namespace BlockBlastGame
             _selected = card;
             _selected.SetSelected(true);
 
+            SoundManager.Play(SoundCue.ShopSelect);
             UpdateBuyButtonVisual();
             UpdateSelectedPriceVisual();
             onSelectionChanged?.Invoke(_selected);
@@ -199,6 +200,7 @@ namespace BlockBlastGame
 
             // 買えるパターン (実際の購入処理は後でここに繋ぐ)
             Debug.Log($"[ShopCardSelector] 購入可能: card='{_selected.displayName}' cost={cost}");
+            SoundManager.Play(SoundCue.ShopConfirm);
             onPurchaseAffordable?.Invoke(_selected);
         }
 

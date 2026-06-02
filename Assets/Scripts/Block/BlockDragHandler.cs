@@ -114,6 +114,7 @@ namespace BlockBlastGame
                 lastPreviewCanPlace = false;
                 lastPreviewPos = InvalidPreviewPos;
 
+                SoundManager.Play(SoundCue.BlockGrab);
                 DragUpdate();
             }
         }
@@ -139,6 +140,7 @@ namespace BlockBlastGame
                 previewVisible = true;
                 lastPreviewCanPlace = canPlace;
                 lastPreviewPos = boardPos;
+                SoundManager.Play(SoundCue.BlockHover);
             }
         }
 
@@ -162,6 +164,7 @@ namespace BlockBlastGame
             else
             {
                 RestoreSelectedPiece();
+                SoundManager.Play(SoundCue.BlockCancel);
             }
 
             selectedPiece = null;
@@ -177,6 +180,7 @@ namespace BlockBlastGame
                 return;
 
             RestoreSelectedPiece();
+            SoundManager.Play(SoundCue.BlockCancel);
             selectedPiece = null;
             originalParent = null;
         }
