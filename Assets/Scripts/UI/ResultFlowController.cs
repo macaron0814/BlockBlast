@@ -1,4 +1,5 @@
 using System.Collections;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -31,8 +32,33 @@ namespace BlockBlastGame
         [Tooltip("Result 表示時に再生する SequentialAnimatorPlayer。空なら resultCanvas から取得。")]
         public SequentialAnimatorPlayer sequencePlayer;
 
-        [Tooltip("リザルト画面内のボタン。押すと現在のシーンを再ロードする。")]
+        [Tooltip("リザルト画面内のボタン。押すと replayTargetSceneName へ戻る。")]
         public Button resultReloadButton;
+
+        [Tooltip("リザルトボタン押下時の遷移先シーン名。通常は Title。")]
+        public string replayTargetSceneName = "Title";
+
+        [Header("Result Score")]
+        [Tooltip("今回のカロリースコアを表示する TMP。")]
+        public TMP_Text currentScoreTextTMP;
+
+        [Tooltip("今回のカロリースコアを表示する uGUI Text。TMP を使わない場合用。")]
+        public Text currentScoreText;
+
+        [Tooltip("ローカル保存されたベストスコアを表示する TMP。")]
+        public TMP_Text bestScoreTextTMP;
+
+        [Tooltip("ローカル保存されたベストスコアを表示する uGUI Text。TMP を使わない場合用。")]
+        public Text bestScoreText;
+
+        [Tooltip("スコア表示フォーマット。{0}=カロリー値。")]
+        public string currentScoreFormat = "{0}";
+
+        [Tooltip("ベストスコア表示フォーマット。{0}=ベストカロリー値。")]
+        public string bestScoreFormat = "{0}";
+
+        [Tooltip("PlayerPrefs に保存するベストスコアのキー。再インストールまでは保持される。")]
+        public string bestScorePrefsKey = "BestCalorieScore";
 
         [Header("Systems")]
         public EnemySystem enemySystem;
@@ -82,6 +108,8 @@ namespace BlockBlastGame
         [Header("Runtime (read only)")]
         [SerializeField] bool _resultOpen;
         [SerializeField] GameOverType _lastGameOverType;
+        [SerializeField] int _currentCalories;
+        [SerializeField] int _bestCalories;
 
         Coroutine _sequenceRoutine;
 
@@ -114,8 +142,10 @@ namespace BlockBlastGame
         void OnEnable()
         {
             GameEvents.OnGameOver += HandleGameOver;
+            GameEvents.OnCalorieChanged += HandleCalorieChanged;
             ResolveReferences();
             BindResultButton(true);
+            _bestCalories = LoadBestScore();
 
             if (hideCanvasOnStart)
             {
@@ -131,6 +161,7 @@ namespace BlockBlastGame
         void OnDisable()
         {
             GameEvents.OnGameOver -= HandleGameOver;
+            GameEvents.OnCalorieChanged -= HandleCalorieChanged;
             BindResultButton(false);
             ForceCloseWithoutEvents();
         }
@@ -161,6 +192,11 @@ namespace BlockBlastGame
                 if (canvas != null)
                     resultReloadButton = canvas.GetComponentInChildren<Button>(true);
             }
+        }
+
+        void HandleCalorieChanged(int totalCalories)
+        {
+            _currentCalories = Mathf.Max(0, totalCalories);
         }
 
         void BindResultButton(bool subscribe)
@@ -222,6 +258,8 @@ namespace BlockBlastGame
             yield return FadeTo(1f, fadeOutDuration);
 
             // 4. リザルト表示
+            RefreshResultScoreTexts();
+
             var canvas = ResolveResultCanvas();
             if (canvas != null)
             {
@@ -234,6 +272,38 @@ namespace BlockBlastGame
                 sequencePlayer.PlaySequence();
 
             _sequenceRoutine = null;
+        }
+
+        void RefreshResultScoreTexts()
+        {
+            int current = Mathf.Max(0, _currentCalories);
+            int best = LoadBestScore();
+            if (current > best)
+            {
+                best = current;
+                SaveBestScore(best);
+            }
+
+            _bestCalories = best;
+
+            string currentText = string.Format(currentScoreFormat, current);
+            string bestText = string.Format(bestScoreFormat, best);
+
+            if (currentScoreTextTMP != null) currentScoreTextTMP.text = currentText;
+            if (currentScoreText != null) currentScoreText.text = currentText;
+            if (bestScoreTextTMP != null) bestScoreTextTMP.text = bestText;
+            if (bestScoreText != null) bestScoreText.text = bestText;
+        }
+
+        int LoadBestScore()
+        {
+            return PlayerPrefs.GetInt(bestScorePrefsKey, 0);
+        }
+
+        void SaveBestScore(int value)
+        {
+            PlayerPrefs.SetInt(bestScorePrefsKey, Mathf.Max(0, value));
+            PlayerPrefs.Save();
         }
 
         void SwapPlayerToGameOver()
@@ -346,13 +416,15 @@ namespace BlockBlastGame
         {
             // Result 表示中は GamePauseService で timeScale=0 になっているので、ロード前に必ず解除する。
             GamePauseService.ResetAll();
+            Time.timeScale = 1f;
 
-            if (GameManager.Instance != null)
+            if (!string.IsNullOrEmpty(replayTargetSceneName))
             {
-                GameManager.Instance.RestartGame();
+                SceneManager.LoadScene(replayTargetSceneName);
                 return;
             }
 
+            // 遷移先未設定時だけ従来通り現在シーンを再ロードする。
             Scene active = SceneManager.GetActiveScene();
             SceneManager.LoadScene(active.name);
         }
