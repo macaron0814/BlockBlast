@@ -125,7 +125,9 @@ namespace BlockBlastGame
         {
             for (int x = 0; x < boardWidth; x++)
             {
-                if (grid[x, y].IsEmpty) return false;
+                // Item だけが置かれているセルは「ブロックで埋まっている」とは扱わない。
+                // 見た目上ブロックが揃っていないラインが、アイテムだけで完成扱いになるのを防ぐ。
+                if (!grid[x, y].IsFilled) return false;
             }
             return true;
         }
@@ -134,7 +136,8 @@ namespace BlockBlastGame
         {
             for (int y = 0; y < boardHeight; y++)
             {
-                if (grid[x, y].IsEmpty) return false;
+                // Row と同じく、ライン完成条件はブロックセルのみ。
+                if (!grid[x, y].IsFilled) return false;
             }
             return true;
         }
