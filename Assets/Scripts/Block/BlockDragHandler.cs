@@ -19,6 +19,13 @@ namespace BlockBlastGame
         [Tooltip("ショップ到来演出の参照。空なら Start で自動取得 (FindObjectOfType)")]
         public ShopArrivalSequence shopArrivalSequence;
 
+        [Header("Vending Machine Arrival Lock")]
+        [Tooltip("ON: VendingMachineArrivalSequence の到来演出中も、新規つかみ・配置を禁止し、つかみ中のブロックは元の位置に戻す。")]
+        public bool lockDuringVendingMachineArrival = true;
+
+        [Tooltip("自販機到来演出の参照。空なら Start で自動取得 (FindObjectOfType)")]
+        public VendingMachineArrivalSequence vendingMachineArrivalSequence;
+
         [Header("Settings")]
         [Tooltip("ドラッグ中、指 (ポインタ) からブロックを上にずらす量 (ワールド単位)。\n" +
                  "スマホで指がブロックを覆ってしまわないよう、正の値で「指より上」に持ち上げる。\n" +
@@ -47,6 +54,9 @@ namespace BlockBlastGame
         {
             if (shopArrivalSequence == null)
                 shopArrivalSequence = FindObjectOfType<ShopArrivalSequence>();
+
+            if (vendingMachineArrivalSequence == null)
+                vendingMachineArrivalSequence = FindObjectOfType<VendingMachineArrivalSequence>();
         }
 
         void Update()
@@ -55,14 +65,17 @@ namespace BlockBlastGame
             bool shopArriving = lockDuringShopArrival
                                 && shopArrivalSequence != null
                                 && shopArrivalSequence.IsSequenceRunning;
+            bool vendingMachineArriving = lockDuringVendingMachineArrival
+                                && vendingMachineArrivalSequence != null
+                                && vendingMachineArrivalSequence.IsSequenceRunning;
 
             // GamePauseService.Pause("VendingMachine") 等で世界が停止しているときも
             // Input は届くので、ここで明示的にロックする (= つかみ・配置を禁止)。
             bool worldPaused = GamePauseService.IsPaused;
 
-            if (state != GameState.Playing || shopArriving || worldPaused)
+            if (state != GameState.Playing || shopArriving || vendingMachineArriving || worldPaused)
             {
-                // ショップ到来中 / ポーズ中につかみっぱなしのブロックは、置けないままなので
+                // ショップ/自販機到来中 / ポーズ中につかみっぱなしのブロックは、置けないままなので
                 // 「指を離したときと同じ」= 元の位置に戻して破棄。
                 if (isDragging)
                     CancelCurrentDrag();
