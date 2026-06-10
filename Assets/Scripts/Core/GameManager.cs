@@ -101,6 +101,7 @@ namespace BlockBlastGame
         {
             stageNumber = Mathf.Max(1, stageNumber);
 
+            EnemySystem.ResetLoopProgress();
             score = 0;
             GameEvents.TriggerScoreChanged(score);
             comboSystem?.ResetCombo();
@@ -334,6 +335,7 @@ namespace BlockBlastGame
             gameStarted = false;
             GameEvents.ClearAll();
             GamePauseService.ResetAll();
+            EnemySystem.ResetLoopProgress();
             Time.timeScale = 1f;
             UnityEngine.SceneManagement.SceneManager.LoadScene(
                 UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);

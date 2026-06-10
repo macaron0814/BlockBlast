@@ -40,3 +40,14 @@ MonoBehaviour:
   hitEffectScale: 2
   hitEffectColor: {r: 1, g: 1, b: 1, a: 1}
   defeatBonusAmount: 100
+  maxHPPerLoop: 100
+  chaseSpeedPerLoop: 0.01
+  knockbackPerHitPerLoop: 0
+  spawnDistancePerLoop: 0
+  defeatBonusPerLoop: 0
+  loopVisualPrefabs:
+  - {fileID: 5604592452998576511, guid: 9932d7aa0899447f78f1727337fff6a0, type: 3}
+  - {fileID: 2145985292594952354, guid: 212dae0b262cb4742bb2dca0640e30f7, type: 3}
+  - {fileID: 7482215074846945798, guid: 7675a41f2e2d242d2b079f5f6b708f35, type: 3}
+  loopTints: []
+  applyLoopTintToPrefab: 1

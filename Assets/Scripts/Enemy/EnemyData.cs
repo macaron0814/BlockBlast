@@ -81,6 +81,32 @@ namespace BlockBlastGame
         [Tooltip("HP が 0 になった瞬間に追加で表示するスパチャ金額 (円)")]
         public int defeatBonusAmount = 500;
 
+        [Header("Loop Scaling (ボス撃破後の周回強化)")]
+        [Tooltip("1 周進むごとに加算される最大 HP。\n例: 2 なら 2周目は +2、3周目は +4。")]
+        public int maxHPPerLoop = 0;
+
+        [Tooltip("1 周進むごとに加算される追跡速度 (度/秒)。")]
+        public float chaseSpeedPerLoop = 0f;
+
+        [Tooltip("1 周進むごとに加算されるノックバック量。")]
+        public float knockbackPerHitPerLoop = 0f;
+
+        [Tooltip("1 周進むごとに加算される初期距離 (度)。0 のままで通常は OK。")]
+        public float spawnDistancePerLoop = 0f;
+
+        [Tooltip("1 周進むごとに加算される撃破ボーナス額。")]
+        public int defeatBonusPerLoop = 0;
+
+        [Header("Loop Visual (赤→緑→青など)")]
+        [Tooltip("周回ごとに使う prefab。0=1周目, 1=2周目, 2=3周目...。末尾まで行くとループ。\n空または該当要素が null なら通常 visualPrefab を使う。同じフォルムの色違い prefab を入れる想定。")]
+        public GameObject[] loopVisualPrefabs;
+
+        [Tooltip("周回ごとに使う tint。0=1周目, 1=2周目, 2=3周目...。末尾まで行くとループ。\n空なら通常 tint を使う。例: 赤, 緑, 青。")]
+        public Color[] loopTints;
+
+        [Tooltip("Prefab 使用時も loopTints を乗算する。OFF なら prefab の色を維持。")]
+        public bool applyLoopTintToPrefab = true;
+
         public static EnemyData CreateDefault(int index = 0)
         {
             var d = CreateInstance<EnemyData>();

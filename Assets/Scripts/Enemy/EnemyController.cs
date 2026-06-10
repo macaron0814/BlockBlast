@@ -17,6 +17,7 @@ namespace BlockBlastGame
         int _currentHP;
         bool _isStunned;
         float _stunTimer;
+        bool _isLoopBoss;
 
         SpriteRenderer _sr;                  // プレハブ未使用時の単一スプライト
         GameObject _visualInstance;          // プレハブ使用時のインスタンス (子)
@@ -36,11 +37,21 @@ namespace BlockBlastGame
 
         // 出現時に決まるランダムな高さオフセット (EnemySystem.enemyHoverHeightVariance に基づく)
         float _hoverOffset;
+        int _maxHP;
+        float _chaseSpeed;
+        float _knockbackPerHit;
+        float _spawnDistance;
+        int _defeatBonusAmount;
+        Color _runtimeTint = Color.white;
+        bool _hasLoopTint;
+        GameObject _runtimeVisualPrefab;
 
         static readonly List<GameObject> _activeHitEffects = new List<GameObject>();
 
         public bool IsStunned => _isStunned;
         public int CurrentHP => _currentHP;
+        public bool IsLoopBoss => _isLoopBoss;
+        public event System.Action<EnemyController> OnDefeated;
 
         /// <summary>当たり判定の中心ワールド座標（hitOffset 適用済み）</summary>
         public Vector3 HitPosition
@@ -76,14 +87,16 @@ namespace BlockBlastGame
         //  Init
         // ────────────────────────────────────────
 
-        public void Initialize(EnemyData data, float archRadius, Vector3 archCenter, float roadScrollSpeed)
+        public void Initialize(EnemyData data, float archRadius, Vector3 archCenter, float roadScrollSpeed, bool isLoopBoss = false)
         {
             _data = data;
+            _isLoopBoss = isLoopBoss;
             _archRadius = archRadius;
             _archCenter = archCenter;
             _roadScrollSpeed = roadScrollSpeed;
-            _currentHP = data.maxHP;
-            distanceAngle = data.spawnDistance;
+            ApplyLoopScaledStats(data);
+            _currentHP = _maxHP;
+            distanceAngle = _spawnDistance;
 
             // 出現時に高さオフセットを決定 (EnemySystem.enemyHoverHeightVariance を消費)
             float variance = EnemySystem.CurrentHoverHeightVariance;
@@ -93,7 +106,7 @@ namespace BlockBlastGame
             if (enemyLayer >= 0)
                 gameObject.layer = enemyLayer;
 
-            if (data.visualPrefab != null)
+            if (_runtimeVisualPrefab != null)
             {
                 SetupPrefabVisual(data);
             }
@@ -105,6 +118,44 @@ namespace BlockBlastGame
             UpdateVisualPosition();
         }
 
+        void ApplyLoopScaledStats(EnemyData data)
+        {
+            int loop = Mathf.Max(0, EnemySystem.CurrentLoopIndex);
+            _maxHP = Mathf.Max(1, data.maxHP + data.maxHPPerLoop * loop);
+            _chaseSpeed = Mathf.Max(0f, data.chaseSpeed + data.chaseSpeedPerLoop * loop);
+            _knockbackPerHit = Mathf.Max(0f, data.knockbackPerHit + data.knockbackPerHitPerLoop * loop);
+            _spawnDistance = Mathf.Max(0f, data.spawnDistance + data.spawnDistancePerLoop * loop);
+            _defeatBonusAmount = Mathf.Max(0, data.defeatBonusAmount + data.defeatBonusPerLoop * loop);
+            _runtimeVisualPrefab = ResolveLoopVisualPrefab(data, loop);
+            _runtimeTint = ResolveLoopTint(data, loop);
+        }
+
+        GameObject ResolveLoopVisualPrefab(EnemyData data, int loop)
+        {
+            if (data.loopVisualPrefabs != null && data.loopVisualPrefabs.Length > 0)
+            {
+                var prefab = data.loopVisualPrefabs[loop % data.loopVisualPrefabs.Length];
+                if (prefab != null)
+                    return prefab;
+            }
+
+            return data.visualPrefab;
+        }
+
+        Color ResolveLoopTint(EnemyData data, int loop)
+        {
+            _hasLoopTint = false;
+            if (data.loopTints != null && data.loopTints.Length > 0)
+            {
+                var tint = data.loopTints[loop % data.loopTints.Length];
+                if (tint.a <= 0f) tint.a = 1f;
+                _hasLoopTint = true;
+                return tint;
+            }
+
+            return data.tint;
+        }
+
         void SetupSpriteVisual(EnemyData data)
         {
             _usingPrefabVisual = false;
@@ -112,7 +163,7 @@ namespace BlockBlastGame
             _sr = gameObject.AddComponent<SpriteRenderer>();
             _sr.sortingLayerName = "Enemy";
             _sr.sortingOrder = 5;
-            _sr.color = data.tint;
+            _sr.color = _runtimeTint;
 
             if (data.frames != null && data.frames.Length > 0)
                 _sr.sprite = data.frames[0];
@@ -124,7 +175,7 @@ namespace BlockBlastGame
         {
             _usingPrefabVisual = true;
 
-            _visualInstance = Instantiate(data.visualPrefab, transform);
+            _visualInstance = Instantiate(_runtimeVisualPrefab, transform);
             _visualInstance.transform.localPosition = data.visualPrefabOffset;
             _visualInstance.transform.localRotation = Quaternion.Euler(data.visualPrefabRotationEuler);
             float pScale = data.visualPrefabScale > 0f ? data.visualPrefabScale : 1f;
@@ -142,8 +193,10 @@ namespace BlockBlastGame
                 r.sortingLayerName = "Enemy";
                 r.sortingOrder     = 5 + r.sortingOrder; // プレハブ内の相対順を尊重しつつ底上げ
 
-                if (data.applyTintToPrefab)
+                if (data.applyTintToPrefab && !_hasLoopTint)
                     r.color = r.color * data.tint;
+                if (data.applyLoopTintToPrefab && _hasLoopTint)
+                    r.color = r.color * _runtimeTint;
 
                 _visualOriginalColors[i] = r.color;
             }
@@ -186,10 +239,10 @@ namespace BlockBlastGame
                 // 必要なら距離に応じて「遠いほど速く、近いほど遅い」倍率を追加で掛ける。
                 float distanceSpeedMultiplier = EnemySystem.ResolveDistanceChaseSpeedMultiplier(
                     distanceAngle,
-                    _data.spawnDistance);
+                    _spawnDistance);
 
                 // EnemySystem.enemyMoveSpeedMultiplier を全敵共通の速度倍率として乗算
-                distanceAngle -= _data.chaseSpeed
+                distanceAngle -= _chaseSpeed
                                * EnemySystem.CurrentMoveSpeedMultiplier
                                * distanceSpeedMultiplier
                                * enemySlowFactor
@@ -209,7 +262,7 @@ namespace BlockBlastGame
                 _knockbackVelocity = 0f;
             }
 
-            float maxDist = _data != null ? _data.spawnDistance * 2f : 360f;
+            float maxDist = _data != null ? _spawnDistance * 2f : 360f;
             distanceAngle = Mathf.Min(distanceAngle, maxDist);
 
             UpdateAnimation();
@@ -234,7 +287,7 @@ namespace BlockBlastGame
         {
             // ノックバック (knockbackPerHit × ライン同時消し倍率 × 全体倍率)
             // ※ ショップ「弾でかくなる」の倍率はここには掛けない
-            float knockback = _data.knockbackPerHit
+            float knockback = _knockbackPerHit
                             * hitMultiplier
                             * EnemySystem.CurrentKnockbackMultiplier;
             _knockbackVelocity += knockback;
@@ -249,7 +302,8 @@ namespace BlockBlastGame
                 if (_currentHP <= 0)
                 {
                     _currentHP = 0;
-                    GameEvents.TriggerEnemyDefeated(transform.position, _data.defeatBonusAmount);
+                    GameEvents.TriggerEnemyDefeated(transform.position, _defeatBonusAmount);
+                    OnDefeated?.Invoke(this);
                     Stun();
                 }
             }
@@ -269,7 +323,7 @@ namespace BlockBlastGame
         void Revive()
         {
             _isStunned = false;
-            _currentHP = _data.maxHP;
+            _currentHP = _maxHP;
             _currentFrame = 0;
             _animTimer = 0f;
             StartCoroutine(ReviveFlash());
@@ -382,7 +436,7 @@ namespace BlockBlastGame
 
         void RestoreOriginalColors()
         {
-            if (_sr != null) _sr.color = _data.tint;
+            if (_sr != null) _sr.color = _runtimeTint;
             if (_visualRenderers != null && _visualOriginalColors != null)
             {
                 for (int i = 0; i < _visualRenderers.Length && i < _visualOriginalColors.Length; i++)

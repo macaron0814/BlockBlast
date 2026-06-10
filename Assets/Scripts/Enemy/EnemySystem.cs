@@ -17,6 +17,14 @@ namespace BlockBlastGame
         [Tooltip("ステージごとの制限時間 (秒)。0 以下なら WaveData の survivalTime を使用")]
         public float[] stageSurvivalTimes;
 
+        [Header("Loop Settings")]
+        [Tooltip("ON: Boss ルートノードで出た敵を倒したらゲームクリアではなく Stage 1 に戻る。\n購入効果などのプレイヤー強化は維持される。")]
+        public bool loopToStage1AfterBossDefeat = true;
+
+        [Tooltip("ボス撃破後に戻るステージ番号。通常は 1。")]
+        [Min(1)]
+        public int loopRestartStage = 1;
+
         [Header("Enemy Movement")]
         [Tooltip("全敵のチェイス速度に掛かる倍率。\n1 = 通常 / 0.5 = 半分の速さ / 2 = 倍速\n個別 EnemyData.chaseSpeed を変えずに全体ペースだけ調整したい時に使用。")]
         [Range(0f, 5f)]
@@ -67,6 +75,15 @@ namespace BlockBlastGame
         // ─── 全敵共通パラメータの static 公開 (EnemyController から参照) ──────────
         /// <summary>全敵のチェイス速度に掛かる倍率。</summary>
         public static float CurrentMoveSpeedMultiplier { get; private set; } = 1f;
+        /// <summary>現在の周回番号。0=1周目、1=2周目、2=3周目...</summary>
+        public static int CurrentLoopIndex { get; private set; } = 0;
+        /// <summary>表示用の周回番号。1=1周目。</summary>
+        public static int CurrentLoopNumber => CurrentLoopIndex + 1;
+
+        public static void ResetLoopProgress()
+        {
+            CurrentLoopIndex = 0;
+        }
         /// <summary>true: 距離に応じてチェイス速度倍率を変える。</summary>
         public static bool CurrentUseDistanceBasedChaseSpeed { get; private set; } = false;
         /// <summary>プレイヤー付近での速度倍率。</summary>
@@ -163,6 +180,7 @@ namespace BlockBlastGame
         bool _wavesRunning;
         readonly List<RouteNodeRuntime> _routeNodes = new List<RouteNodeRuntime>();
         int _consumedNodeCount;
+        bool _waitingForLoopBossDefeat;
 
         // --- Survival timer ---
         float _survivalTimer;
@@ -370,6 +388,7 @@ namespace BlockBlastGame
                 : EnemyWaveData.CreateDefault();
 
             _currentWaveIndex = 0;
+            _waitingForLoopBossDefeat = false;
 
             _survivalTimeLimit = ResolveSurvivalTime(stageNumber);
             _survivalTimer = 0f;
@@ -460,7 +479,7 @@ namespace BlockBlastGame
             // ただし最終ノードが Shop で PauseSurvivalForShop() により _survivalActive=false
             // になっている場合は、ShopArrivalSequence → ShopFlowController.OpenShop の流れで
             // 次ステージに進めるので、ここでは発火しない (二重起動防止)。
-            if (_consumedNodeCount >= _routeNodes.Count && _survivalActive)
+            if (_consumedNodeCount >= _routeNodes.Count && _survivalActive && !_waitingForLoopBossDefeat)
             {
                 _survivalActive = false;
                 StopWaves();
@@ -501,7 +520,10 @@ namespace BlockBlastGame
 
                 case RouteEventType.Boss:
                     if (node.spawnEnemy != null)
-                        SpawnSpecialEnemy(node.spawnEnemy);
+                    {
+                        _waitingForLoopBossDefeat = loopToStage1AfterBossDefeat;
+                        SpawnSpecialEnemy(node.spawnEnemy, isLoopBoss: true);
+                    }
                     break;
 
                 case RouteEventType.Shop:
@@ -663,7 +685,7 @@ namespace BlockBlastGame
         //  Spawn
         // ────────────────────────────────────────
 
-        void SpawnEnemy(EnemyData data)
+        void SpawnEnemy(EnemyData data, bool isLoopBoss = false)
         {
             if (archRoadSystem == null) return;
 
@@ -674,17 +696,59 @@ namespace BlockBlastGame
             ctrl.Initialize(data,
                 archRoadSystem.archRadius,
                 archRoadSystem.transform.position,
-                archRoadSystem.scrollSpeed);
+                archRoadSystem.scrollSpeed,
+                isLoopBoss);
+
+            if (isLoopBoss)
+                ctrl.OnDefeated += HandleLoopBossDefeated;
 
             _enemies.Add(ctrl);
         }
 
         public void SpawnSpecialEnemy(EnemyData data)
         {
+            SpawnSpecialEnemy(data, isLoopBoss: false);
+        }
+
+        public void SpawnSpecialEnemy(EnemyData data, bool isLoopBoss)
+        {
             if (data == null)
                 return;
 
-            SpawnEnemy(data);
+            SpawnEnemy(data, isLoopBoss);
+        }
+
+        void HandleLoopBossDefeated(EnemyController boss)
+        {
+            if (!loopToStage1AfterBossDefeat)
+                return;
+
+            if (boss != null)
+                boss.OnDefeated -= HandleLoopBossDefeated;
+
+            StartCoroutine(RestartLoopAfterBossDefeat());
+        }
+
+        IEnumerator RestartLoopAfterBossDefeat()
+        {
+            // EnemyController.TakeSingleHit 内の撃破処理が完了するのを 1 フレーム待つ。
+            yield return null;
+
+            CurrentLoopIndex++;
+            Debug.Log($"[EnemySystem] Boss defeated. Loop -> {CurrentLoopNumber}, restart stage {loopRestartStage}");
+
+            StopWaves();
+            ClearAllEnemies();
+            _survivalActive = false;
+            _waitingForLoopBossDefeat = false;
+            _routeNodes.Clear();
+            _consumedNodeCount = 0;
+
+            if (GameManager.Instance != null && GameManager.Instance.stageManager != null)
+            {
+                GameManager.Instance.ChangeState(GameState.Playing);
+                GameManager.Instance.stageManager.StartStage(Mathf.Max(1, loopRestartStage));
+            }
         }
 
         // ────────────────────────────────────────
@@ -860,7 +924,11 @@ namespace BlockBlastGame
         public void ClearAllEnemies()
         {
             foreach (var e in _enemies)
-                if (e != null) Destroy(e.gameObject);
+            {
+                if (e == null) continue;
+                e.OnDefeated -= HandleLoopBossDefeated;
+                Destroy(e.gameObject);
+            }
             _enemies.Clear();
             EnemyController.ClearAllHitEffects();
 
