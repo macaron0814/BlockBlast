@@ -12,7 +12,7 @@ namespace BlockBlastGame
     /// • 赤線     = ゲームオーバーライン（敵がここに到達するとゲームオーバー）
     /// </summary>
     [CustomEditor(typeof(EnemySystem))]
-    public class EnemySystemEditor : Editor
+    public class EnemySystemEditor : UnityEditor.Editor
     {
         static readonly Color SpawnColor    = new Color(1f,   0.95f, 0.2f,  0.9f);
         static readonly Color HitColor      = new Color(0.2f, 1f,   0.35f, 0.85f);

@@ -11,7 +11,7 @@ namespace BlockBlastGame
     /// • 青い線   = hoverHeight（地面との距離）
     /// </summary>
     [CustomEditor(typeof(EnemyController))]
-    public class EnemyControllerEditor : Editor
+    public class EnemyControllerEditor : UnityEditor.Editor
     {
         static readonly Color HitColor    = new Color(1f,  0.2f, 0.2f, 0.85f);
         static readonly Color OffsetColor = new Color(1f,  0.9f, 0.1f, 0.9f);
