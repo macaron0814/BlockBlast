@@ -56,6 +56,9 @@ TagManager:
   - name: Enemy
     uniqueID: 1632456789
     locked: 0
+  - name: HUD
+    uniqueID: 3377982375
+    locked: 0
   - name: Shop
     uniqueID: 3908638367
     locked: 0

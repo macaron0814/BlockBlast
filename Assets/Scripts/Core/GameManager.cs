@@ -106,6 +106,8 @@ namespace BlockBlastGame
             GameEvents.TriggerScoreChanged(score);
             comboSystem?.ResetCombo();
             ChangeState(GameState.Playing);
+            SoundManager.Play(SoundCue.GameStart);
+            SoundManager.PlayBgm(BgmCue.Game);
 
             if (startFromDebugStage)
                 LogDebugStageReadiness(stageNumber);

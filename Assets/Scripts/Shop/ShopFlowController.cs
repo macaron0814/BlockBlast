@@ -209,6 +209,7 @@ namespace BlockBlastGame
             }
 
             shopPanel.SetActive(true);
+            SoundManager.PlayBgm(BgmCue.Shop);
             onShopOpened?.Invoke();
         }
 
@@ -309,6 +310,7 @@ namespace BlockBlastGame
             if (shopPanel != null)
                 shopPanel.SetActive(false);
 
+            SoundManager.PlayBgm(BgmCue.Game);
             onShopClosed?.Invoke();
         }
 
