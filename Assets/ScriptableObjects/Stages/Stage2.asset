@@ -15,10 +15,13 @@ MonoBehaviour:
   stageNumber: 2
   stageFeatureNote: "\u63C3\u3048\u3066\u5012\u3059\u3092\u5B66\u3076 / \u3053\u3053\u304B\u3089
     END \u6709"
-  timeLimitSeconds: 40
+  timeLimitSeconds: 1
   linesToClear: 9999
   initialTurns: 9999
   turnsPerLineClear: 9999
   initialMaxBlockCells: 3
+  blockCellCountWeights: []
+  blockDefaultWeightForUnlistedCellCount: 1
+  resetWeightsWhenStageWeightsEmpty: 0
   difficultyMultiplier: 0.7
   itemCount: 3

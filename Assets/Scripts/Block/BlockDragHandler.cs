@@ -40,6 +40,14 @@ namespace BlockBlastGame
         public float dragScale = 1f;
         public float idleScale = 0.6f;
 
+        [Header("Haptics")]
+        [Tooltip("ON: BlockHover SE と同じタイミングで iPhone の一番軽い haptic を鳴らす。")]
+        public bool enableBlockHoverHaptics = true;
+
+        [Tooltip("hover haptic の最小間隔 (秒)。0 にするとプレビュー更新ごとに鳴る。")]
+        [Min(0f)]
+        public float blockHoverHapticMinInterval = 0.03f;
+
         BlockPiece selectedPiece;
         Transform originalParent;
         Vector3 originalPosition;
@@ -49,6 +57,7 @@ namespace BlockBlastGame
         bool previewVisible;
         bool lastPreviewCanPlace;
         Vector2Int lastPreviewPos = InvalidPreviewPos;
+        float lastHoverHapticRealtime = -999f;
 
         void Start()
         {
@@ -154,7 +163,21 @@ namespace BlockBlastGame
                 lastPreviewCanPlace = canPlace;
                 lastPreviewPos = boardPos;
                 SoundManager.Play(SoundCue.BlockHover);
+                PlayBlockHoverHaptic();
             }
+        }
+
+        void PlayBlockHoverHaptic()
+        {
+            if (!enableBlockHoverHaptics)
+                return;
+
+            float now = Time.realtimeSinceStartup;
+            if (now - lastHoverHapticRealtime < blockHoverHapticMinInterval)
+                return;
+
+            lastHoverHapticRealtime = now;
+            MobileHaptics.PlayLightImpact();
         }
 
         void TryDrop()

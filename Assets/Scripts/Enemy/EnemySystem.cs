@@ -21,6 +21,9 @@ namespace BlockBlastGame
         [Tooltip("ON: Boss ルートノードで出た敵を倒したらゲームクリアではなく Stage 1 に戻る。\n購入効果などのプレイヤー強化は維持される。")]
         public bool loopToStage1AfterBossDefeat = true;
 
+        [Tooltip("ON: Clear ルートノードに到達したらゲームクリア UI を出さず、周回数を上げて Stage 1 に戻る。")]
+        public bool loopToStage1OnClearRoute = true;
+
         [Tooltip("ボス撃破後に戻るステージ番号。通常は 1。")]
         [Min(1)]
         public int loopRestartStage = 1;
@@ -531,6 +534,7 @@ namespace BlockBlastGame
                     // EnemySystem はサバイバルタイマー停止 + Wave 停止までを行い、
                     // 演出側からの BeginEnemyExitToShop() でフィールドの敵を整理する。
                     Debug.Log("[EnemySystem] Shop ルートノードを消費 → OnShopRouteNodeReached を発火");
+                    ClearAllBullets();
                     PauseSurvivalForShop();
                     GameEvents.TriggerShopRouteNodeReached();
                     break;
@@ -541,17 +545,25 @@ namespace BlockBlastGame
                     // サバイバルタイマーのカウントだけ一時的に止める。
                     // 到着 → Canvas オープン中は GamePauseService.Pause で全停止される。
                     Debug.Log("[EnemySystem] VendingMachine ルートノードを消費 → OnVendingMachineRouteNodeReached を発火");
+                    ClearAllBullets();
                     PauseSurvivalTickOnly();
                     GameEvents.TriggerVendingMachineRouteNodeReached();
                     break;
 
                 case RouteEventType.Clear:
-                    // ゲーム全体のクリアマス。ショップのように通常ステージ進行へは戻らず、
-                    // Wave / survival を止めてリザルト表示へ遷移する。
-                    Debug.Log("[EnemySystem] Clear ルートノードを消費 → OnGameClearRouteNodeReached を発火");
+                    // このゲームはクリアで終了せず、1 周クリア後は強化状態を維持して Stage 1 に戻る。
+                    // 旧来の GameClearRouteNodeReached は loopToStage1OnClearRoute=OFF のときだけ使う。
+                    Debug.Log("[EnemySystem] Clear ルートノードを消費");
                     PauseSurvivalForShop();
                     ClearAllEnemies();
-                    GameEvents.TriggerGameClearRouteNodeReached();
+                    if (loopToStage1OnClearRoute)
+                    {
+                        StartCoroutine(RestartLoopAfterRouteClear());
+                    }
+                    else
+                    {
+                        GameEvents.TriggerGameClearRouteNodeReached();
+                    }
                     break;
             }
         }
@@ -733,9 +745,20 @@ namespace BlockBlastGame
         {
             // EnemyController.TakeSingleHit 内の撃破処理が完了するのを 1 フレーム待つ。
             yield return null;
+            RestartLoop("Boss defeated");
+        }
 
+        IEnumerator RestartLoopAfterRouteClear()
+        {
+            // Clear マス消費中の route 更新が完了してから周回を切り替える。
+            yield return null;
+            RestartLoop("Clear route reached");
+        }
+
+        void RestartLoop(string reason)
+        {
             CurrentLoopIndex++;
-            Debug.Log($"[EnemySystem] Boss defeated. Loop -> {CurrentLoopNumber}, restart stage {loopRestartStage}");
+            Debug.Log($"[EnemySystem] {reason}. Loop -> {CurrentLoopNumber}, restart stage {loopRestartStage}");
 
             StopWaves();
             ClearAllEnemies();
@@ -932,6 +955,11 @@ namespace BlockBlastGame
             _enemies.Clear();
             EnemyController.ClearAllHitEffects();
 
+            ClearAllBullets();
+        }
+
+        public void ClearAllBullets()
+        {
             foreach (var b in _activeBullets)
                 if (b != null) Destroy(b.gameObject);
             _activeBullets.Clear();

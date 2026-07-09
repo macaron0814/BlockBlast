@@ -14,10 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   stageNumber: 4
   stageFeatureNote: "\u6575\u3092\u5012\u3057\u305F\u6642\u3068\u30C7\u30D5\u30A9\u306E\u5831\u916C\u306B\u5DEE\u304C\u51FA\u59CB\u3081\u308B"
-  timeLimitSeconds: 60
+  timeLimitSeconds: 1
   linesToClear: 9999
   initialTurns: 9999
   turnsPerLineClear: 9999
   initialMaxBlockCells: 4
+  blockCellCountWeights: []
+  blockDefaultWeightForUnlistedCellCount: 1
+  resetWeightsWhenStageWeightsEmpty: 0
   difficultyMultiplier: 0.9
   itemCount: 4
