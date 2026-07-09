@@ -26,8 +26,8 @@ MonoBehaviour:
   - {fileID: 0}
   stunFrames: []
   frameRate: 0.15
-  scale: 0.45
-  hoverHeight: 0.65
+  scale: 0.3375
+  hoverHeight: 0.4875
   tint: {r: 1, g: 1, b: 1, a: 1}
   hitOffset: {x: 0, y: 0}
   hitAngleRadius: 0.5
@@ -37,7 +37,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 5475def8091e34ef0a225c64b44861c8, type: 3}
   - {fileID: 21300000, guid: f11081fef15f84bc386606a68de527be, type: 3}
   hitEffectFrameRate: 0.05
-  hitEffectScale: 2
+  hitEffectScale: 1.5
   hitEffectColor: {r: 1, g: 1, b: 1, a: 1}
   defeatBonusAmount: 100
   maxHPPerLoop: 50
