@@ -13414,14 +13414,14 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 4f8dff9b119a14cf39c6ea1d6f6551aa, type: 2}
   - {fileID: 11400000, guid: 136de8e9fbb9e462386727b0914b87a1, type: 2}
   stageSurvivalTimes:
-  - 30
-  - 40
-  - 60
-  - 60
-  - 90
-  - 90
-  - 120
-  - 160
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
   loopToStage1AfterBossDefeat: 1
   loopToStage1OnClearRoute: 1
   loopRestartStage: 1
@@ -15903,6 +15903,13 @@ MonoBehaviour:
   snapBackSpeed: 15
   dragScale: 1
   idleScale: 0.6
+  enableBlockHoverHaptics: 1
+  blockHoverHapticStyle: 2
+  forceWeakBlockHoverHaptics: 1
+  blockHoverHapticPulseCount: 2
+  blockHoverHapticPulseInterval: 0.035
+  blockHoverHapticStartDelay: 0.02
+  blockHoverHapticMinInterval: 0.03
 --- !u!4 &2000434664
 Transform:
   m_ObjectHideFlags: 0

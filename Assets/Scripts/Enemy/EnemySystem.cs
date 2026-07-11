@@ -770,10 +770,22 @@ namespace BlockBlastGame
             _routeNodes.Clear();
             _consumedNodeCount = 0;
 
+            ResetCharacterRoadBumpPositions();
+
             if (GameManager.Instance != null && GameManager.Instance.stageManager != null)
             {
                 GameManager.Instance.ChangeState(GameState.Playing);
                 GameManager.Instance.stageManager.StartStage(Mathf.Max(1, loopRestartStage));
+            }
+        }
+
+        void ResetCharacterRoadBumpPositions()
+        {
+            var animators = FindObjectsOfType<CharacterAnimator>(includeInactive: true);
+            for (int i = 0; i < animators.Length; i++)
+            {
+                if (animators[i] == null) continue;
+                animators[i].ResetRoadBumpToInitialBase(restartBump: true);
             }
         }
 

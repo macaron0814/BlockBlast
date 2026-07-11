@@ -107,6 +107,7 @@ namespace BlockBlastGame
 
         RectTransform _rect;
         Vector2 _basePosition;
+        Vector2 _initialBasePosition;
         Vector3 _baseScale;
 
         readonly Dictionary<CharaState, CharaAnimState> _stateMap
@@ -124,6 +125,7 @@ namespace BlockBlastGame
             if (_rect != null)
             {
                 _basePosition = _rect.anchoredPosition;
+                _initialBasePosition = _basePosition;
                 _baseScale    = _rect.localScale;
             }
 
@@ -243,8 +245,34 @@ namespace BlockBlastGame
         /// </summary>
         public void RebaseRoadBumpToCurrent()
         {
-            if (_rect != null)
-                _basePosition = _rect.anchoredPosition;
+            if (_rect == null)
+                return;
+
+            // Y を現在位置でリベースすると、揺れの上側にいる瞬間に基準が上へ積み上がる。
+            // 演出復帰で動かしたいのは基本 X だけなので、Y は起動時の基準を維持する。
+            _basePosition = new Vector2(_rect.anchoredPosition.x, _initialBasePosition.y);
+        }
+
+        /// <summary>
+        /// 周回切り替えなど、演出を跨いだ後にプレイヤーUIを本来の揺れ基準へ戻す。
+        /// </summary>
+        public void ResetRoadBumpToInitialBase(bool restartBump = true)
+        {
+            if (_rect == null)
+                return;
+
+            if (_bumpCoroutine != null)
+            {
+                StopCoroutine(_bumpCoroutine);
+                _bumpCoroutine = null;
+            }
+
+            _basePosition = _initialBasePosition;
+            _rect.anchoredPosition = _basePosition;
+            _rect.localScale = _baseScale;
+
+            if (restartBump && enableRoadBump)
+                _bumpCoroutine = StartCoroutine(RoadBumpLoop());
         }
 
         /// <summary>
