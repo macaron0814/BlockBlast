@@ -118,7 +118,7 @@ namespace BlockBlastGame
 
             _sr = gameObject.AddComponent<SpriteRenderer>();
             _sr.sprite = sprite != null ? sprite : GetOrCreateBulletSprite();
-            _sr.sortingLayerName = "UI";
+            _sr.sortingLayerName = "HUD";
             _sr.sortingOrder = 7;
             _sr.color = color ?? new Color(1f, 0.95f, 0.35f);
 

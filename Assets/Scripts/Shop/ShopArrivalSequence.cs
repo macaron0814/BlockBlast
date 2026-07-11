@@ -244,6 +244,8 @@ namespace BlockBlastGame
         {
             if (verboseLog) Debug.Log("[ShopArrivalSequence] OnShopRouteNodeReached 受信");
 
+            enemySystem?.ClearAllBullets();
+
             if (_sequenceRunning)
             {
                 if (verboseLog) Debug.Log("[ShopArrivalSequence] 既に演出中のためスキップ");
@@ -316,6 +318,7 @@ namespace BlockBlastGame
         {
             _sequenceRunning = true;
             _shopArrivedAtCenter = false;
+            enemySystem?.ClearAllBullets();
 
             if (verboseLog) Debug.Log("[ShopArrivalSequence] === Phase 1: 敵退場 & 道路速度保存 ===");
 
@@ -697,6 +700,8 @@ namespace BlockBlastGame
             //         = V0*τ + ΔV * frac * τ / 2     (ΔV = Vpeak - V0, frac = τ / tB)
             if (boostDuration > 0f && Vpeak > V0 + 0.0001f)
             {
+                enemySystem?.ClearAllBullets();
+
                 if (verboseLog)
                     Debug.Log($"[ShopArrivalSequence] 加速フェーズ開始 (V0={V0:F1} → Vpeak={Vpeak:F1}, dur={boostDuration:F2}s)");
                 float boostBaseD = startDist + shopDirection * approachDist;

@@ -3,9 +3,18 @@ using UnityEngine;
 
 namespace BlockBlastGame
 {
+    public enum MobileHapticImpactStyle
+    {
+        Light = 0,
+        Medium = 1,
+        Heavy = 2,
+        Soft = 3,
+        Rigid = 4,
+    }
+
     /// <summary>
     /// Mobile haptic feedback wrapper.
-    /// iOS では UIImpactFeedbackGeneratorStyleLight を使い、その他の環境では何もしない。
+    /// 専用プラグイン tsyk5.MobileHapticFeedback を優先して呼ぶ。
     /// </summary>
     public static class MobileHaptics
     {
@@ -16,11 +25,40 @@ namespace BlockBlastGame
 
         public static void PlayLightImpact()
         {
-#if UNITY_IOS && !UNITY_EDITOR
-            BlockBlast_PlayLightImpact();
-#else
-            // Editor / Android / unsupported platforms: intentionally no-op.
-#endif
+            PlayImpact(MobileHapticImpactStyle.Light);
+        }
+
+        public static void PrepareImpact(MobileHapticImpactStyle style)
+        {
+            tsyk5.MobileHapticFeedback.MobileHapticFeedback.Prepare();
+        }
+
+        public static void PlayImpact(MobileHapticImpactStyle style)
+        {
+            var pluginStyle = ToPluginImpactStyle(style);
+            tsyk5.MobileHapticFeedback.MobileHapticFeedback.PlayImpact(pluginStyle);
+        }
+
+        public static void PlayCoreImpact(float intensity, float sharpness, double durationSec)
+        {
+            tsyk5.MobileHapticFeedback.MobileHapticFeedback.PlayImpact(intensity, sharpness, durationSec);
+        }
+
+        static tsyk5.MobileHapticFeedback.ImpactStyle ToPluginImpactStyle(MobileHapticImpactStyle style)
+        {
+            switch (style)
+            {
+                case MobileHapticImpactStyle.Medium:
+                    return tsyk5.MobileHapticFeedback.ImpactStyle.Medium;
+                case MobileHapticImpactStyle.Heavy:
+                    return tsyk5.MobileHapticFeedback.ImpactStyle.Heavy;
+                case MobileHapticImpactStyle.Soft:
+                    return tsyk5.MobileHapticFeedback.ImpactStyle.Soft;
+                case MobileHapticImpactStyle.Rigid:
+                    return tsyk5.MobileHapticFeedback.ImpactStyle.Rigid;
+                default:
+                    return tsyk5.MobileHapticFeedback.ImpactStyle.Light;
+            }
         }
     }
 }

@@ -361,7 +361,11 @@ namespace BlockBlastGame
 
         void HandleGameClear() => PlayCue(SoundCue.GameClear);
 
-        void HandleGameOver(GameOverType _) => PlayCue(SoundCue.GameOver);
+        void HandleGameOver(GameOverType _)
+        {
+            StopBgmCue();
+            PlayCue(SoundCue.GameOver);
+        }
 
 #if UNITY_EDITOR
         void OnValidate()

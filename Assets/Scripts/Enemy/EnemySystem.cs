@@ -164,6 +164,7 @@ namespace BlockBlastGame
         readonly List<EnemyController> _enemies = new List<EnemyController>();
         readonly List<PlayerBullet> _activeBullets = new List<PlayerBullet>();
         readonly List<BulletHitCandidate> _bulletHitCandidates = new List<BulletHitCandidate>();
+        Coroutine _bulletBurstCoroutine;
 
         struct BulletHitCandidate
         {
@@ -309,7 +310,9 @@ namespace BlockBlastGame
                 : 0;
             int totalBullets = Mathf.Max(0, cellsCleared + bulletCountBonus);
 
-            StartCoroutine(FireBulletBurst(totalBullets));
+            if (_bulletBurstCoroutine != null)
+                StopCoroutine(_bulletBurstCoroutine);
+            _bulletBurstCoroutine = StartCoroutine(FireBulletBurst(totalBullets));
         }
 
         /// <summary>
@@ -785,6 +788,8 @@ namespace BlockBlastGame
                 SpawnBullet();
                 yield return new WaitForSeconds(bulletSpawnInterval);
             }
+
+            _bulletBurstCoroutine = null;
         }
 
         void SpawnBullet()
@@ -960,6 +965,12 @@ namespace BlockBlastGame
 
         public void ClearAllBullets()
         {
+            if (_bulletBurstCoroutine != null)
+            {
+                StopCoroutine(_bulletBurstCoroutine);
+                _bulletBurstCoroutine = null;
+            }
+
             foreach (var b in _activeBullets)
                 if (b != null) Destroy(b.gameObject);
             _activeBullets.Clear();

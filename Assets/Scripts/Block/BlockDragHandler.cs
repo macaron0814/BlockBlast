@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 namespace BlockBlastGame
@@ -41,8 +42,26 @@ namespace BlockBlastGame
         public float idleScale = 0.6f;
 
         [Header("Haptics")]
-        [Tooltip("ON: BlockHover SE と同じタイミングで iPhone の一番軽い haptic を鳴らす。")]
+        [Tooltip("ON: BlockHover SE とは別処理で iPhone の haptic を鳴らす。")]
         public bool enableBlockHoverHaptics = true;
+
+        [Tooltip("BlockHover と同時に鳴らす haptic の強さ。通常は最弱の Light。")]
+        public MobileHapticImpactStyle blockHoverHapticStyle = MobileHapticImpactStyle.Light;
+
+        [Tooltip("ON: 既存シーンで強い値が保存されていても、BlockHover は最弱の Light 1回だけにする。")]
+        public bool forceWeakBlockHoverHaptics = true;
+
+        [Tooltip("1回の BlockHover で haptic を何回鳴らすか。最弱にしたい場合は 1。")]
+        [Range(1, 3)]
+        public int blockHoverHapticPulseCount = 1;
+
+        [Tooltip("複数回鳴らすときの間隔 (秒)。短すぎると端末側で吸収されることがあります。")]
+        [Min(0f)]
+        public float blockHoverHapticPulseInterval = 0.035f;
+
+        [Tooltip("BlockHover SE から haptic を何秒ずらして鳴らすか。SE と同フレームで奪い合うのを避けるため、少し遅らせる。")]
+        [Min(0f)]
+        public float blockHoverHapticStartDelay = 0.02f;
 
         [Tooltip("hover haptic の最小間隔 (秒)。0 にするとプレビュー更新ごとに鳴る。")]
         [Min(0f)]
@@ -137,6 +156,8 @@ namespace BlockBlastGame
                 lastPreviewPos = InvalidPreviewPos;
 
                 SoundManager.Play(SoundCue.BlockGrab);
+                if (enableBlockHoverHaptics)
+                    MobileHaptics.PrepareImpact(ResolveBlockHoverHapticStyle());
                 DragUpdate();
             }
         }
@@ -177,7 +198,37 @@ namespace BlockBlastGame
                 return;
 
             lastHoverHapticRealtime = now;
-            MobileHaptics.PlayLightImpact();
+            var style = ResolveBlockHoverHapticStyle();
+            int pulseCount = forceWeakBlockHoverHaptics
+                ? 1
+                : Mathf.Clamp(blockHoverHapticPulseCount, 1, 3);
+            StartCoroutine(PlayHoverHapticPulses(style, pulseCount));
+        }
+
+        MobileHapticImpactStyle ResolveBlockHoverHapticStyle()
+        {
+            return forceWeakBlockHoverHaptics
+                ? MobileHapticImpactStyle.Light
+                : blockHoverHapticStyle;
+        }
+
+        IEnumerator PlayHoverHapticPulses(MobileHapticImpactStyle style, int pulseCount)
+        {
+            float startDelay = Mathf.Max(0f, blockHoverHapticStartDelay);
+            if (startDelay > 0f)
+                yield return new WaitForSecondsRealtime(startDelay);
+            else
+                yield return null; // SE と同フレームにならないよう、最低 1 フレームずらす。
+
+            float interval = Mathf.Max(0f, blockHoverHapticPulseInterval);
+            for (int i = 0; i < pulseCount; i++)
+            {
+                MobileHaptics.PrepareImpact(style);
+                MobileHaptics.PlayImpact(style);
+
+                if (i < pulseCount - 1 && interval > 0f)
+                    yield return new WaitForSecondsRealtime(interval);
+            }
         }
 
         void TryDrop()

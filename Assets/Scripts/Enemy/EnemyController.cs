@@ -474,7 +474,7 @@ namespace BlockBlastGame
             var sr = obj.AddComponent<SpriteRenderer>();
             sr.sprite           = _data.hitEffectFrames[0];
             sr.color            = _data.hitEffectColor;
-            sr.sortingLayerName = ResolveSortingLayerName();
+            sr.sortingLayerName = "HUD";
             sr.sortingOrder     = ResolveSortingOrder() + 2;
             _activeHitEffects.Add(obj);
 
