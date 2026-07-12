@@ -57,6 +57,11 @@ namespace BlockBlastGame.Editor
                     {
                         key = "NSUserTrackingUsageDescription",
                         value = "不適切な広告の表示を避けるためにトラッキングの許可を使用します"
+                    },
+                    new IOSLocalizedInfoPlistEntry
+                    {
+                        key = "NSLocalNetworkUsageDescription",
+                        value = "広告の表示品質を保つために、ネットワーク上の状態を確認します"
                     }
                 }
             },
@@ -75,6 +80,11 @@ namespace BlockBlastGame.Editor
                     {
                         key = "NSUserTrackingUsageDescription",
                         value = "Allow tracking to help avoid showing inappropriate advertisements."
+                    },
+                    new IOSLocalizedInfoPlistEntry
+                    {
+                        key = "NSLocalNetworkUsageDescription",
+                        value = "Used to check local network conditions to maintain ad display quality."
                     }
                 }
             }
@@ -82,6 +92,10 @@ namespace BlockBlastGame.Editor
 
         [Header("Advertising")]
         public bool setGADIsAdManagerApp = false;
+        [Tooltip("ON: AdMob iOS banner 用に GADApplicationIdentifier と Google-Mobile-Ads-SDK Pod を追加する。")]
+        public bool enableAdMob = true;
+        [Tooltip("AdMob App ID。Info.plist の GADApplicationIdentifier に入る。")]
+        public string admobApplicationIdentifier = "ca-app-pub-5945355481712765~5781050108";
         public string[] skAdNetworkIdentifiers =
         {
             "cstr6suwn9.skadnetwork"
@@ -113,6 +127,9 @@ namespace BlockBlastGame.Editor
         [Tooltip("Distribution Archive 用の証明書名。通常は Apple Distribution。")]
         public string distributionCodeSignIdentity = "Apple Distribution";
 
+        [Tooltip("ON: Debug構成 (XcodeからのRun実機テスト用) は自動署名(開発用証明書)にする。OFF にすると Debug も Release と同じ Distribution 手動署名になり、Xcodeから直接実機Runできなくなる。")]
+        public bool useAutomaticSigningForDebug = true;
+
         [Header("App Store Icon")]
         [Tooltip("ON: AppIcon.appiconset に App Store 用 1024x1024 (ios-marketing) が無い場合、自動生成する。")]
         public bool ensureMarketingAppIcon = true;
@@ -125,7 +142,7 @@ namespace BlockBlastGame.Editor
         public bool runPodInstall = true;
 
         [Tooltip("Podfile の platform :ios に入れる最低 iOS バージョン。")]
-        public string podPlatformIOS = "13.0";
+        public string podPlatformIOS = "15.0";
 
         [Tooltip("ON: Podfile に use_frameworks! を追加する。必要な SDK でだけ ON にする。")]
         public bool useFrameworks;
@@ -187,11 +204,21 @@ namespace BlockBlastGame.Editor
             if (settings.setGADIsAdManagerApp)
                 plist.root.SetBoolean("GADIsAdManagerApp", true);
 
+            if (settings.enableAdMob && !string.IsNullOrWhiteSpace(settings.admobApplicationIdentifier))
+            {
+                plist.root.SetString("GADApplicationIdentifier", settings.admobApplicationIdentifier.Trim());
+                plist.root.SetBoolean("GADIsAdManagerApp", false);
+            }
+
+            RemoveLocalNetworkPromptKeys(plist);
+
             plist.WriteToFile(plistPath);
 
             EnsureMarketingAppIcon(pathToBuiltProject, settings);
             ApplyCodeSigning(projectPath, settings);
             ApplyFrameworks(projectPath, settings);
+            ApplyDeploymentTarget(projectPath, settings);
+            ApplySwiftRuntimeEmbedding(projectPath, settings);
             ApplyCocoaPods(pathToBuiltProject, settings);
             UnityEngine.Debug.Log("[iOS Xcode Build] Applied Xcode project and Info.plist settings from Unity.");
         }
@@ -352,6 +379,16 @@ namespace BlockBlastGame.Editor
             }
         }
 
+        // 注意: NSLocalNetworkUsageDescription / NSBonjourServices を Info.plist から削除しても
+        // ローカルネットワークへの確認ダイアログ自体は消えない。このアラートはOSが
+        // 「アプリが実際にローカルネットワーク通信 (Bonjour/mDNS/ソケット接続等) を試みた瞬間」に
+        // 自動的に出す仕組みで、抑制するAPIは存在しない (Appleの公式仕様、TN3179参照)。
+        // キーを削除すると通信自体は止まらず、説明文が空欄の分かりにくいダイアログになるだけで
+        // 審査上もマイナスなので、代わりに ApplyInfoPlistLocalization 側で正しい説明文を設定する。
+        static void RemoveLocalNetworkPromptKeys(PlistDocument plist)
+        {
+        }
+
         static void ApplyFrameworks(string projectPath, IOSXcodeBuildSettings settings)
         {
             var project = new PBXProject();
@@ -378,6 +415,42 @@ namespace BlockBlastGame.Editor
             project.WriteToFile(projectPath);
         }
 
+        static void ApplyDeploymentTarget(string projectPath, IOSXcodeBuildSettings settings)
+        {
+            string deploymentTarget = NormalizePodPlatform(settings.podPlatformIOS);
+            var project = new PBXProject();
+            project.ReadFromFile(projectPath);
+
+            project.SetBuildProperty(project.GetUnityMainTargetGuid(), "IPHONEOS_DEPLOYMENT_TARGET", deploymentTarget);
+            project.SetBuildProperty(project.GetUnityFrameworkTargetGuid(), "IPHONEOS_DEPLOYMENT_TARGET", deploymentTarget);
+
+            project.WriteToFile(projectPath);
+        }
+
+        // GoogleUserMessagingPlatform はSwift製だがUnity側にはSwiftソースが無いため、
+        // アプリ本体へSwift標準ライブラリを埋め込むことを明示する。
+        // UnityFrameworkはAdMobを静的リンクする側だが、ランタイムを自身へ重複して
+        // 埋め込まないよう ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES はNOにする。
+        static void ApplySwiftRuntimeEmbedding(string projectPath, IOSXcodeBuildSettings settings)
+        {
+            if (!settings.enableAdMob)
+                return;
+
+            var project = new PBXProject();
+            project.ReadFromFile(projectPath);
+
+            string mainTargetGuid = project.GetUnityMainTargetGuid();
+            string frameworkTargetGuid = project.GetUnityFrameworkTargetGuid();
+
+            project.SetBuildProperty(mainTargetGuid, "SWIFT_VERSION", "5.0");
+            project.SetBuildProperty(mainTargetGuid, "ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES", "YES");
+
+            project.SetBuildProperty(frameworkTargetGuid, "SWIFT_VERSION", "5.0");
+            project.SetBuildProperty(frameworkTargetGuid, "ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES", "NO");
+
+            project.WriteToFile(projectPath);
+        }
+
         static void ApplyCodeSigning(string projectPath, IOSXcodeBuildSettings settings)
         {
             if (!settings.configureCodeSigning)
@@ -399,14 +472,50 @@ namespace BlockBlastGame.Editor
                 teamId,
                 identity,
                 settings.provisioningProfileSpecifier,
-                settings.provisioningProfileUuid);
+                settings.provisioningProfileUuid,
+                settings.useAutomaticSigningForDebug);
 
-            ApplyDistributionSigningToFrameworkTarget(project, frameworkTargetGuid, teamId, identity);
+            ApplyDistributionSigningToFrameworkTarget(
+                project,
+                frameworkTargetGuid,
+                teamId,
+                identity,
+                settings.useAutomaticSigningForDebug);
 
             project.WriteToFile(projectPath);
         }
 
+        // Release構成は申請用の Distribution 証明書 + App Store プロビジョニングプロファイルで手動署名する。
+        // Debug構成は (useAutomaticSigningForDebug が ON の場合) 自動署名にしておくことで、
+        // Xcode から実機に直接 Run してテストできるようにする。
+        // App Store / TestFlight 用の配布プロファイルは Xcode からの直接インストールを許可されていないため、
+        // Debug にも Distribution 設定を入れると "Attempted to install a Beta profile without the proper
+        // entitlement" (0xe800801f) エラーで実機Runできなくなる。
         static void ApplyDistributionSigningToMainTarget(
+            PBXProject project,
+            string targetGuid,
+            string teamId,
+            string identity,
+            string profileSpecifier,
+            string profileUuid,
+            bool useAutomaticSigningForDebug)
+        {
+            ApplyReleaseDistributionSigning(project, targetGuid, teamId, identity, profileSpecifier, profileUuid);
+            ApplyDebugSigning(project, targetGuid, teamId, identity, profileSpecifier, profileUuid, useAutomaticSigningForDebug);
+        }
+
+        static void ApplyDistributionSigningToFrameworkTarget(
+            PBXProject project,
+            string targetGuid,
+            string teamId,
+            string identity,
+            bool useAutomaticSigningForDebug)
+        {
+            ApplyReleaseDistributionSigning(project, targetGuid, teamId, identity, null, null);
+            ApplyDebugSigning(project, targetGuid, teamId, identity, null, null, useAutomaticSigningForDebug);
+        }
+
+        static void ApplyReleaseDistributionSigning(
             PBXProject project,
             string targetGuid,
             string teamId,
@@ -414,26 +523,67 @@ namespace BlockBlastGame.Editor
             string profileSpecifier,
             string profileUuid)
         {
-            project.SetBuildProperty(targetGuid, "CODE_SIGN_STYLE", "Manual");
-            project.SetBuildProperty(targetGuid, "CODE_SIGN_IDENTITY", identity);
-            project.SetBuildProperty(targetGuid, "DEVELOPMENT_TEAM", teamId);
+            string releaseConfigGuid = project.BuildConfigByName(targetGuid, "Release");
+            if (string.IsNullOrEmpty(releaseConfigGuid))
+            {
+                // Fallback: フォールバックとして全構成に適用する (Debug/Release の構成名が見つからない場合)。
+                project.SetBuildProperty(targetGuid, "CODE_SIGN_STYLE", "Manual");
+                project.SetBuildProperty(targetGuid, "CODE_SIGN_IDENTITY", identity);
+                project.SetBuildProperty(targetGuid, "DEVELOPMENT_TEAM", teamId);
+                if (!string.IsNullOrWhiteSpace(profileSpecifier))
+                    project.SetBuildProperty(targetGuid, "PROVISIONING_PROFILE_SPECIFIER", profileSpecifier.Trim());
+                if (!string.IsNullOrWhiteSpace(profileUuid))
+                    project.SetBuildProperty(targetGuid, "PROVISIONING_PROFILE", profileUuid.Trim());
+                return;
+            }
+
+            project.SetBuildPropertyForConfig(releaseConfigGuid, "CODE_SIGN_STYLE", "Manual");
+            project.SetBuildPropertyForConfig(releaseConfigGuid, "CODE_SIGN_IDENTITY", identity);
+            project.SetBuildPropertyForConfig(releaseConfigGuid, "DEVELOPMENT_TEAM", teamId);
 
             if (!string.IsNullOrWhiteSpace(profileSpecifier))
-                project.SetBuildProperty(targetGuid, "PROVISIONING_PROFILE_SPECIFIER", profileSpecifier.Trim());
+                project.SetBuildPropertyForConfig(releaseConfigGuid, "PROVISIONING_PROFILE_SPECIFIER", profileSpecifier.Trim());
 
             if (!string.IsNullOrWhiteSpace(profileUuid))
-                project.SetBuildProperty(targetGuid, "PROVISIONING_PROFILE", profileUuid.Trim());
+                project.SetBuildPropertyForConfig(releaseConfigGuid, "PROVISIONING_PROFILE", profileUuid.Trim());
         }
 
-        static void ApplyDistributionSigningToFrameworkTarget(
+        static void ApplyDebugSigning(
             PBXProject project,
             string targetGuid,
             string teamId,
-            string identity)
+            string identity,
+            string profileSpecifier,
+            string profileUuid,
+            bool useAutomaticSigningForDebug)
         {
-            project.SetBuildProperty(targetGuid, "CODE_SIGN_STYLE", "Manual");
-            project.SetBuildProperty(targetGuid, "CODE_SIGN_IDENTITY", identity);
-            project.SetBuildProperty(targetGuid, "DEVELOPMENT_TEAM", teamId);
+            string debugConfigGuid = project.BuildConfigByName(targetGuid, "Debug");
+            if (string.IsNullOrEmpty(debugConfigGuid))
+                return;
+
+            if (!useAutomaticSigningForDebug)
+            {
+                // Debug も Release と同じ Distribution 手動署名にする (Xcodeからの直接実機Runは不可になる)。
+                project.SetBuildPropertyForConfig(debugConfigGuid, "CODE_SIGN_STYLE", "Manual");
+                project.SetBuildPropertyForConfig(debugConfigGuid, "CODE_SIGN_IDENTITY", identity);
+                project.SetBuildPropertyForConfig(debugConfigGuid, "DEVELOPMENT_TEAM", teamId);
+
+                if (!string.IsNullOrWhiteSpace(profileSpecifier))
+                    project.SetBuildPropertyForConfig(debugConfigGuid, "PROVISIONING_PROFILE_SPECIFIER", profileSpecifier.Trim());
+
+                if (!string.IsNullOrWhiteSpace(profileUuid))
+                    project.SetBuildPropertyForConfig(debugConfigGuid, "PROVISIONING_PROFILE", profileUuid.Trim());
+
+                return;
+            }
+
+            project.SetBuildPropertyForConfig(debugConfigGuid, "CODE_SIGN_STYLE", "Automatic");
+            project.SetBuildPropertyForConfig(debugConfigGuid, "DEVELOPMENT_TEAM", teamId);
+            // 自動署名時はXcodeにDevelopment証明書/プロファイルを選ばせるため、
+            // Distribution向けの手動指定を残さない (残っていると自動署名と衝突する)。
+            project.SetBuildPropertyForConfig(debugConfigGuid, "CODE_SIGN_IDENTITY", "Apple Development");
+            project.SetBuildPropertyForConfig(debugConfigGuid, "PROVISIONING_PROFILE_SPECIFIER", "");
+            project.SetBuildPropertyForConfig(debugConfigGuid, "PROVISIONING_PROFILE", "");
         }
 
         static void EnsureMarketingAppIcon(string buildPath, IOSXcodeBuildSettings settings)
@@ -582,9 +732,9 @@ namespace BlockBlastGame.Editor
                 }
             }
 
-            builder.AppendLine("end");
-            builder.AppendLine();
-            builder.AppendLine("target 'Unity-iPhone' do");
+            if (settings.enableAdMob)
+                builder.AppendLine("  pod 'Google-Mobile-Ads-SDK'");
+
             builder.AppendLine("end");
 
             File.WriteAllText(podfilePath, builder.ToString(), new UTF8Encoding(false));
@@ -593,7 +743,7 @@ namespace BlockBlastGame.Editor
 
         static string NormalizePodPlatform(string value)
         {
-            return string.IsNullOrWhiteSpace(value) ? "13.0" : value.Trim();
+            return string.IsNullOrWhiteSpace(value) ? "15.0" : value.Trim();
         }
 
         static string EscapeRubySingleQuotedString(string value)

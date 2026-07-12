@@ -20,6 +20,8 @@ MonoBehaviour:
       value: "\u30C8\u30A5\u30A4\u30F3\u30AD\u30FC\u30D1\u30BA\u30EB"
     - key: NSUserTrackingUsageDescription
       value: "\u4E0D\u9069\u5207\u306A\u5E83\u544A\u306E\u8868\u793A\u3092\u907F\u3051\u308B\u305F\u3081\u306B\u30C8\u30E9\u30C3\u30AD\u30F3\u30B0\u306E\u8A31\u53EF\u3092\u4F7F\u7528\u3057\u307E\u3059"
+    - key: NSLocalNetworkUsageDescription
+      value: "\u5E83\u544A\u306E\u8868\u793A\u54C1\u8CEA\u3092\u4FDD\u3064\u305F\u3081\u306B\u3001\u30CD\u30C3\u30C8\u30EF\u30FC\u30AF\u4E0A\u306E\u72B6\u614B\u3092\u78BA\u8A8D\u3057\u307E\u3059"
   - languageCode: en
     isDefault: 0
     entries:
@@ -27,7 +29,11 @@ MonoBehaviour:
       value: TwinkiiPuzzle
     - key: NSUserTrackingUsageDescription
       value: Allow tracking to help avoid showing inappropriate advertisements.
+    - key: NSLocalNetworkUsageDescription
+      value: Used to check local network conditions to maintain ad display quality.
   setGADIsAdManagerApp: 0
+  enableAdMob: 1
+  admobApplicationIdentifier: ca-app-pub-5945355481712765~5781050108
   skAdNetworkIdentifiers:
   - cstr6suwn9.skadnetwork
   addAppTrackingTransparencyFramework: 1
@@ -36,3 +42,4 @@ MonoBehaviour:
   - WebKit.framework
   - UserNotifications.framework
   - AuthenticationServices.framework
+  podPlatformIOS: 15.0
