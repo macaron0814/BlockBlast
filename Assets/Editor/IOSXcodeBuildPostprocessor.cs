@@ -51,7 +51,7 @@ namespace BlockBlastGame.Editor
                     new IOSLocalizedInfoPlistEntry
                     {
                         key = "CFBundleDisplayName",
-                        value = "BlockBlast"
+                        value = "パズプリ"
                     },
                     new IOSLocalizedInfoPlistEntry
                     {
@@ -74,7 +74,7 @@ namespace BlockBlastGame.Editor
                     new IOSLocalizedInfoPlistEntry
                     {
                         key = "CFBundleDisplayName",
-                        value = "BlockBlast"
+                        value = "パズプリ"
                     },
                     new IOSLocalizedInfoPlistEntry
                     {

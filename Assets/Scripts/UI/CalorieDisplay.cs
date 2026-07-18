@@ -1,8 +1,57 @@
+using System;
+using System.Globalization;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace BlockBlastGame
 {
+    public static class CalorieFormatter
+    {
+        public const long MaxValue = 999_900_000_000_000L;
+
+        static readonly long[] Divisors =
+        {
+            1_000L,
+            1_000_000L,
+            1_000_000_000L,
+            1_000_000_000_000L,
+        };
+
+        static readonly char[] Suffixes = { 'K', 'M', 'G', 'T' };
+
+        public static long Clamp(long value)
+        {
+            return Math.Max(0L, Math.Min(value, MaxValue));
+        }
+
+        public static string Format(long value)
+        {
+            value = Clamp(value);
+            if (value < Divisors[0])
+                return value.ToString(CultureInfo.InvariantCulture);
+
+            int suffixIndex = 0;
+            while (suffixIndex < Divisors.Length - 1 && value >= Divisors[suffixIndex + 1])
+                suffixIndex++;
+
+            double scaled = (double)value / Divisors[suffixIndex];
+            double rounded = Math.Round(scaled, 1, MidpointRounding.AwayFromZero);
+
+            // 999.95K のように丸め後が1000になった場合は、次の単位へ繰り上げる。
+            if (rounded >= 1000d && suffixIndex < Suffixes.Length - 1)
+            {
+                suffixIndex++;
+                scaled = (double)value / Divisors[suffixIndex];
+                rounded = Math.Round(scaled, 1, MidpointRounding.AwayFromZero);
+            }
+
+            if (suffixIndex == Suffixes.Length - 1)
+                rounded = Math.Min(999.9d, rounded);
+
+            return rounded.ToString("0.#", CultureInfo.InvariantCulture) + Suffixes[suffixIndex];
+        }
+    }
+
     /// <summary>
     /// ライン消去で消えたセル数に応じて「セル数 × caloriesPerBlock」カロリーを加算し、
     /// sprite 数字で右揃え表示する UI コンポーネント。
@@ -26,6 +75,20 @@ namespace BlockBlastGame
 
         [Header("桁スプライト (0〜9 の順)")]
         public Sprite[] digitSprites = new Sprite[10];
+
+        [Header("省略表記スプライト")]
+        public Sprite decimalPointSprite;
+        public Sprite kSuffixSprite;
+        public Sprite mSuffixSprite;
+        public Sprite gSuffixSprite;
+        public Sprite tSuffixSprite;
+
+        [Tooltip("小数点画像の表示倍率。素材が数字より大きい場合の調整用。")]
+        [Min(0.01f)]
+        public float decimalPointScale = 0.1f;
+
+        [Tooltip("小数点画像のY位置。数字のベースラインへ合わせるため通常は負の値。")]
+        public float decimalPointOffsetY = -35f;
 
         [Header("kcal ラベルスプライト（null で非表示）")]
         public Sprite kcalLabelSprite;
@@ -70,8 +133,8 @@ namespace BlockBlastGame
         //  Runtime
         // ────────────────────────────────────────
 
-        int _totalCalories;
-        int _displayedCalories = -1;
+        long _totalCalories;
+        long _displayedCalories = -1;
 
         Image[] _digitImages;
         Image   _labelImage;
@@ -106,9 +169,9 @@ namespace BlockBlastGame
             AddCalories(cellsCleared * caloriesPerBlock);
         }
 
-        void HandleCalorieChanged(int total)
+        void HandleCalorieChanged(long total)
         {
-            _totalCalories = total;
+            _totalCalories = CalorieFormatter.Clamp(total);
             RefreshDisplay();
         }
 
@@ -116,11 +179,16 @@ namespace BlockBlastGame
         //  Public API
         // ────────────────────────────────────────
 
-        public int TotalCalories => _totalCalories;
+        public long TotalCalories => _totalCalories;
 
-        public void AddCalories(int amount)
+        public void AddCalories(long amount)
         {
-            _totalCalories += amount;
+            if (amount <= 0L)
+                return;
+
+            _totalCalories = amount >= CalorieFormatter.MaxValue - _totalCalories
+                ? CalorieFormatter.MaxValue
+                : _totalCalories + amount;
             GameEvents.TriggerCalorieChanged(_totalCalories);
         }
 
@@ -139,8 +207,10 @@ namespace BlockBlastGame
             for (int i = transform.childCount - 1; i >= 0; i--)
                 DestroyImmediate(transform.GetChild(i).gameObject);
 
-            _digitImages = new Image[maxDigits];
-            for (int i = 0; i < maxDigits; i++)
+            // 最大表示 "999.9T" の6文字を必ず確保する。
+            int imageCount = Mathf.Max(maxDigits, 6);
+            _digitImages = new Image[imageCount];
+            for (int i = 0; i < imageCount; i++)
             {
                 var go  = new GameObject($"Digit_{i}", typeof(RectTransform));
                 go.transform.SetParent(transform, false);
@@ -178,11 +248,12 @@ namespace BlockBlastGame
             if (_displayedCalories == _totalCalories) return;
             _displayedCalories = _totalCalories;
 
-            string valueText = Mathf.Max(0, _totalCalories).ToString();
-            if (valueText.Length > maxDigits)
-                valueText = valueText.Substring(valueText.Length - maxDigits);
-            else if (zeroPadToMaxDigits)
+            string valueText = CalorieFormatter.Format(_totalCalories);
+            if (_totalCalories < 1000L && zeroPadToMaxDigits)
                 valueText = valueText.PadLeft(maxDigits, '0');
+
+            if (valueText.Length > _digitImages.Length)
+                valueText = valueText.Substring(valueText.Length - _digitImages.Length);
 
             // 桁の基準サイズ
             float dw = digitSize.x;
@@ -215,19 +286,20 @@ namespace BlockBlastGame
             int slot = 0;
             for (int charIndex = valueText.Length - 1; charIndex >= 0 && slot < _digitImages.Length; charIndex--, slot++)
             {
-                int digit = valueText[charIndex] - '0';
+                char character = valueText[charIndex];
                 var img = _digitImages[slot];
-                var sp = (digitSprites != null && digit < digitSprites.Length) ? digitSprites[digit] : null;
+                var sp = ResolveValueSprite(character);
+                float symbolScale = character == '.' ? decimalPointScale : 1f;
 
-                float cw = dw;
-                float ch = dh;
+                float cw = dw * symbolScale;
+                float ch = dh * symbolScale;
                 if (sp != null)
                 {
                     img.sprite = sp;
                     if (useNativeSize)
                     {
-                        cw = sp.rect.width  * digitScale;
-                        ch = sp.rect.height * digitScale;
+                        cw = sp.rect.width  * digitScale * symbolScale;
+                        ch = sp.rect.height * digitScale * symbolScale;
                     }
                 }
                 else
@@ -235,13 +307,37 @@ namespace BlockBlastGame
                     img.sprite = null;
                 }
 
-                PlaceElement(img.rectTransform, cw, ch, cursor + digitOffset.x, digitOffset.y);
+                float characterOffsetY = character == '.' ? decimalPointOffsetY : 0f;
+                PlaceElement(img.rectTransform, cw, ch,
+                    cursor + digitOffset.x,
+                    digitOffset.y + characterOffsetY);
                 img.gameObject.SetActive(true);
                 cursor -= cw + digitGap;
             }
 
             if (labelOnLeft && _labelImage != null)
                 PlaceElement(_labelImage.rectTransform, lw, lh, cursor + labelOffset.x, labelOffset.y);
+        }
+
+        Sprite ResolveValueSprite(char character)
+        {
+            if (character >= '0' && character <= '9')
+            {
+                int digit = character - '0';
+                return digitSprites != null && digit < digitSprites.Length
+                    ? digitSprites[digit]
+                    : null;
+            }
+
+            switch (character)
+            {
+                case '.': return decimalPointSprite;
+                case 'K': return kSuffixSprite;
+                case 'M': return mSuffixSprite;
+                case 'G': return gSuffixSprite;
+                case 'T': return tSuffixSprite;
+                default: return null;
+            }
         }
 
         void PlaceElement(RectTransform rectTransform, float width, float height, float x, float y)

@@ -317,8 +317,15 @@ namespace BlockBlastGame
         void ProceedToNextStageImmediate()
         {
             var gm = GameManager.Instance;
-            if (gm != null)
-                gm.ProceedToNextStage();
+            if (gm == null)
+                return;
+
+            // 最終Shopにゲームクリアフラグがある場合は、通常の次ステージではなく
+            // 周回数を進めてWave 1へ戻す。CurrentLoopIndexが進むため色ルールも維持される。
+            if (gm.enemySystem != null && gm.enemySystem.TryRestartLoopAfterGameClearShop())
+                return;
+
+            gm.ProceedToNextStage();
         }
     }
 }

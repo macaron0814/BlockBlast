@@ -185,6 +185,7 @@ namespace BlockBlastGame
         readonly List<RouteNodeRuntime> _routeNodes = new List<RouteNodeRuntime>();
         int _consumedNodeCount;
         bool _waitingForLoopBossDefeat;
+        bool _pendingGameClearAfterShop;
 
         // --- Survival timer ---
         float _survivalTimer;
@@ -395,6 +396,7 @@ namespace BlockBlastGame
 
             _currentWaveIndex = 0;
             _waitingForLoopBossDefeat = false;
+            _pendingGameClearAfterShop = false;
 
             _survivalTimeLimit = ResolveSurvivalTime(stageNumber);
             _survivalTimer = 0f;
@@ -456,7 +458,8 @@ namespace BlockBlastGame
                     maxCellIncrease = Mathf.Max(0, cfg.maxCellIncrease),
                     unlockAllShapes = cfg.unlockAllShapes,
                     randomShapeIncrease = Mathf.Max(0, cfg.randomShapeIncrease),
-                    spawnEnemy = cfg.spawnEnemy
+                    spawnEnemy = cfg.spawnEnemy,
+                    gameClearAfterShop = cfg.gameClearAfterShop
                 });
             }
         }
@@ -536,7 +539,8 @@ namespace BlockBlastGame
                     // ショップ到来演出は ShopArrivalSequence が担当する。
                     // EnemySystem はサバイバルタイマー停止 + Wave 停止までを行い、
                     // 演出側からの BeginEnemyExitToShop() でフィールドの敵を整理する。
-                    Debug.Log("[EnemySystem] Shop ルートノードを消費 → OnShopRouteNodeReached を発火");
+                    _pendingGameClearAfterShop = node.gameClearAfterShop;
+                    Debug.Log($"[EnemySystem] Shop ルートノードを消費 → OnShopRouteNodeReached を発火 (gameClear={_pendingGameClearAfterShop})");
                     ClearAllBullets();
                     PauseSurvivalForShop();
                     GameEvents.TriggerShopRouteNodeReached();
@@ -758,6 +762,16 @@ namespace BlockBlastGame
             RestartLoop("Clear route reached");
         }
 
+        public bool TryRestartLoopAfterGameClearShop()
+        {
+            if (!_pendingGameClearAfterShop)
+                return false;
+
+            _pendingGameClearAfterShop = false;
+            RestartLoop("Game-clear shop completed");
+            return true;
+        }
+
         void RestartLoop(string reason)
         {
             CurrentLoopIndex++;
@@ -774,6 +788,9 @@ namespace BlockBlastGame
 
             if (GameManager.Instance != null && GameManager.Instance.stageManager != null)
             {
+                // 周回で持ち越すのは累積kcalと所持金のみ。
+                // ショップ購入効果、パーク、盤面、アイテム、ターン等は初期化する。
+                GameManager.Instance.ResetForNewLoopPreservingKcalAndMoney();
                 GameManager.Instance.ChangeState(GameState.Playing);
                 GameManager.Instance.stageManager.StartStage(Mathf.Max(1, loopRestartStage));
             }

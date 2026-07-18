@@ -306,6 +306,35 @@ namespace BlockBlastGame
             GameEvents.TriggerGameClear();
         }
 
+        /// <summary>
+        /// 周回開始時にラン内パラメータを初期状態へ戻す。
+        /// 累積カロリー (CalorieDisplay) と所持金 (PlayerWallet) には触れない。
+        /// </summary>
+        public void ResetForNewLoopPreservingKcalAndMoney()
+        {
+            score = 0;
+            GameEvents.TriggerScoreChanged(score);
+
+            boardManager?.ClearBoard();
+            if (blockSpawner != null)
+            {
+                blockSpawner.ClearCurrentPieces();
+                blockSpawner.ClearCellCountWeights();
+                blockSpawner.defaultWeightForUnlistedCellCount = 1f;
+            }
+            itemSystem?.ClearAll();
+            comboSystem?.ResetCombo();
+            roguelikeSystem?.Reset();
+            EnemySystem.SetEventVisualOffset(Vector3.zero);
+
+            var playerEffects = PlayerEffectState.Instance;
+            if (playerEffects == null)
+                playerEffects = FindObjectOfType<PlayerEffectState>();
+            playerEffects?.ResetAll();
+
+            GamePauseService.ResetAll();
+        }
+
         public void ProceedToNextStage(PerkType selectedPerk)
         {
             roguelikeSystem.ApplyPerk(selectedPerk);

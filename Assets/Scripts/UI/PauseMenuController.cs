@@ -23,6 +23,20 @@ namespace BlockBlastGame
         [Tooltip("pauseCanvas 内の閉じるボタン。押すと pauseCanvas を非表示にしてゲームを再開する。")]
         public Button closeButton;
 
+        [Header("Haptics Toggle")]
+        [Tooltip("PauseMenu 内の振動ON/OFFボタン。")]
+        public Button hapticsToggleButton;
+
+        [Tooltip("振動ONのときだけ表示するチェック画像（hapticsToggleButtonの子）。")]
+        public GameObject hapticsCheckObject;
+
+        [Header("Audio Volume Sliders")]
+        [Tooltip("BGM共通音量を0〜1で調整するスライダー。")]
+        public Slider bgmVolumeSlider;
+
+        [Tooltip("SE共通音量を0〜1で調整するスライダー。")]
+        public Slider seVolumeSlider;
+
         [Tooltip("ポーズ画面の背面に表示する blur overlay。\n未設定ならこの GameObject か子から自動取得する。")]
         public PauseBlurOverlay blurOverlay;
 
@@ -58,6 +72,8 @@ namespace BlockBlastGame
                 blurOverlay = GetComponentInChildren<PauseBlurOverlay>(true);
 
             BindButtons(true);
+            RefreshHapticsToggleVisual();
+            RefreshAudioSliders();
 
             if (hideCanvasOnStart && pauseCanvas != null)
                 pauseCanvas.SetActive(false);
@@ -98,6 +114,65 @@ namespace BlockBlastGame
                 if (subscribe)
                     closeButton.onClick.AddListener(ClosePauseMenu);
             }
+
+            if (hapticsToggleButton != null)
+            {
+                hapticsToggleButton.onClick.RemoveListener(ToggleHaptics);
+                if (subscribe)
+                    hapticsToggleButton.onClick.AddListener(ToggleHaptics);
+            }
+
+            if (bgmVolumeSlider != null)
+            {
+                bgmVolumeSlider.onValueChanged.RemoveListener(OnBgmVolumeSliderChanged);
+                if (subscribe)
+                    bgmVolumeSlider.onValueChanged.AddListener(OnBgmVolumeSliderChanged);
+            }
+
+            if (seVolumeSlider != null)
+            {
+                seVolumeSlider.onValueChanged.RemoveListener(OnSeVolumeSliderChanged);
+                if (subscribe)
+                    seVolumeSlider.onValueChanged.AddListener(OnSeVolumeSliderChanged);
+            }
+        }
+
+        public void ToggleHaptics()
+        {
+            bool enabled = !MobileHaptics.IsEnabled;
+            MobileHaptics.SetEnabled(enabled);
+            RefreshHapticsToggleVisual();
+
+            if (enabled)
+                MobileHaptics.PlayLightImpact();
+        }
+
+        void RefreshHapticsToggleVisual()
+        {
+            if (hapticsCheckObject != null)
+                hapticsCheckObject.SetActive(MobileHaptics.IsEnabled);
+        }
+
+        void RefreshAudioSliders()
+        {
+            SoundManager soundManager = SoundManager.Instance;
+            float bgmVolume = soundManager != null ? soundManager.bgmVolume : 0.5f;
+            float seVolume = soundManager != null ? soundManager.seVolume : 0.5f;
+
+            if (bgmVolumeSlider != null)
+                bgmVolumeSlider.SetValueWithoutNotify(Mathf.Clamp01(bgmVolume));
+            if (seVolumeSlider != null)
+                seVolumeSlider.SetValueWithoutNotify(Mathf.Clamp01(seVolume));
+        }
+
+        void OnBgmVolumeSliderChanged(float value)
+        {
+            SoundManager.SetBGMVolume(Mathf.Clamp01(value));
+        }
+
+        void OnSeVolumeSliderChanged(float value)
+        {
+            SoundManager.SetSEVolume(Mathf.Clamp01(value));
         }
 
         public void TogglePauseMenu()
@@ -150,6 +225,8 @@ namespace BlockBlastGame
                 pauseCanvas.transform.SetAsLastSibling();
             }
 
+            RefreshHapticsToggleVisual();
+            RefreshAudioSliders();
             _isOpening = false;
             _openRoutine = null;
             onPauseOpened?.Invoke();

@@ -456,7 +456,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   bgmCue: 0
-  playOnEnable: 0
+  playOnEnable: 1
+  fallbackAudioSource: {fileID: 1119227692}
+  fallbackTrackVolume: 0.1
 --- !u!82 &1119227692
 AudioSource:
   m_ObjectHideFlags: 0
@@ -468,7 +470,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 8300000, guid: 3e0a639c1c23e46a5bfbc766d252d93f, type: 3}
-  m_PlayOnAwake: 1
+  m_PlayOnAwake: 0
   m_Volume: 0.1
   m_Pitch: 1
   Loop: 1

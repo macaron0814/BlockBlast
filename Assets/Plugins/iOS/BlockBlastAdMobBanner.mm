@@ -4,7 +4,7 @@
 
 static GADBannerView *BlockBlast_BannerView = nil;
 static BOOL BlockBlast_AdMobStarted = NO;
-static const CGFloat BlockBlast_BannerHorizontalMargin = 8.0;
+static const CGFloat BlockBlast_BannerDownwardOffset = 12.0;
 
 // GADApplicationIdentifier が Info.plist に無い/空/不正な場合、
 // Google Mobile Ads SDK は起動時に内部で強制終了 (abort) する仕様がある。
@@ -89,21 +89,11 @@ static void BlockBlast_LayoutBanner(int position)
     }
     else
     {
-        y = parent.bounds.size.height - bannerSize.height - safeInsets.bottom;
+        CGFloat bottomInset = MAX(0.0, safeInsets.bottom - BlockBlast_BannerDownwardOffset);
+        y = parent.bounds.size.height - bannerSize.height - bottomInset;
     }
 
     BlockBlast_BannerView.frame = CGRectMake(x, y, bannerSize.width, bannerSize.height);
-}
-
-static GADAdSize BlockBlast_AdaptiveBannerSize(UIView *parent)
-{
-    UIEdgeInsets safeInsets = UIEdgeInsetsZero;
-    if (@available(iOS 11.0, *))
-        safeInsets = parent.safeAreaInsets;
-
-    CGFloat safeWidth = parent.bounds.size.width - safeInsets.left - safeInsets.right;
-    CGFloat requestedWidth = MAX(320.0, safeWidth - BlockBlast_BannerHorizontalMargin * 2.0);
-    return GADCurrentOrientationAnchoredAdaptiveBannerAdSizeWithWidth(requestedWidth);
 }
 
 static void BlockBlast_CreateAndLoadBanner(NSString *unitId, int position)
@@ -125,11 +115,10 @@ static void BlockBlast_CreateAndLoadBanner(NSString *unitId, int position)
         BlockBlast_BannerView = nil;
     }
 
-    // Unity の描画領域は変更せず、画面最下部のSafe Area直上へ広告を配置する。
-    // Safe Area 内の横幅に合う Adaptive Banner を使い、端末ごとの差を吸収する。
-    GADAdSize bannerSize = BlockBlast_AdaptiveBannerSize(root.view);
-    NSLog(@"[BlockBlastAdMobBanner] STEP: alloc adaptive GADBannerView");
-    BlockBlast_BannerView = [[GADBannerView alloc] initWithAdSize:bannerSize];
+    // Unity の描画領域は変更せず、画面最下部のSafe Area直上へ
+    // 固定320x50ptの標準バナーを中央配置する。
+    NSLog(@"[BlockBlastAdMobBanner] STEP: alloc fixed 320x50 GADBannerView");
+    BlockBlast_BannerView = [[GADBannerView alloc] initWithAdSize:GADAdSizeBanner];
     NSLog(@"[BlockBlastAdMobBanner] STEP: GADBannerView allocated %@", BlockBlast_BannerView);
 
     BlockBlast_BannerView.adUnitID = unitId;

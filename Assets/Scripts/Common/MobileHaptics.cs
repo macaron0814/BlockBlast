@@ -18,10 +18,31 @@ namespace BlockBlastGame
     /// </summary>
     public static class MobileHaptics
     {
+        const string EnabledPlayerPrefsKey = "HapticsEnabled";
+        static bool? _enabled;
+
 #if UNITY_IOS && !UNITY_EDITOR
         [DllImport("__Internal")]
         static extern void BlockBlast_PlayLightImpact();
 #endif
+
+        public static bool IsEnabled
+        {
+            get
+            {
+                if (!_enabled.HasValue)
+                    _enabled = PlayerPrefs.GetInt(EnabledPlayerPrefsKey, 1) != 0;
+
+                return _enabled.Value;
+            }
+        }
+
+        public static void SetEnabled(bool enabled)
+        {
+            _enabled = enabled;
+            PlayerPrefs.SetInt(EnabledPlayerPrefsKey, enabled ? 1 : 0);
+            PlayerPrefs.Save();
+        }
 
         public static void PlayLightImpact()
         {
@@ -30,17 +51,26 @@ namespace BlockBlastGame
 
         public static void PrepareImpact(MobileHapticImpactStyle style)
         {
+            if (!IsEnabled)
+                return;
+
             tsyk5.MobileHapticFeedback.MobileHapticFeedback.Prepare();
         }
 
         public static void PlayImpact(MobileHapticImpactStyle style)
         {
+            if (!IsEnabled)
+                return;
+
             var pluginStyle = ToPluginImpactStyle(style);
             tsyk5.MobileHapticFeedback.MobileHapticFeedback.PlayImpact(pluginStyle);
         }
 
         public static void PlayCoreImpact(float intensity, float sharpness, double durationSec)
         {
+            if (!IsEnabled)
+                return;
+
             tsyk5.MobileHapticFeedback.MobileHapticFeedback.PlayImpact(intensity, sharpness, durationSec);
         }
 

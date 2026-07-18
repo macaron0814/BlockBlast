@@ -14,12 +14,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   waves:
   - enemies:
+    - {fileID: 11400000, guid: 3817892ed3c0442c8a0ee9d8d878d835, type: 2}
+    spawnInterval: 1
+    startTimeSeconds: 0
+  - enemies:
     - {fileID: 11400000, guid: 1213f03f64f8b4a1890ed870c1c491b4, type: 2}
     - {fileID: 11400000, guid: 1213f03f64f8b4a1890ed870c1c491b4, type: 2}
     - {fileID: 11400000, guid: 1213f03f64f8b4a1890ed870c1c491b4, type: 2}
     - {fileID: 11400000, guid: 1213f03f64f8b4a1890ed870c1c491b4, type: 2}
     spawnInterval: 1
-    startTimeSeconds: 0
+    startTimeSeconds: 5
   - enemies:
     - {fileID: 11400000, guid: 9d13acce3ca584f9ba26f499ffbde820, type: 2}
     - {fileID: 11400000, guid: 9d13acce3ca584f9ba26f499ffbde820, type: 2}
@@ -45,10 +49,6 @@ MonoBehaviour:
     spawnInterval: 1
     startTimeSeconds: 50
   - enemies:
-    - {fileID: 11400000, guid: 3817892ed3c0442c8a0ee9d8d878d835, type: 2}
-    spawnInterval: 1
-    startTimeSeconds: 80
-  - enemies:
     - {fileID: 11400000, guid: 1213f03f64f8b4a1890ed870c1c491b4, type: 2}
     - {fileID: 11400000, guid: 1213f03f64f8b4a1890ed870c1c491b4, type: 2}
     - {fileID: 11400000, guid: 1213f03f64f8b4a1890ed870c1c491b4, type: 2}
@@ -72,58 +72,70 @@ MonoBehaviour:
     randomShapeIncrease: 0
     unlockAllShapes: 0
     spawnEnemy: {fileID: 0}
+    gameClearAfterShop: 0
   - eventType: 0
     maxCellIncrease: 1
     randomShapeIncrease: 0
     unlockAllShapes: 0
     spawnEnemy: {fileID: 0}
+    gameClearAfterShop: 0
   - eventType: 2
     maxCellIncrease: 1
     randomShapeIncrease: 0
     unlockAllShapes: 0
     spawnEnemy: {fileID: 0}
+    gameClearAfterShop: 0
   - eventType: 0
     maxCellIncrease: 1
     randomShapeIncrease: 0
     unlockAllShapes: 0
     spawnEnemy: {fileID: 0}
+    gameClearAfterShop: 0
   - eventType: 0
     maxCellIncrease: 1
     randomShapeIncrease: 0
     unlockAllShapes: 0
     spawnEnemy: {fileID: 0}
+    gameClearAfterShop: 0
   - eventType: 2
     maxCellIncrease: 1
     randomShapeIncrease: 0
     unlockAllShapes: 0
     spawnEnemy: {fileID: 0}
+    gameClearAfterShop: 0
   - eventType: 0
     maxCellIncrease: 1
     randomShapeIncrease: 0
     unlockAllShapes: 0
     spawnEnemy: {fileID: 0}
+    gameClearAfterShop: 0
   - eventType: 0
     maxCellIncrease: 1
     randomShapeIncrease: 0
     unlockAllShapes: 0
     spawnEnemy: {fileID: 0}
+    gameClearAfterShop: 0
   - eventType: 2
     maxCellIncrease: 1
     randomShapeIncrease: 0
     unlockAllShapes: 0
     spawnEnemy: {fileID: 0}
+    gameClearAfterShop: 0
   - eventType: 0
     maxCellIncrease: 1
     randomShapeIncrease: 0
     unlockAllShapes: 0
     spawnEnemy: {fileID: 0}
+    gameClearAfterShop: 0
   - eventType: 0
     maxCellIncrease: 1
     randomShapeIncrease: 0
     unlockAllShapes: 0
     spawnEnemy: {fileID: 0}
-  - eventType: 5
+    gameClearAfterShop: 0
+  - eventType: 1
     maxCellIncrease: 1
     randomShapeIncrease: 0
     unlockAllShapes: 0
     spawnEnemy: {fileID: 0}
+    gameClearAfterShop: 1

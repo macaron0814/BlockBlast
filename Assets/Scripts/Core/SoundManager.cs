@@ -63,6 +63,8 @@ namespace BlockBlastGame
 
         const string SEVolumeLevelKey = "BlockBlast.SEVolumeLevel";
         const string BGMVolumeLevelKey = "BlockBlast.BGMVolumeLevel";
+        const string SEVolumeKey = "BlockBlast.SEVolume";
+        const string BGMVolumeKey = "BlockBlast.BGMVolume";
 
         [Header("SE Audio Source")]
         [Tooltip("SE 専用 AudioSource。既存の SoundManager に付いている AudioSource は SE 用のまま変更しない。未設定なら Awake で取得/追加する。")]
@@ -73,21 +75,29 @@ namespace BlockBlastGame
         public AudioSource bgmAudioSource;
 
         [Header("Volume")]
-        [Tooltip("SE の最大音量。実際の音量 = seMaxVolume × (seVolumeLevel / 10)。")]
+        [Tooltip("SE の最大音量。実際の音量 = seMaxVolume × seVolume × SE個別音量。")]
         [Range(0f, 1f)]
         public float seMaxVolume = 1f;
 
-        [Tooltip("BGM の最大音量。実際の音量 = bgmMaxVolume × (bgmVolumeLevel / 10)。")]
+        [Tooltip("BGM の最大音量。実際の音量 = bgmMaxVolume × bgmVolume × 楽曲個別音量。")]
         [Range(0f, 1f)]
         public float bgmMaxVolume = 1f;
 
-        [Tooltip("SE 音量段階。0=無音 / 10=seMaxVolume。")]
-        [Range(0, 10)]
-        public int seVolumeLevel = 10;
+        [Tooltip("SEスライダーの音量。0=無音 / 1=最大。")]
+        [Range(0f, 1f)]
+        public float seVolume = 0.5f;
 
-        [Tooltip("BGM 音量段階。0=無音 / 10=bgmMaxVolume。")]
+        [Tooltip("BGMスライダーの音量。0=無音 / 1=最大。")]
+        [Range(0f, 1f)]
+        public float bgmVolume = 0.5f;
+
+        [Tooltip("(互換用) SE 音量段階。スライダー値から0〜10へ換算される。")]
         [Range(0, 10)]
-        public int bgmVolumeLevel = 10;
+        public int seVolumeLevel = 5;
+
+        [Tooltip("(互換用) BGM 音量段階。スライダー値から0〜10へ換算される。")]
+        [Range(0, 10)]
+        public int bgmVolumeLevel = 5;
 
         [Tooltip("(旧) SE の masterVolume。互換用。新規設定では seMaxVolume / seVolumeLevel を使う。")]
         [Range(0f, 1f)]
@@ -178,6 +188,20 @@ namespace BlockBlastGame
             Instance.StopBgmCue();
         }
 
+        public static float GetSavedBGMVolume(float defaultValue = 0.5f)
+        {
+            if (Instance != null)
+                return Mathf.Clamp01(Instance.bgmVolume);
+
+            if (PlayerPrefs.HasKey(BGMVolumeKey))
+                return Mathf.Clamp01(PlayerPrefs.GetFloat(BGMVolumeKey));
+
+            if (PlayerPrefs.HasKey(BGMVolumeLevelKey))
+                return Mathf.Clamp(PlayerPrefs.GetInt(BGMVolumeLevelKey), 0, 10) / 10f;
+
+            return Mathf.Clamp01(defaultValue);
+        }
+
         public static void SetSEVolumeLevel(int level)
         {
             if (Instance == null) return;
@@ -188,6 +212,18 @@ namespace BlockBlastGame
         {
             if (Instance == null) return;
             Instance.SetBgmLevel(level);
+        }
+
+        public static void SetSEVolume(float volume)
+        {
+            if (Instance == null) return;
+            Instance.SetSeVolume(volume);
+        }
+
+        public static void SetBGMVolume(float volume)
+        {
+            if (Instance == null) return;
+            Instance.SetBgmVolume(volume);
         }
 
         public static void AddSEVolumeLevel(int delta)
@@ -255,21 +291,33 @@ namespace BlockBlastGame
             _currentBgmCue = null;
         }
 
-        public float GetSEVolume() => Mathf.Clamp01(seMaxVolume * (Mathf.Clamp(seVolumeLevel, 0, 10) / 10f));
+        public float GetSEVolume() => Mathf.Clamp01(seMaxVolume * Mathf.Clamp01(seVolume));
 
-        public float GetBGMVolume() => Mathf.Clamp01(bgmMaxVolume * (Mathf.Clamp(bgmVolumeLevel, 0, 10) / 10f));
+        public float GetBGMVolume() => Mathf.Clamp01(bgmMaxVolume * Mathf.Clamp01(bgmVolume));
 
         public void SetSeLevel(int level)
         {
-            seVolumeLevel = Mathf.Clamp(level, 0, 10);
+            SetSeVolume(Mathf.Clamp(level, 0, 10) / 10f);
+        }
+
+        public void SetBgmLevel(int level)
+        {
+            SetBgmVolume(Mathf.Clamp(level, 0, 10) / 10f);
+        }
+
+        public void SetSeVolume(float volume)
+        {
+            seVolume = Mathf.Clamp01(volume);
+            seVolumeLevel = Mathf.RoundToInt(seVolume * 10f);
             SaveVolumeSettings();
             OnVolumeLevelsChanged?.Invoke(seVolumeLevel, bgmVolumeLevel);
             PlayCue(SoundCue.VolumeAdjust);
         }
 
-        public void SetBgmLevel(int level)
+        public void SetBgmVolume(float volume)
         {
-            bgmVolumeLevel = Mathf.Clamp(level, 0, 10);
+            bgmVolume = Mathf.Clamp01(volume);
+            bgmVolumeLevel = Mathf.RoundToInt(bgmVolume * 10f);
             ApplyBgmVolume();
             SaveVolumeSettings();
             OnVolumeLevelsChanged?.Invoke(seVolumeLevel, bgmVolumeLevel);
@@ -330,12 +378,26 @@ namespace BlockBlastGame
 
         void LoadVolumeSettings()
         {
-            seVolumeLevel = Mathf.Clamp(PlayerPrefs.GetInt(SEVolumeLevelKey, seVolumeLevel), 0, 10);
-            bgmVolumeLevel = Mathf.Clamp(PlayerPrefs.GetInt(BGMVolumeLevelKey, bgmVolumeLevel), 0, 10);
+            seVolume = PlayerPrefs.HasKey(SEVolumeKey)
+                ? Mathf.Clamp01(PlayerPrefs.GetFloat(SEVolumeKey))
+                : PlayerPrefs.HasKey(SEVolumeLevelKey)
+                    ? Mathf.Clamp(PlayerPrefs.GetInt(SEVolumeLevelKey), 0, 10) / 10f
+                    : Mathf.Clamp01(seVolume);
+
+            bgmVolume = PlayerPrefs.HasKey(BGMVolumeKey)
+                ? Mathf.Clamp01(PlayerPrefs.GetFloat(BGMVolumeKey))
+                : PlayerPrefs.HasKey(BGMVolumeLevelKey)
+                    ? Mathf.Clamp(PlayerPrefs.GetInt(BGMVolumeLevelKey), 0, 10) / 10f
+                    : Mathf.Clamp01(bgmVolume);
+
+            seVolumeLevel = Mathf.RoundToInt(seVolume * 10f);
+            bgmVolumeLevel = Mathf.RoundToInt(bgmVolume * 10f);
         }
 
         void SaveVolumeSettings()
         {
+            PlayerPrefs.SetFloat(SEVolumeKey, seVolume);
+            PlayerPrefs.SetFloat(BGMVolumeKey, bgmVolume);
             PlayerPrefs.SetInt(SEVolumeLevelKey, seVolumeLevel);
             PlayerPrefs.SetInt(BGMVolumeLevelKey, bgmVolumeLevel);
             PlayerPrefs.Save();
@@ -373,8 +435,10 @@ namespace BlockBlastGame
             if (masterVolume < 0f) masterVolume = 0f;
             seMaxVolume = Mathf.Clamp01(seMaxVolume);
             bgmMaxVolume = Mathf.Clamp01(bgmMaxVolume);
-            seVolumeLevel = Mathf.Clamp(seVolumeLevel, 0, 10);
-            bgmVolumeLevel = Mathf.Clamp(bgmVolumeLevel, 0, 10);
+            seVolume = Mathf.Clamp01(seVolume);
+            bgmVolume = Mathf.Clamp01(bgmVolume);
+            seVolumeLevel = Mathf.RoundToInt(seVolume * 10f);
+            bgmVolumeLevel = Mathf.RoundToInt(bgmVolume * 10f);
 
             EnsureSoundEntryExists(SoundCue.GameStart);
             EnsureSoundEntryExists(SoundCue.GameOver);

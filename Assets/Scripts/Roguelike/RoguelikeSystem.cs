@@ -19,6 +19,12 @@ namespace BlockBlastGame
         [Header("Applied Perks")]
         public List<PerkType> appliedPerks = new List<PerkType>();
 
+        bool _baseValuesCaptured;
+        int _baseTurnRecoveryBonus;
+        int _baseStartingTurnsBonus;
+        float _baseItemSpawnRateMultiplier = 1f;
+        float _baseSameColorBonusMultiplier = 1.5f;
+
         public List<PerkType> GetRandomPerks(int count)
         {
             var pool = new List<PerkType>(availablePerks);
@@ -36,6 +42,7 @@ namespace BlockBlastGame
 
         public void ApplyPerk(PerkType perk)
         {
+            CaptureBaseValues();
             appliedPerks.Add(perk);
             var gm = GameManager.Instance;
 
@@ -124,7 +131,48 @@ namespace BlockBlastGame
 
         public void Reset()
         {
+            CaptureBaseValues();
             appliedPerks.Clear();
+
+            var gm = GameManager.Instance;
+            if (gm == null)
+                return;
+
+            if (gm.turnManager != null)
+            {
+                gm.turnManager.turnRecoveryBonus = _baseTurnRecoveryBonus;
+                gm.turnManager.startingTurnsBonus = _baseStartingTurnsBonus;
+            }
+
+            if (gm.itemSystem != null)
+                gm.itemSystem.itemSpawnRateMultiplier = _baseItemSpawnRateMultiplier;
+
+            if (gm.comboSystem != null)
+                gm.comboSystem.sameColorBonusMultiplier = _baseSameColorBonusMultiplier;
+        }
+
+        void CaptureBaseValues()
+        {
+            if (_baseValuesCaptured)
+                return;
+
+            var gm = GameManager.Instance;
+            if (gm == null)
+                return;
+
+            if (gm.turnManager != null)
+            {
+                _baseTurnRecoveryBonus = gm.turnManager.turnRecoveryBonus;
+                _baseStartingTurnsBonus = gm.turnManager.startingTurnsBonus;
+            }
+
+            if (gm.itemSystem != null)
+                _baseItemSpawnRateMultiplier = gm.itemSystem.itemSpawnRateMultiplier;
+
+            if (gm.comboSystem != null)
+                _baseSameColorBonusMultiplier = gm.comboSystem.sameColorBonusMultiplier;
+
+            _baseValuesCaptured = true;
         }
     }
 }

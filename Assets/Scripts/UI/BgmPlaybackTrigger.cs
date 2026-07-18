@@ -11,6 +11,13 @@ namespace BlockBlastGame
         public BgmCue bgmCue = BgmCue.Title;
         public bool playOnEnable = true;
 
+        [Tooltip("SoundManagerが存在しないTitleシーンなどで使うAudioSource。")]
+        public AudioSource fallbackAudioSource;
+
+        [Tooltip("フォールバック再生時の楽曲個別音量。最終音量 = BGM設定値 × この値。")]
+        [Range(0f, 1f)]
+        public float fallbackTrackVolume = 1f;
+
         void OnEnable()
         {
             if (playOnEnable)
@@ -19,12 +26,29 @@ namespace BlockBlastGame
 
         public void Play()
         {
-            SoundManager.PlayBgm(bgmCue);
+            if (SoundManager.Instance != null)
+            {
+                SoundManager.PlayBgm(bgmCue);
+                return;
+            }
+
+            if (fallbackAudioSource == null)
+                fallbackAudioSource = GetComponent<AudioSource>();
+            if (fallbackAudioSource == null)
+                return;
+
+            fallbackAudioSource.volume = Mathf.Clamp01(
+                SoundManager.GetSavedBGMVolume() * fallbackTrackVolume);
+            fallbackAudioSource.loop = true;
+            fallbackAudioSource.Play();
         }
 
         public void Stop()
         {
-            SoundManager.StopBgm();
+            if (SoundManager.Instance != null)
+                SoundManager.StopBgm();
+            else if (fallbackAudioSource != null)
+                fallbackAudioSource.Stop();
         }
     }
 }

@@ -30,6 +30,9 @@ namespace BlockBlastGame
 
         [Tooltip("Boss: スポーンする敵データ")]
         public EnemyData spawnEnemy;
+
+        [Tooltip("Shop: ONの場合、ショップ終了後にゲームクリア扱いで周回数を進め、Wave 1へ戻る")]
+        public bool gameClearAfterShop = false;
     }
 
     public sealed class RouteNodeRuntime
@@ -40,6 +43,7 @@ namespace BlockBlastGame
         public bool unlockAllShapes;
         public int randomShapeIncrease;
         public EnemyData spawnEnemy;
+        public bool gameClearAfterShop;
         public bool eventTriggered;
 
         public RouteEventType GetDisplayEventType() => eventType;

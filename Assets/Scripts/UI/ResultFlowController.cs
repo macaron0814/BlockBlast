@@ -108,8 +108,8 @@ namespace BlockBlastGame
         [Header("Runtime (read only)")]
         [SerializeField] bool _resultOpen;
         [SerializeField] GameOverType _lastGameOverType;
-        [SerializeField] int _currentCalories;
-        [SerializeField] int _bestCalories;
+        [SerializeField] long _currentCalories;
+        [SerializeField] long _bestCalories;
 
         Coroutine _sequenceRoutine;
 
@@ -194,9 +194,9 @@ namespace BlockBlastGame
             }
         }
 
-        void HandleCalorieChanged(int totalCalories)
+        void HandleCalorieChanged(long totalCalories)
         {
-            _currentCalories = Mathf.Max(0, totalCalories);
+            _currentCalories = CalorieFormatter.Clamp(totalCalories);
         }
 
         void BindResultButton(bool subscribe)
@@ -276,8 +276,8 @@ namespace BlockBlastGame
 
         void RefreshResultScoreTexts()
         {
-            int current = Mathf.Max(0, _currentCalories);
-            int best = LoadBestScore();
+            long current = CalorieFormatter.Clamp(_currentCalories);
+            long best = LoadBestScore();
             if (current > best)
             {
                 best = current;
@@ -286,8 +286,8 @@ namespace BlockBlastGame
 
             _bestCalories = best;
 
-            string currentText = string.Format(currentScoreFormat, current);
-            string bestText = string.Format(bestScoreFormat, best);
+            string currentText = string.Format(currentScoreFormat, CalorieFormatter.Format(current));
+            string bestText = string.Format(bestScoreFormat, CalorieFormatter.Format(best));
 
             if (currentScoreTextTMP != null) currentScoreTextTMP.text = currentText;
             if (currentScoreText != null) currentScoreText.text = currentText;
@@ -295,14 +295,23 @@ namespace BlockBlastGame
             if (bestScoreText != null) bestScoreText.text = bestText;
         }
 
-        int LoadBestScore()
+        long LoadBestScore()
         {
-            return PlayerPrefs.GetInt(bestScorePrefsKey, 0);
+            string longKey = bestScorePrefsKey + ".Long";
+            if (PlayerPrefs.HasKey(longKey)
+                && long.TryParse(PlayerPrefs.GetString(longKey), out long stored))
+            {
+                return CalorieFormatter.Clamp(stored);
+            }
+
+            // 旧int保存データからの移行。
+            return CalorieFormatter.Clamp(PlayerPrefs.GetInt(bestScorePrefsKey, 0));
         }
 
-        void SaveBestScore(int value)
+        void SaveBestScore(long value)
         {
-            PlayerPrefs.SetInt(bestScorePrefsKey, Mathf.Max(0, value));
+            value = CalorieFormatter.Clamp(value);
+            PlayerPrefs.SetString(bestScorePrefsKey + ".Long", value.ToString());
             PlayerPrefs.Save();
         }
 

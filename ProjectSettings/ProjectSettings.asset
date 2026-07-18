@@ -13,7 +13,7 @@ PlayerSettings:
   useOnDemandResources: 0
   accelerometerFrequency: 60
   companyName: DefaultCompany
-  productName: BlockBlast
+  productName: "\u30D1\u30BA\u30D7\u30EA"
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
   m_SplashScreenBackgroundColor: {r: 0.13725491, g: 0.12156863, b: 0.1254902, a: 1}
@@ -141,7 +141,7 @@ PlayerSettings:
   loadStoreDebugModeEnabled: 0
   visionOSBundleVersion: 1.0
   tvOSBundleVersion: 1.0
-  bundleVersion: 0.3
+  bundleVersion: 0.4
   preloadedAssets: []
   metroInputSource: 0
   wsaTransparentSwapchain: 0
@@ -167,7 +167,7 @@ PlayerSettings:
   buildNumber:
     Standalone: 0
     VisionOS: 0
-    iPhone: 2
+    iPhone: 10
     tvOS: 0
   overrideDefaultApplicationIdentifier: 1
   AndroidBundleVersionCode: 1

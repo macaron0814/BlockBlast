@@ -31,11 +31,19 @@ namespace BlockBlastGame
         [Tooltip("ドラッグ中、指 (ポインタ) からブロックを上にずらす量 (ワールド単位)。\n" +
                  "スマホで指がブロックを覆ってしまわないよう、正の値で「指より上」に持ち上げる。\n" +
                  "0 = 指の真下、1.5 = 指から 1.5 ワールド単位上、など。")]
-        public float dragOffsetY = 1.5f;
+        public float dragOffsetY = 1.75f;
 
         [Tooltip("ドラッグ中、指 (ポインタ) からブロックを横にずらす量 (ワールド単位)。\n" +
                  "通常は 0 のままで OK。指が右利きで右側がよく隠れる場合などに微調整。")]
         public float dragOffsetX = 0f;
+
+        [Tooltip("指の横移動をブロックへ反映する倍率。配置精度を保つため通常は 1。")]
+        [Range(0.5f, 3f)]
+        public float dragSensitivityX = 1f;
+
+        [Tooltip("指の縦移動をブロックへ反映する倍率。1より大きくすると、少ないスライドで盤面まで届く。")]
+        [Range(0.5f, 3f)]
+        public float dragSensitivityY = 1.4f;
 
         public float snapBackSpeed = 15f;
         public float dragScale = 1f;
@@ -71,7 +79,8 @@ namespace BlockBlastGame
         Transform originalParent;
         Vector3 originalPosition;
         Vector3 originalScale;
-        Vector3 dragPointerOffset;
+        Vector3 dragStartPointerWorld;
+        Vector3 dragStartPieceWorld;
         bool isDragging;
         bool previewVisible;
         bool lastPreviewCanPlace;
@@ -145,7 +154,8 @@ namespace BlockBlastGame
                 originalParent = closest.transform.parent;
                 originalPosition = closest.transform.position;
                 originalScale = closest.transform.localScale;
-                dragPointerOffset = closest.transform.position - pointerWorld;
+                dragStartPointerWorld = pointerWorld;
+                dragStartPieceWorld = closest.transform.position;
 
                 closest.transform.SetParent(null, true);
                 closest.transform.localScale = Vector3.Scale(GetBoardMatchedScale(closest), new Vector3(dragScale, dragScale, 1f));
@@ -294,9 +304,17 @@ namespace BlockBlastGame
 
         Vector3 GetDraggedPieceWorldPosition(Vector3 pointerWorld)
         {
-            // pointerWorld + dragPointerOffset … つかんだ瞬間の指↔ブロック中心の相対位置を維持
-            //                + (dragOffsetX, dragOffsetY) … 指より上 (or 横) にブロックをずらして指の影で隠れないようにする
-            Vector3 draggedWorld = pointerWorld + dragPointerOffset
+            // つかんだ位置を基準に移動量を増幅する。縦感度だけ高くすれば、
+            // 横の配置精度を保ったまま少ない上スライドで盤面まで運べる。
+            Vector3 pointerDelta = pointerWorld - dragStartPointerWorld;
+            Vector3 amplifiedDelta = new Vector3(
+                pointerDelta.x * dragSensitivityX,
+                pointerDelta.y * dragSensitivityY,
+                0f);
+
+            // ブロックを指より上へ表示し、指で形や配置先が隠れないようにする。
+            Vector3 draggedWorld = dragStartPieceWorld
+                                   + amplifiedDelta
                                    + new Vector3(dragOffsetX, dragOffsetY, 0f);
             draggedWorld.z = 0f;
             return draggedWorld;

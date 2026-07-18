@@ -17,7 +17,7 @@ MonoBehaviour:
     isDefault: 1
     entries:
     - key: CFBundleDisplayName
-      value: "\u30C8\u30A5\u30A4\u30F3\u30AD\u30FC\u30D1\u30BA\u30EB"
+      value: "\u30D1\u30BA\u30D7\u30EA"
     - key: NSUserTrackingUsageDescription
       value: "\u4E0D\u9069\u5207\u306A\u5E83\u544A\u306E\u8868\u793A\u3092\u907F\u3051\u308B\u305F\u3081\u306B\u30C8\u30E9\u30C3\u30AD\u30F3\u30B0\u306E\u8A31\u53EF\u3092\u4F7F\u7528\u3057\u307E\u3059"
     - key: NSLocalNetworkUsageDescription
@@ -26,7 +26,7 @@ MonoBehaviour:
     isDefault: 0
     entries:
     - key: CFBundleDisplayName
-      value: TwinkiiPuzzle
+      value: "\u30D1\u30BA\u30D7\u30EA"
     - key: NSUserTrackingUsageDescription
       value: Allow tracking to help avoid showing inappropriate advertisements.
     - key: NSLocalNetworkUsageDescription
