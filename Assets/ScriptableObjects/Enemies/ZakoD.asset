@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ZakoD
   m_EditorClassIdentifier: 
   maxHP: 10
-  chaseSpeed: 7
+  chaseSpeed: 10
   knockbackPerHit: 0.5
   stunDuration: 2
   spawnDistance: 10

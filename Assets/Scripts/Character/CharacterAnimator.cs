@@ -104,6 +104,9 @@ namespace BlockBlastGame
         Coroutine  _animCoroutine;
         Coroutine  _bumpCoroutine;
         Coroutine  _pulseCoroutine;
+        bool _staticSpriteActive;
+        bool _autoOnLineClearBeforeStatic;
+        bool _enableRoadBumpBeforeStatic;
 
         RectTransform _rect;
         Vector2 _basePosition;
@@ -285,6 +288,13 @@ namespace BlockBlastGame
             if (_bumpCoroutine != null)  { StopCoroutine(_bumpCoroutine);  _bumpCoroutine = null; }
             if (_pulseCoroutine != null) { StopCoroutine(_pulseCoroutine); _pulseCoroutine = null; }
 
+            if (!_staticSpriteActive)
+            {
+                _autoOnLineClearBeforeStatic = autoOnLineClear;
+                _enableRoadBumpBeforeStatic = enableRoadBump;
+                _staticSpriteActive = true;
+            }
+
             // 以降の自動アニメ起動を抑止 (ライン消去・ゲームオーバー再生で上書きされないように)
             autoOnLineClear = false;
             enableRoadBump = false;
@@ -296,6 +306,20 @@ namespace BlockBlastGame
             }
 
             SetSprite(sprite);
+        }
+
+        /// <summary>ゲームオーバー用の静止表示を解除して通常アニメへ戻す。</summary>
+        public void RestoreFromStaticSprite()
+        {
+            if (_staticSpriteActive)
+            {
+                autoOnLineClear = _autoOnLineClearBeforeStatic;
+                enableRoadBump = _enableRoadBumpBeforeStatic;
+                _staticSpriteActive = false;
+            }
+
+            Play(defaultState);
+            ResetRoadBumpToInitialBase(restartBump: true);
         }
 
         // ─────────────────────────────────────────────────

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ZakoASmall
   m_EditorClassIdentifier: 
   maxHP: 10
-  chaseSpeed: 4
+  chaseSpeed: 7
   knockbackPerHit: 0.2
   stunDuration: 2
   spawnDistance: 5

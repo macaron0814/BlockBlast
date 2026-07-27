@@ -183,7 +183,8 @@ namespace BlockBlastGame
             switch (newState)
             {
                 case GameState.Playing:
-                    Time.timeScale = 1f;
+                    if (!GamePauseService.IsPaused)
+                        Time.timeScale = 1f;
                     break;
                 case GameState.LineClearing:
                     Time.timeScale = 1f;
@@ -359,6 +360,36 @@ namespace BlockBlastGame
             if (currentState != GameState.Playing) return;
             ChangeState(GameState.GameOver);
             GameEvents.TriggerGameOver(GameOverType.EnemyCapture);
+        }
+
+        /// <summary>
+        /// リワード広告視聴後、ゲームオーバー地点から再開する。
+        /// 敵のHP・ステージ進行・kcal・所持金は維持し、盤面だけ空にする。
+        /// </summary>
+        public bool ContinueAfterReward(
+            float minimumEnemyDistanceAngle = 40f,
+            float additionalEnemyDistanceAngle = 25f,
+            int minimumRemainingTurns = 3)
+        {
+            if (currentState != GameState.GameOver)
+                return false;
+
+            boardManager?.ClearBoard();
+            itemSystem?.ClearBoardItemsForContinue();
+            comboSystem?.ResetCombo();
+
+            if (blockSpawner != null)
+                blockSpawner.SpawnNewSet();
+
+            if (turnManager != null && turnManager.remainingTurns < minimumRemainingTurns)
+                turnManager.AddTurns(minimumRemainingTurns - turnManager.remainingTurns);
+
+            enemySystem?.PrepareContinue(
+                Mathf.Max(0f, minimumEnemyDistanceAngle),
+                Mathf.Max(0f, additionalEnemyDistanceAngle));
+
+            ChangeState(GameState.Playing);
+            return true;
         }
 
         public void RestartGame()

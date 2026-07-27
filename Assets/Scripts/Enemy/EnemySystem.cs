@@ -1005,6 +1005,27 @@ namespace BlockBlastGame
             _activeBullets.Clear();
         }
 
+        /// <summary>
+        /// コンティニュー用。敵HPは維持したまま全敵を後方へ離し、
+        /// 画面上に残っているプレイヤー弾だけを消す。
+        /// </summary>
+        public void PrepareContinue(float minimumDistanceAngle, float additionalDistanceAngle)
+        {
+            ClearAllBullets();
+
+            for (int i = _enemies.Count - 1; i >= 0; i--)
+            {
+                EnemyController enemy = _enemies[i];
+                if (enemy == null)
+                {
+                    _enemies.RemoveAt(i);
+                    continue;
+                }
+
+                enemy.PushAwayForContinue(minimumDistanceAngle, additionalDistanceAngle);
+            }
+        }
+
         public List<EnemyController> GetActiveEnemies() => _enemies;
 
         public static void SetEventVisualOffset(Vector3 offset)

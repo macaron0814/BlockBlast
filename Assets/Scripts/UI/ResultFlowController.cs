@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -78,6 +79,24 @@ namespace BlockBlastGame
         [Min(0f)]
         public float holdBeforeFade = 0.4f;
 
+        [Header("Reward Continue")]
+        public bool enableRewardContinue = true;
+        [Tooltip("リワード復活ボタンのResult内座標。")]
+        public Vector2 rewardContinueAnchoredPosition = new Vector2(0f, -150f);
+        public Vector2 rewardContinueSize = new Vector2(360f, 282f);
+        [Min(0.03f)]
+        public float rewardFrameInterval = 0.12f;
+        [Tooltip("復活時に敵を最低でもこの角度まで離す。")]
+        [Min(0f)]
+        public float continueMinimumEnemyDistance = 40f;
+        [Tooltip("各敵の現在位置へ追加する後退角度。")]
+        [Min(0f)]
+        public float continueEnemyPushDistance = 25f;
+        [Min(1)]
+        public int continueMinimumTurns = 3;
+        [Min(0f)]
+        public float continueFadeInDuration = 0.35f;
+
         [Header("Fade")]
         [Tooltip("フェードに使う CanvasGroup。未設定なら全画面フェードを自動生成する。")]
         public CanvasGroup fadeCanvasGroup;
@@ -112,6 +131,10 @@ namespace BlockBlastGame
         [SerializeField] long _bestCalories;
 
         Coroutine _sequenceRoutine;
+        Coroutine _rewardFrameRoutine;
+        Button _rewardContinueButton;
+        Image _rewardContinueImage;
+        readonly Dictionary<int, Sprite[]> _rewardFrames = new Dictionary<int, Sprite[]>();
 
         public bool IsResultOpen => _resultOpen;
         public GameOverType LastGameOverType => _lastGameOverType;
@@ -145,6 +168,8 @@ namespace BlockBlastGame
             GameEvents.OnCalorieChanged += HandleCalorieChanged;
             ResolveReferences();
             BindResultButton(true);
+            BindRewardService(true);
+            EnsureRewardContinueButton();
             _bestCalories = LoadBestScore();
 
             if (hideCanvasOnStart)
@@ -163,6 +188,7 @@ namespace BlockBlastGame
             GameEvents.OnGameOver -= HandleGameOver;
             GameEvents.OnCalorieChanged -= HandleCalorieChanged;
             BindResultButton(false);
+            BindRewardService(false);
             ForceCloseWithoutEvents();
         }
 
@@ -206,6 +232,180 @@ namespace BlockBlastGame
             resultReloadButton.onClick.RemoveListener(ReloadCurrentScene);
             if (subscribe)
                 resultReloadButton.onClick.AddListener(ReloadCurrentScene);
+        }
+
+        void BindRewardService(bool subscribe)
+        {
+            RewardedAdService service = RewardedAdService.Instance;
+            if (service == null)
+                return;
+
+            service.RewardCompleted -= HandleRewardCompleted;
+            service.RewardFailed -= HandleRewardFailed;
+            if (subscribe)
+            {
+                service.RewardCompleted += HandleRewardCompleted;
+                service.RewardFailed += HandleRewardFailed;
+            }
+        }
+
+        void EnsureRewardContinueButton()
+        {
+            if (!enableRewardContinue || _rewardContinueButton != null)
+                return;
+
+            GameObject canvas = ResolveResultCanvas();
+            if (canvas == null)
+                return;
+
+            var buttonObject = new GameObject(
+                "RewardContinueButton",
+                typeof(RectTransform),
+                typeof(CanvasRenderer),
+                typeof(Image),
+                typeof(Button));
+            buttonObject.layer = canvas.layer;
+            buttonObject.transform.SetParent(canvas.transform, false);
+
+            var rect = buttonObject.GetComponent<RectTransform>();
+            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = rewardContinueAnchoredPosition;
+            rect.sizeDelta = rewardContinueSize;
+
+            _rewardContinueImage = buttonObject.GetComponent<Image>();
+            _rewardContinueImage.preserveAspect = true;
+            _rewardContinueImage.raycastTarget = true;
+
+            _rewardContinueButton = buttonObject.GetComponent<Button>();
+            _rewardContinueButton.targetGraphic = _rewardContinueImage;
+            _rewardContinueButton.onClick.AddListener(HandleRewardContinueClicked);
+            buttonObject.SetActive(false);
+        }
+
+        void HandleRewardContinueClicked()
+        {
+            RewardedAdService service = RewardedAdService.Instance;
+            if (!_resultOpen || service == null || !service.CanContinue)
+            {
+                RefreshRewardContinueUI();
+                return;
+            }
+
+            if (_rewardContinueButton != null)
+                _rewardContinueButton.interactable = false;
+            service.ShowForContinue();
+        }
+
+        void HandleRewardCompleted()
+        {
+            if (!_resultOpen)
+                return;
+
+            StartCoroutine(ContinueAfterReward());
+        }
+
+        void HandleRewardFailed(string message)
+        {
+            Debug.LogWarning($"[ResultFlowController] Reward continue failed: {message}");
+            RefreshRewardContinueUI();
+        }
+
+        void RefreshRewardContinueUI()
+        {
+            EnsureRewardContinueButton();
+            if (_rewardContinueButton == null)
+                return;
+
+            RewardedAdService service = RewardedAdService.Instance;
+            int remaining = service != null ? service.RemainingAttempts : 0;
+            bool visible = enableRewardContinue && _resultOpen && remaining > 0;
+            _rewardContinueButton.gameObject.SetActive(visible);
+            _rewardContinueButton.interactable = visible && service != null && service.CanContinue;
+
+            if (!visible)
+            {
+                StopRewardFrameAnimation();
+                return;
+            }
+
+            Sprite[] frames = GetRewardFrames(remaining);
+            if (_rewardContinueImage != null)
+                _rewardContinueImage.sprite = frames.Length > 0 ? frames[0] : null;
+
+            StartRewardFrameAnimation();
+        }
+
+        Sprite[] GetRewardFrames(int remaining)
+        {
+            remaining = Mathf.Clamp(remaining, 1, 3);
+            if (_rewardFrames.TryGetValue(remaining, out Sprite[] cached))
+                return cached;
+
+            string resourcePath = $"RewardContinue/{remaining}";
+            Texture2D[] textures = Resources.LoadAll<Texture2D>(resourcePath);
+            System.Array.Sort(textures, (a, b) =>
+                string.CompareOrdinal(a != null ? a.name : "", b != null ? b.name : ""));
+
+            var frames = new List<Sprite>(textures.Length);
+            for (int i = 0; i < textures.Length; i++)
+            {
+                Texture2D texture = textures[i];
+                if (texture == null) continue;
+                frames.Add(Sprite.Create(
+                    texture,
+                    new Rect(0f, 0f, texture.width, texture.height),
+                    new Vector2(0.5f, 0.5f),
+                    100f));
+            }
+
+            if (frames.Count == 0)
+            {
+                Sprite[] importedSprites = Resources.LoadAll<Sprite>(resourcePath);
+                System.Array.Sort(importedSprites, (a, b) =>
+                    string.CompareOrdinal(a != null ? a.name : "", b != null ? b.name : ""));
+                frames.AddRange(importedSprites);
+            }
+
+            cached = frames.ToArray();
+            _rewardFrames[remaining] = cached;
+            return cached;
+        }
+
+        void StartRewardFrameAnimation()
+        {
+            StopRewardFrameAnimation();
+            _rewardFrameRoutine = StartCoroutine(AnimateRewardFrames());
+        }
+
+        void StopRewardFrameAnimation()
+        {
+            if (_rewardFrameRoutine == null)
+                return;
+            StopCoroutine(_rewardFrameRoutine);
+            _rewardFrameRoutine = null;
+        }
+
+        IEnumerator AnimateRewardFrames()
+        {
+            int frameIndex = 0;
+            while (_resultOpen && _rewardContinueImage != null)
+            {
+                RewardedAdService service = RewardedAdService.Instance;
+                int remaining = service != null ? service.RemainingAttempts : 0;
+                if (remaining <= 0)
+                    break;
+
+                Sprite[] frames = GetRewardFrames(remaining);
+                if (frames.Length > 0)
+                {
+                    _rewardContinueImage.sprite = frames[frameIndex % frames.Length];
+                    frameIndex++;
+                }
+
+                yield return new WaitForSecondsRealtime(Mathf.Max(0.03f, rewardFrameInterval));
+            }
+
+            _rewardFrameRoutine = null;
         }
 
         GameObject ResolveResultCanvas()
@@ -268,6 +468,8 @@ namespace BlockBlastGame
                 canvas.transform.SetAsLastSibling();
             }
 
+            RefreshRewardContinueUI();
+
             if (sequencePlayer != null && !sequencePlayer.playOnEnable)
                 sequencePlayer.PlaySequence();
 
@@ -327,16 +529,8 @@ namespace BlockBlastGame
 
         void StopWorldForResult()
         {
-            if (enemySystem == null && GameManager.Instance != null)
-                enemySystem = GameManager.Instance.enemySystem;
-
-            if (enemySystem != null)
-            {
-                // リザルトでは敵を消さず、追いつかれた瞬間の見た目を残したまま止める。
-                // GamePauseService.Pause で Time.timeScale=0 になるため、敵の移動や道の回転は停止する。
-                enemySystem.PauseSurvivalForShop();
-            }
-
+            // Wave/サバイバル状態を破棄せず、その場からコンティニューできるよう
+            // TimeScaleの一時停止だけを使う。
             GamePauseService.Pause(PauseHandle);
         }
 
@@ -438,6 +632,39 @@ namespace BlockBlastGame
             SceneManager.LoadScene(active.name);
         }
 
+        IEnumerator ContinueAfterReward()
+        {
+            GameManager gameManager = GameManager.Instance;
+            if (gameManager == null || !gameManager.ContinueAfterReward(
+                    continueMinimumEnemyDistance,
+                    continueEnemyPushDistance,
+                    continueMinimumTurns))
+            {
+                RefreshRewardContinueUI();
+                yield break;
+            }
+
+            _resultOpen = false;
+            StopRewardFrameAnimation();
+            if (_rewardContinueButton != null)
+                _rewardContinueButton.gameObject.SetActive(false);
+
+            sequencePlayer?.StopSequence();
+
+            if (playerCharacter != null)
+                playerCharacter.RestoreFromStaticSprite();
+
+            GameObject canvas = ResolveResultCanvas();
+            if (canvas != null)
+                canvas.SetActive(false);
+
+            EnsureFadeReady();
+            yield return FadeTo(0f, continueFadeInDuration);
+
+            GamePauseService.Resume(PauseHandle);
+            SoundManager.PlayBgm(BgmCue.Game);
+        }
+
         void ForceCloseWithoutEvents()
         {
             if (_sequenceRoutine != null)
@@ -447,6 +674,7 @@ namespace BlockBlastGame
             }
 
             _resultOpen = false;
+            StopRewardFrameAnimation();
 
             var canvas = ResolveResultCanvas();
             if (canvas != null)

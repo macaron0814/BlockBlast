@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: MidBoss
   m_EditorClassIdentifier: 
   maxHP: 75
-  chaseSpeed: 3
+  chaseSpeed: 5
   knockbackPerHit: 0.01
   stunDuration: 2
   spawnDistance: 10

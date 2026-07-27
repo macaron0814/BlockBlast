@@ -158,6 +158,15 @@ namespace BlockBlastGame
             tilemapController?.ClearAllItemMarkers();
         }
 
+        /// <summary>
+        /// コンティニュー時に盤面上のアイテムだけを消す。
+        /// 取得済みアイテム履歴は維持する。
+        /// </summary>
+        public void ClearBoardItemsForContinue()
+        {
+            ClearBoardItems();
+        }
+
         public void ClearAll()
         {
             ClearBoardItems();

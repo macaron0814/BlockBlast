@@ -118,6 +118,23 @@ namespace BlockBlastGame
             UpdateVisualPosition();
         }
 
+        /// <summary>
+        /// コンティニュー時にHPや被ダメージ状態を変えず、プレイヤーから離す。
+        /// </summary>
+        public void PushAwayForContinue(float minimumDistanceAngle, float additionalDistanceAngle)
+        {
+            if (_data == null)
+                return;
+
+            float target = Mathf.Max(
+                distanceAngle + Mathf.Max(0f, additionalDistanceAngle),
+                Mathf.Max(0f, minimumDistanceAngle));
+            float maxDistance = Mathf.Max(0f, _spawnDistance * 2f);
+            distanceAngle = Mathf.Clamp(target, 0f, maxDistance);
+            _knockbackVelocity = 0f;
+            UpdateVisualPosition();
+        }
+
         void ApplyLoopScaledStats(EnemyData data)
         {
             int loop = Mathf.Max(0, EnemySystem.CurrentLoopIndex);

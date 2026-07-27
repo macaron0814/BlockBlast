@@ -46,6 +46,7 @@ namespace BlockBlastGame
 #endif
 
         static AdMobBannerController _instance;
+        public static AdMobBannerController Instance => _instance;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void EnsureInstance()
