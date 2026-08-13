@@ -38,6 +38,8 @@ namespace BlockBlastGame
         public int maxContinueCount = 3;
         public string titleSceneName = "Title";
         public bool simulateRewardOutsideIOS = true;
+        [Tooltip("広告の在庫切れ・読み込み失敗・表示失敗時に、広告なしでコンティニューを成立させる。")]
+        public bool continueWhenAdUnavailable = true;
 
         public int RemainingAttempts { get; private set; } = 3;
         public bool IsShowing { get; private set; }
@@ -119,7 +121,7 @@ namespace BlockBlastGame
             string adUnitId = ResolveAdUnitId();
             if (string.IsNullOrWhiteSpace(adUnitId))
             {
-                RewardFailed?.Invoke("リワード広告ユニットIDが未設定です。");
+                CompleteUnavailable("リワード広告ユニットIDが未設定です。");
                 return;
             }
 
@@ -137,13 +139,13 @@ namespace BlockBlastGame
             }
             catch (Exception exception)
             {
-                CompleteFailure($"Androidリワード広告の呼び出しに失敗しました: {exception.Message}");
+                CompleteUnavailable($"Androidリワード広告の呼び出しに失敗しました: {exception.Message}");
             }
 #else
             if (simulateRewardOutsideIOS)
                 StartCoroutine(SimulateReward());
             else
-                CompleteFailure("リワード広告はモバイル実機でのみ表示されます。");
+                CompleteUnavailable("リワード広告はモバイル実機でのみ表示されます。");
 #endif
         }
 
@@ -194,11 +196,17 @@ namespace BlockBlastGame
 
         public void OnRewardedAdEarned(string message)
         {
+            if (!IsShowing)
+                return;
+
             _rewardEarned = true;
         }
 
         public void OnRewardedAdDismissed(string message)
         {
+            if (!IsShowing)
+                return;
+
             IsShowing = false;
             AdMobBannerController.Instance?.ShowBanner();
 
@@ -218,9 +226,46 @@ namespace BlockBlastGame
 
         public void OnRewardedAdFailed(string message)
         {
-            CompleteFailure(string.IsNullOrWhiteSpace(message)
+            string failureMessage = string.IsNullOrWhiteSpace(message)
                 ? "リワード広告を表示できませんでした。"
-                : message);
+                : message;
+
+            // iOS はバックグラウンドの事前読み込み失敗でもこのコールバックを返す。
+            // ユーザーがコンティニューを要求していない場合は処理を進めない。
+            if (!IsShowing)
+            {
+                Debug.LogWarning($"[RewardedAdService] Rewarded preload failed: {failureMessage}");
+                return;
+            }
+
+            CompleteUnavailable(failureMessage);
+        }
+
+        void CompleteUnavailable(string message)
+        {
+            if (!continueWhenAdUnavailable)
+            {
+                CompleteFailure(message);
+                return;
+            }
+
+            IsShowing = false;
+            _rewardEarned = false;
+            AdMobBannerController.Instance?.ShowBanner();
+
+            if (RemainingAttempts > 0)
+            {
+                RemainingAttempts--;
+                Debug.LogWarning(
+                    $"[RewardedAdService] 広告を用意できなかったため、広告なしでコンティニューします: {message}");
+                RewardCompleted?.Invoke();
+            }
+            else
+            {
+                RewardFailed?.Invoke("コンティニュー可能回数が残っていません。");
+            }
+
+            Preload();
         }
 
         void CompleteFailure(string message)

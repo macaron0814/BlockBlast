@@ -1213,7 +1213,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 00000000
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -2520,7 +2520,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 00000000
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -3651,7 +3651,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 00000000
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -6643,7 +6643,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 00000000
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -10463,7 +10463,7 @@ MonoBehaviour:
   wallet: {fileID: 1107749784}
   itemDatabase: {fileID: 11400000, guid: 303cb622bccc04cb1abf994988039669, type: 2}
   effectTable: {fileID: 11400000, guid: b08aad1b11f6f4ecaa86de2c4e541fb1, type: 2}
-  rarityVisualTable: {fileID: 11400000, guid: 6b7e8498123a4b3295fd2f54e6d0b7a1, type: 2}
+  rarityVisualTable: {fileID: 11400000, guid: 0f6f87853172e424ea9fd59d8cd96cbd, type: 2}
   defaultPool: {fileID: 11400000, guid: 2214fe30aea6649deb08d42ce3924fde, type: 2}
   toggleSameCardDeselects: 1
   onPurchaseAffordable:
@@ -11077,7 +11077,7 @@ MonoBehaviour:
     scale: {x: 1, y: 1}
   curbInterval: 3
   archRadius: 50
-  tileWorldWidth: 1.4
+  tileWorldWidth: 1.56
   scrollSpeed: -10
   whiteLineOffsetY: 0
   sortingLayer: UI
@@ -13890,7 +13890,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 00000000
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -15221,7 +15221,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 00000000
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -16017,7 +16017,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 00000000
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -16467,7 +16467,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 00000000
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -17127,7 +17127,7 @@ MonoBehaviour:
     offsetY: 0
     archRadiusOffset: 0
     sortingLayer: UI
-    sortingOrder: -5
+    sortingOrder: -2
     scale: {x: 0.5, y: 0.5}
     tileWorldWidth: 0
     tiles:
@@ -17189,7 +17189,7 @@ MonoBehaviour:
     offsetY: 2
     archRadiusOffset: 0
     sortingLayer: UI
-    sortingOrder: -4
+    sortingOrder: 2
     scale: {x: 0.5, y: 0.5}
     tileWorldWidth: 20
     tiles:
@@ -17220,7 +17220,7 @@ MonoBehaviour:
     offsetY: 1.75
     archRadiusOffset: 0
     sortingLayer: UI
-    sortingOrder: -4
+    sortingOrder: 2
     scale: {x: 0.5, y: 0.5}
     tileWorldWidth: 5
     tiles:

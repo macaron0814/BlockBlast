@@ -171,7 +171,7 @@ namespace BlockBlastGame
             public EnemyController enemy;
             public int enemyId;
             public Vector3 hitPosition;
-            public float distanceToPlayerX;
+            public float distanceAngle;
         }
 
         // 同時消しライン数から計算される倍率 (damage + knockback 両方に効く)
@@ -885,8 +885,6 @@ namespace BlockBlastGame
             float bulletSizeDamageMul = PlayerEffectState.Instance != null
                 ? Mathf.Max(0.01f, PlayerEffectState.Instance.BulletSizeMultiplier)
                 : 1f;
-            float playerX = GetPlayerReferenceX();
-
             for (int b = _activeBullets.Count - 1; b >= 0; b--)
             {
                 var bullet = _activeBullets[b];
@@ -899,9 +897,11 @@ namespace BlockBlastGame
                 bool destroyed = false;
 
                 _bulletHitCandidates.Clear();
+                bool checkSpawnProximity = bullet.SpawnProximityCheckPending;
 
                 // まず「このフレームで当たり判定に入っている敵」を全部集める。
-                // その後、プレイヤーの X 座標に近い順に処理することで、
+                // 発射位置よりプレイヤー側に入り込んだ敵は、発射直後の判定で候補に含める。
+                // その後、プレイヤーからの角度距離が近い順に処理することで、
                 // 判定範囲が重なったときも手前の敵から当たるようにする。
                 for (int e = 0; e < _enemies.Count; e++)
                 {
@@ -914,8 +914,12 @@ namespace BlockBlastGame
                     float combinedRadius = bullet.HitAngleRadius + enemy.HitAngleRadius;
                     float enemyDist = enemy.HitAngleCenter;
 
-                    if (bullet.PrevHitAngle - combinedRadius <= enemyDist
-                        && bullet.HitAngle + combinedRadius >= enemyDist)
+                    bool sweptHit = bullet.PrevHitAngle - combinedRadius <= enemyDist
+                                 && bullet.HitAngle + combinedRadius >= enemyDist;
+                    bool nearerThanSpawn = checkSpawnProximity
+                                        && enemyDist <= bullet.StartHitAngle + combinedRadius;
+
+                    if (sweptHit || nearerThanSpawn)
                     {
                         Vector3 hitPosition = enemy.HitPosition;
                         _bulletHitCandidates.Add(new BulletHitCandidate
@@ -923,14 +927,17 @@ namespace BlockBlastGame
                             enemy = enemy,
                             enemyId = enemyId,
                             hitPosition = hitPosition,
-                            distanceToPlayerX = Mathf.Abs(hitPosition.x - playerX)
+                            distanceAngle = enemyDist
                         });
                     }
                 }
 
+                if (checkSpawnProximity)
+                    bullet.MarkSpawnProximityChecked();
+
                 if (_bulletHitCandidates.Count > 0)
                 {
-                    _bulletHitCandidates.Sort((a, b2) => a.distanceToPlayerX.CompareTo(b2.distanceToPlayerX));
+                    _bulletHitCandidates.Sort((a, b2) => a.distanceAngle.CompareTo(b2.distanceAngle));
 
                     // 同一弾が同フレーム内に複数の敵に当たり得る (貫通)
                     // → 手前順にヒット処理し、ヒットごとに penetration 残数を確認
@@ -961,17 +968,6 @@ namespace BlockBlastGame
                     _activeBullets.RemoveAt(b);
                 }
             }
-        }
-
-        float GetPlayerReferenceX()
-        {
-            if (bulletSpawnPoint != null)
-                return bulletSpawnPoint.position.x;
-
-            if (archRoadSystem != null)
-                return archRoadSystem.transform.position.x;
-
-            return 0f;
         }
 
         // ────────────────────────────────────────

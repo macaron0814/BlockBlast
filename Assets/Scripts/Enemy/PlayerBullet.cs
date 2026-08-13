@@ -17,9 +17,11 @@ namespace BlockBlastGame
 
         float _currentAngle;
         float _prevAngle;
+        float _startAngle;
         float _elapsed;
         bool _alive = true;
         bool _hasEnteredViewport;
+        bool _spawnProximityCheckPending = true;
 
         float _hitAngleOffset;
         float _hitAngleRadius;
@@ -46,7 +48,14 @@ namespace BlockBlastGame
         /// <summary>ヒット判定中心角度（hitAngleOffset 適用済み）</summary>
         public float HitAngle       => _currentAngle + _hitAngleOffset;
         public float PrevHitAngle   => _prevAngle    + _hitAngleOffset;
+        public float StartHitAngle  => _startAngle   + _hitAngleOffset;
         public float HitAngleRadius => _hitAngleRadius;
+        public bool SpawnProximityCheckPending => _spawnProximityCheckPending;
+
+        public void MarkSpawnProximityChecked()
+        {
+            _spawnProximityCheckPending = false;
+        }
 
         /// <summary>残り貫通可能数 (0 のとき、ヒットすると消える)</summary>
         public int RemainingPenetration => _remainingPenetration;
@@ -105,6 +114,7 @@ namespace BlockBlastGame
             _archCenter = archCenter;
             _currentAngle = startAngle;
             _prevAngle = startAngle;
+            _startAngle = startAngle;
             _hitAngleOffset = hitAngleOffset;
             _hitAngleRadius = hitAngleRadius;
             _viewportExitMargin = Mathf.Max(0f, viewportExitMargin);
