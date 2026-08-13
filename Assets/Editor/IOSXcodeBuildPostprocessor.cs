@@ -421,8 +421,11 @@ namespace BlockBlastGame.Editor
             var project = new PBXProject();
             project.ReadFromFile(projectPath);
 
-            project.SetBuildProperty(project.GetUnityMainTargetGuid(), "IPHONEOS_DEPLOYMENT_TARGET", deploymentTarget);
+            string mainTargetGuid = project.GetUnityMainTargetGuid();
+            project.SetBuildProperty(mainTargetGuid, "IPHONEOS_DEPLOYMENT_TARGET", deploymentTarget);
             project.SetBuildProperty(project.GetUnityFrameworkTargetGuid(), "IPHONEOS_DEPLOYMENT_TARGET", deploymentTarget);
+            // 本アプリはiPhone専用。Xcode側でもiPadを対象端末から確実に除外する。
+            project.SetBuildProperty(mainTargetGuid, "TARGETED_DEVICE_FAMILY", "1");
 
             project.WriteToFile(projectPath);
         }

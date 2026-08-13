@@ -7,22 +7,31 @@ using UnityEngine.SceneManagement;
 namespace BlockBlastGame
 {
     /// <summary>
-    /// iOSネイティブAdMobリワード広告とコンティニュー回数を管理する。
+    /// iOS/AndroidネイティブAdMobリワード広告とコンティニュー回数を管理する。
     /// 回数はアプリ内セッションだけで保持し、Titleへ戻るたびに3回へ戻す。
     /// </summary>
     [DefaultExecutionOrder(-200)]
     public class RewardedAdService : MonoBehaviour
     {
         const string ObjectName = "RewardedAdService";
-        const string TestRewardedAdUnitId = "ca-app-pub-3940256099942544/1712485313";
+        const string IosTestRewardedAdUnitId = "ca-app-pub-3940256099942544/1712485313";
+        const string AndroidTestRewardedAdUnitId = "ca-app-pub-3940256099942544/5224354917";
+        const string AndroidBridgeClass = "com.blockblast.ads.BlockBlastAdMob";
 
         public static RewardedAdService Instance { get; private set; }
 
         [Header("AdMob Rewarded")]
-        public bool useTestAd = true;
-        public string testRewardedAdUnitId = TestRewardedAdUnitId;
-        [Tooltip("AdMob管理画面で作成した本番リワード広告ユニットID。")]
-        public string productionRewardedAdUnitId = "";
+        [Tooltip("iOSでGoogleのテスト用広告ユニットIDを使う。")]
+        public bool useTestAd = false;
+        public string testRewardedAdUnitId = IosTestRewardedAdUnitId;
+        [Tooltip("AdMob管理画面で作成したiOS本番リワード広告ユニットID。")]
+        public string productionRewardedAdUnitId = "ca-app-pub-5945355481712765/5986821829";
+
+        [Tooltip("AndroidでGoogleのテスト用広告ユニットIDを使う。")]
+        public bool useAndroidTestAd = false;
+        public string androidTestRewardedAdUnitId = AndroidTestRewardedAdUnitId;
+        [Tooltip("Android本番用リワード広告ユニットID。リリース前に設定する。")]
+        public string androidProductionRewardedAdUnitId = "ca-app-pub-5945355481712765/8582029723";
 
         [Header("Continue")]
         [Min(1)]
@@ -120,11 +129,21 @@ namespace BlockBlastGame
 
 #if UNITY_IOS && !UNITY_EDITOR
             BlockBlast_RewardedShow(adUnitId);
+#elif UNITY_ANDROID && !UNITY_EDITOR
+            try
+            {
+                using (var bridge = new AndroidJavaClass(AndroidBridgeClass))
+                    bridge.CallStatic("showRewarded", adUnitId);
+            }
+            catch (Exception exception)
+            {
+                CompleteFailure($"Androidリワード広告の呼び出しに失敗しました: {exception.Message}");
+            }
 #else
             if (simulateRewardOutsideIOS)
                 StartCoroutine(SimulateReward());
             else
-                CompleteFailure("リワード広告はiOS実機でのみ表示されます。");
+                CompleteFailure("リワード広告はモバイル実機でのみ表示されます。");
 #endif
         }
 
@@ -136,12 +155,28 @@ namespace BlockBlastGame
 
 #if UNITY_IOS && !UNITY_EDITOR
             BlockBlast_RewardedLoad(adUnitId);
+#elif UNITY_ANDROID && !UNITY_EDITOR
+            try
+            {
+                using (var bridge = new AndroidJavaClass(AndroidBridgeClass))
+                    bridge.CallStatic("loadRewarded", adUnitId);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogWarning($"[RewardedAdService] Android preload failed: {exception.Message}");
+            }
 #endif
         }
 
         string ResolveAdUnitId()
         {
+#if UNITY_ANDROID && !UNITY_EDITOR
+            return useAndroidTestAd
+                ? androidTestRewardedAdUnitId
+                : androidProductionRewardedAdUnitId;
+#else
             return useTestAd ? testRewardedAdUnitId : productionRewardedAdUnitId;
+#endif
         }
 
         IEnumerator SimulateReward()

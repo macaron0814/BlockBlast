@@ -5,8 +5,7 @@ using UnityEngine;
 namespace BlockBlastGame
 {
     /// <summary>
-    /// iOS AdMob banner bridge. Google Mobile Ads Unity plugin ではなく、
-    /// iOS native + CocoaPods の Google-Mobile-Ads-SDK でバナーを常時表示する。
+    /// iOS/AndroidネイティブAdMobバナーを常時表示する。
     /// </summary>
     public class AdMobBannerController : MonoBehaviour
     {
@@ -17,18 +16,29 @@ namespace BlockBlastGame
         }
 
         const string ObjectName = "AdMobBannerController";
-        const string TestBannerAdUnitId = "ca-app-pub-3940256099942544/2934735716";
-        const string ProductionBannerAdUnitId = "ca-app-pub-5945355481712765/9051349341";
+        const string IosTestBannerAdUnitId = "ca-app-pub-3940256099942544/2934735716";
+        const string IosProductionBannerAdUnitId = "ca-app-pub-5945355481712765/9051349341";
+        const string AndroidTestBannerAdUnitId = "ca-app-pub-3940256099942544/6300978111";
+        const string AndroidBridgeClass = "com.blockblast.ads.BlockBlastAdMob";
 
         [Header("AdMob Banner")]
-        [Tooltip("ON: Google のテスト用広告ユニットIDを使う。リリース前に OFF にすると productionBannerAdUnitId を使う。")]
-        public bool useTestAd = true;
+        [Tooltip("iOSでGoogleのテスト用広告ユニットIDを使う。")]
+        public bool useTestAd = false;
 
-        [Tooltip("本番用バナー広告ユニットID")]
-        public string productionBannerAdUnitId = ProductionBannerAdUnitId;
+        [Tooltip("iOS本番用バナー広告ユニットID")]
+        public string productionBannerAdUnitId = IosProductionBannerAdUnitId;
 
-        [Tooltip("テスト用バナー広告ユニットID")]
-        public string testBannerAdUnitId = TestBannerAdUnitId;
+        [Tooltip("iOSテスト用バナー広告ユニットID")]
+        public string testBannerAdUnitId = IosTestBannerAdUnitId;
+
+        [Tooltip("AndroidでGoogleのテスト用広告ユニットIDを使う。")]
+        public bool useAndroidTestAd = false;
+
+        [Tooltip("Androidテスト用バナー広告ユニットID")]
+        public string androidTestBannerAdUnitId = AndroidTestBannerAdUnitId;
+
+        [Tooltip("Android本番用バナー広告ユニットID。リリース前に設定する。")]
+        public string androidProductionBannerAdUnitId = "ca-app-pub-5945355481712765/2290499875";
 
         [Tooltip("バナー表示位置")]
         public BannerPosition bannerPosition = BannerPosition.Bottom;
@@ -92,7 +102,7 @@ namespace BlockBlastGame
 
         public void ShowBanner()
         {
-            string adUnitId = useTestAd ? testBannerAdUnitId : productionBannerAdUnitId;
+            string adUnitId = ResolveAdUnitId();
             if (string.IsNullOrWhiteSpace(adUnitId))
             {
                 Debug.LogWarning("[AdMobBannerController] ShowBanner aborted: adUnitId is empty.");
@@ -103,6 +113,9 @@ namespace BlockBlastGame
             Debug.Log($"[AdMobBannerController] Calling native BlockBlast_AdMobShowBanner({adUnitId}, {bannerPosition})");
             BlockBlast_AdMobShowBanner(adUnitId, (int)bannerPosition);
             Debug.Log("[AdMobBannerController] Native BlockBlast_AdMobShowBanner call returned.");
+#elif UNITY_ANDROID && !UNITY_EDITOR
+            using (var bridge = new AndroidJavaClass(AndroidBridgeClass))
+                bridge.CallStatic("showBanner", adUnitId, (int)bannerPosition);
 #else
             Debug.Log($"[AdMobBannerController] ShowBanner: {adUnitId} ({bannerPosition})");
 #endif
@@ -112,8 +125,22 @@ namespace BlockBlastGame
         {
 #if UNITY_IOS && !UNITY_EDITOR
             BlockBlast_AdMobHideBanner();
+#elif UNITY_ANDROID && !UNITY_EDITOR
+            using (var bridge = new AndroidJavaClass(AndroidBridgeClass))
+                bridge.CallStatic("hideBanner");
 #else
             Debug.Log("[AdMobBannerController] HideBanner");
+#endif
+        }
+
+        string ResolveAdUnitId()
+        {
+#if UNITY_ANDROID && !UNITY_EDITOR
+            return useAndroidTestAd
+                ? androidTestBannerAdUnitId
+                : androidProductionBannerAdUnitId;
+#else
+            return useTestAd ? testBannerAdUnitId : productionBannerAdUnitId;
 #endif
         }
     }
