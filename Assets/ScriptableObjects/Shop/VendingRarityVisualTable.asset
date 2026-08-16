@@ -17,15 +17,15 @@ MonoBehaviour:
     displayLabel: N
     frameColor: {r: 1, g: 1, b: 1, a: 1}
     backgroundColor: {r: 1, g: 1, b: 1, a: 1}
-    textColor: {r: 1, g: 1, b: 1, a: 1}
+    textColor: {r: 0, g: 0, b: 0, a: 1}
     valueColor: {r: 0, g: 0, b: 0, a: 1}
-    priceColor: {r: 0, g: 0, b: 0, a: 1}
+    priceColor: {r: 1, g: 1, b: 1, a: 1}
     textOutlineColor: {r: 0, g: 0, b: 0, a: 1}
     textOutlineWidth: 0
     priceTextOutlineColor: {r: 0, g: 0, b: 0, a: 1}
     priceTextOutlineWidth: 0
     valueTextOutlineColor: {r: 0, g: 0, b: 0, a: 1}
-    valueTextOutlineWidth: 0.5
+    valueTextOutlineWidth: 0.4997
     frameSprite: {fileID: 0}
     backgroundSprite: {fileID: 21300000, guid: f3a92fc0320a1452b9f57096d815891a, type: 3}
     badgeSprite: {fileID: 21300000, guid: 45398da21d26c47298562ba3702b6dc4, type: 3}
@@ -33,9 +33,9 @@ MonoBehaviour:
     displayLabel: R
     frameColor: {r: 1, g: 1, b: 1, a: 1}
     backgroundColor: {r: 1, g: 1, b: 1, a: 1}
-    textColor: {r: 0.42745098, g: 0.95686275, b: 0.9843137, a: 1}
+    textColor: {r: 1, g: 1, b: 1, a: 1}
     valueColor: {r: 1, g: 1, b: 1, a: 1}
-    priceColor: {r: 1, g: 1, b: 1, a: 1}
+    priceColor: {r: 0.42745098, g: 0.95686275, b: 0.9843137, a: 1}
     textOutlineColor: {r: 0.13029547, g: 0.29668242, b: 0.4528302, a: 1}
     textOutlineWidth: 0.5
     priceTextOutlineColor: {r: 0.13029547, g: 0.29668242, b: 0.4528302, a: 1}
@@ -49,12 +49,12 @@ MonoBehaviour:
     displayLabel: SR
     frameColor: {r: 1, g: 1, b: 1, a: 1}
     backgroundColor: {r: 1, g: 1, b: 1, a: 1}
-    textColor: {r: 1, g: 0.76862746, b: 0.17254902, a: 1}
+    textColor: {r: 1, g: 0, b: 0, a: 1}
     valueColor: {r: 1, g: 0, b: 0, a: 1}
-    priceColor: {r: 1, g: 0, b: 0, a: 1}
-    textOutlineColor: {r: 1, g: 1, b: 1, a: 1}
+    priceColor: {r: 1, g: 0.76862746, b: 0.17254902, a: 1}
+    textOutlineColor: {r: 1, g: 0.76862746, b: 0.17254902, a: 1}
     textOutlineWidth: 0.3
-    priceTextOutlineColor: {r: 1, g: 1, b: 1, a: 1}
+    priceTextOutlineColor: {r: 1, g: 0.76862746, b: 0.17254902, a: 1}
     priceTextOutlineWidth: 0.3
     valueTextOutlineColor: {r: 0, g: 0, b: 0, a: 1}
     valueTextOutlineWidth: 0.5
@@ -65,9 +65,9 @@ MonoBehaviour:
     displayLabel: UR
     frameColor: {r: 1, g: 1, b: 1, a: 1}
     backgroundColor: {r: 1, g: 1, b: 1, a: 1}
-    textColor: {r: 0.972549, g: 0.41568628, b: 0.6901961, a: 1}
+    textColor: {r: 1, g: 1, b: 1, a: 1}
     valueColor: {r: 1, g: 1, b: 1, a: 1}
-    priceColor: {r: 1, g: 1, b: 1, a: 1}
+    priceColor: {r: 0.972549, g: 0.41568628, b: 0.6901961, a: 1}
     textOutlineColor: {r: 1, g: 0.25, b: 0.58669376, a: 1}
     textOutlineWidth: 0.3
     priceTextOutlineColor: {r: 1, g: 0.25, b: 0.58669376, a: 1}
